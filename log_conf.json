@@ -1,0 +1,20 @@
+{
+        "formatters":{
+                "default":{
+                       "()": "lcogt_logging.LCOGTFormatter"
+                }
+        },
+        "handlers": {
+                "console":{
+                        "class": "logging.StreamHandler",
+                        "formatter": "default",
+                        "level": "INFO"
+                }
+        },
+        "loggers":{
+                "ingester":{
+                        "handlers": ["console"]
+                }
+        },
+        "version": 1
+}
