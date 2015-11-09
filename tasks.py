@@ -13,5 +13,3 @@ def ingest_file(path):
     """
     ingester = Ingester()
     ingester.ingest(path)
-
-
