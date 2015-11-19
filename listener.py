@@ -1,8 +1,6 @@
 import logging
 import json
 import tasks
-import argparse
-import sys
 import os
 from logging.config import dictConfig
 from kombu.mixins import ConsumerMixin
@@ -34,36 +32,12 @@ class Listener(ConsumerMixin):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Ingest files from a queue and upload to the archive'
+    listener = Listener(
+        os.getenv('API_ROOT', 'http://localhost'),
+        os.getenv('S3_BUCKET', 'lcogtarchive'),
+        os.getenv('INGEST_QUEUE', 'ingest_queue'),
+        os.getenv('QUEUE_BROKER', 'memory://localhost')
     )
-
-    parser.add_argument(
-        '--config',
-        default='config.json',
-        help='Configuration file to use'
-    )
-
-    args = parser.parse_args()
-
-    try:
-        config = json.loads(open(args.config).read())
-    except FileNotFoundError as err:
-        logger.fatal(err)
-        sys.exit(1)
-    except:
-        logger.fatal('Error parsing configuration')
-        sys.exit(1)
-    try:
-        listener = Listener(
-            config.get('api_root', 'http://localhost'),
-            config.get('s3_bucket', 'lcogtarchive'),
-            config.get('queue_name', os.getenv('INGEST_QUEUE', 'ingest_queue')),
-            config.get('broker', os.getenv('QUEUE_BROKER', 'memory://localhost'))
-        )
-    except KeyError as err:
-        logger.fatal('Config file missing value {}'.format(err))
-        sys.exit(1)
 
     with Connection(listener.broker) as connection:
         listener.connection = connection

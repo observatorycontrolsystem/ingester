@@ -1,3 +1,5 @@
+# celerybeay schedule
+celerybeat-schedule
 # Local congfig
 local_config.json
 
