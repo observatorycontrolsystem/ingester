@@ -1,10 +1,11 @@
-import os
-from logging.config import dictConfig
 import logging
 import json
+import tasks
+import argparse
+import sys
+from logging.config import dictConfig
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue
-import tasks
 
 try:
     config = json.loads(open('log_conf.json').read())
@@ -15,11 +16,11 @@ logger = logging.getLogger('ingester')
 
 
 class Ingester(ConsumerMixin):
-    def __init__(self):
-        self.api_root = os.getenv('API_ROOT', 'http://localhost/')
-        self.s3_bucket = os.getenv('S3_BUCKET', 'lcogt-archive')
-        self.queue_name = os.getenv('QUEUE_NAME', 'ingest_queue')
-        self.connect_str = os.getenv('CONNECT_STR', 'memory://localhost')
+    def __init__(self, api_root, s3_bucket, queue_name, broker):
+        self.api_root = api_root
+        self.s3_bucket = s3_bucket
+        self.queue_name = queue_name
+        self.broker = broker
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue],
@@ -35,10 +36,10 @@ class Ingester(ConsumerMixin):
         task, most likely with a number of different workers asynchronusly.
         """
         logger.info('sending task', body)
-        tasks.ingest_file.delay(body['path'])
+        tasks.ingest_pack.delay(body)
         message.ack()  # acknowledge to the sender we got this message (it can be popped)
 
-    def ingest(self, path):
+    def ingest(self, pack):
         """
         This method does the actual ingesting of a file, and is called by
         celery from the task queue. It can be run by any worker.
@@ -46,7 +47,7 @@ class Ingester(ConsumerMixin):
         being run by main, it is a new instance instantiated by celery
         in tasks.py
         """
-        print('ingested', path)
+        print('ingested', pack)
 
 if __name__ == '__main__':
     """
@@ -55,8 +56,38 @@ if __name__ == '__main__':
     It then creates ingest tasks which will crate other instances of Ingester
     (that don't listen on the ingest queue)
     """
-    ingester = Ingester()
-    with Connection(ingester.connect_str) as connection:
+    parser = argparse.ArgumentParser(
+        description='Ingest files from a queue and upload to the archive'
+    )
+
+    parser.add_argument(
+        '--config',
+        default='config.json',
+        help='Configuration file to use'
+    )
+
+    args = parser.parse_args()
+
+    try:
+        config = json.loads(open(args.config).read())
+    except FileNotFoundError as err:
+        logger.fatal(err)
+        sys.exit(1)
+    except:
+        logger.fatal('Error parsing configuration')
+        sys.exit(1)
+    try:
+        ingester = Ingester(
+            config['api_root'],
+            config['s3_bucket'],
+            config['queue_name'],
+            config['broker']
+        )
+    except KeyError as err:
+        logger.fatal('Config file missing value {}'.format(err))
+        sys.exit(1)
+
+    with Connection(ingester.broker) as connection:
         ingester.connection = connection
         ingester.queue = Queue(ingester.queue_name)
         ingester.run()

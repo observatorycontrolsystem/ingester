@@ -6,10 +6,10 @@ app = Celery('tasks', broker=os.getenv('CONNECT_STR', 'memory://localhost'))
 
 
 @app.task
-def ingest_file(path):
+def ingest_pack(pack):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
     ingester = Ingester()
-    ingester.ingest(path)
+    ingester.ingest(pack)

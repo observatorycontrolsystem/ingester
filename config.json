@@ -1,0 +1,6 @@
+{
+    "s3_bucket": "lcogtarchive",
+    "queue_name": "ingest_queue",
+    "api_root": "http://localhost",
+    "broker": "memory://localhost"
+}

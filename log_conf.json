@@ -7,13 +7,13 @@
         "handlers": {
                 "console":{
                         "class": "logging.StreamHandler",
-                        "formatter": "default",
-                        "level": "INFO"
+                        "formatter": "default"
                 }
         },
         "loggers":{
                 "ingester":{
-                        "handlers": ["console"]
+                        "handlers": ["console"],
+                        "level": "INFO"
                 }
         },
         "version": 1
