@@ -1,7 +1,6 @@
 import json
 import logging
 from logging.config import dictConfig
-from astropy.io import fits
 
 try:
     config = json.loads(open('log_conf.json').read())
@@ -9,6 +8,8 @@ try:
 except:
     logging.basicConfig()
 logger = logging.getLogger('ingester')
+
+HEADER_BLACKLIST = ['HISTORY', '']
 
 
 class Ingester(object):
@@ -18,8 +19,3 @@ class Ingester(object):
 
     def ingest(self, path):
         logger.info('ingesting {0}'.format(path))
-
-    @classmethod
-    def fits_to_dict(clazz, path):
-        hdulist = fits.open(path)
-        return dict(hdulist[0].header)
