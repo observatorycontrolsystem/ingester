@@ -1,0 +1,11 @@
+redis:
+        image: redis:3
+        ports:
+                - "5432:5432"
+
+ingester:
+        image: docker.lcogt.net/ingester:latest
+        links:
+                - redis
+        environment:
+                - QUEUE_BROKER: redis://redis

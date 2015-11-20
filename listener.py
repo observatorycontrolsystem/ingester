@@ -2,6 +2,7 @@ import logging
 import json
 import tasks
 import os
+import sys
 from logging.config import dictConfig
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue
@@ -42,4 +43,8 @@ if __name__ == '__main__':
     with Connection(listener.broker) as connection:
         listener.connection = connection
         listener.queue = Queue(listener.queue_name)
-        listener.run()
+        try:
+            listener.run()
+        except KeyboardInterrupt:
+            logger.info('Shutting down...')
+            sys.exit(0)
