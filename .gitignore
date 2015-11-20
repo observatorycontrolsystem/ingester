@@ -1,4 +1,5 @@
-# celerybeay schedule
+# celerybeat stuff
+celerybeat.pid
 celerybeat-schedule
 # Local congfig
 local_config.json

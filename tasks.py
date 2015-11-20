@@ -10,9 +10,9 @@ app.conf.update(
     CELERY_TIMEZONE='UTC',
     CELERY_ENABLE_UTC=True,
     CELERYBEAT_SCHEDULE={
-        'print_evey_5_seconds': {
-            'task': 'tasks.hello',
-            'schedule': timedelta(seconds=5)
+        'send_heartbeat_every_60_seconds': {
+            'task': 'tasks.heartbeat',
+            'schedule': timedelta(seconds=60)
         },
     }
 )
@@ -29,5 +29,5 @@ def do_ingest(path, api_root, s3_bucket):
 
 
 @app.task
-def hello():
-    print('periodic task!')
+def heartbeat():
+    print('sending heartbeat')

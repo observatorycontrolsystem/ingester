@@ -1,2 +1,3 @@
 #!/bin/sh
-celery -A tasks worker -B --loglevel=WARNING
+celery -A tasks worker --loglevel=WARNING &
+celery -A tasks beat
