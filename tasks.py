@@ -1,7 +1,9 @@
 import os
 from celery import Celery
 from ingester import Ingester
-from datetime import timedelta
+from time import sleep
+from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric
+
 
 app = Celery('tasks', broker=os.getenv('QUEUE_BROKER', 'memory://localhost'))
 app.conf.update(
@@ -9,12 +11,7 @@ app.conf.update(
     CELERY_ACCEPT_CONTENT=['json'],
     CELERY_TIMEZONE='UTC',
     CELERY_ENABLE_UTC=True,
-    CELERYBEAT_SCHEDULE={
-        'send_heartbeat_every_60_seconds': {
-            'task': 'tasks.heartbeat',
-            'schedule': timedelta(seconds=60)
-        },
-    }
+    CELERYBEAT_SCHEDULE={},
 )
 
 
@@ -26,6 +23,13 @@ def do_ingest(path, api_root, s3_bucket):
     """
     ingester = Ingester(api_root, s3_bucket)
     ingester.ingest(path)
+    #  Keep an eye on the queue size
+    i = app.control.inspect()
+    if i.reserved():
+        reserved = len(i.reserved()['celery@cygnus'])
+        send_tsdb_metric('ingester.queue_length', reserved)
+        sleep(2)  # metrics do not block
+        print(reserved)
 
 
 @app.task
