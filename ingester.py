@@ -1,6 +1,8 @@
 import json
 import logging
 from logging.config import dictConfig
+from time import sleep
+import random
 
 try:
     config = json.loads(open('log_conf.json').read())
@@ -19,3 +21,5 @@ class Ingester(object):
 
     def ingest(self, path):
         logger.info('ingesting {0}'.format(path))
+        sleep(random.randint(2, 20))
+        logger.info('task {} complete'.format(path))
