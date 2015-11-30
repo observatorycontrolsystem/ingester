@@ -3,7 +3,6 @@ from celery import Celery
 from ingester import Ingester
 from time import sleep
 import platform
-from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric
 
 
 app = Celery('tasks', broker=os.getenv('QUEUE_BROKER', 'memory://localhost'))
@@ -24,14 +23,15 @@ def do_ingest(path, api_root, s3_bucket):
     """
     ingester = Ingester(api_root, s3_bucket)
     ingester.ingest(path)
-    #  Keep an eye on the queue size
+    #  Metrics
     i = app.control.inspect()
     if i.reserved():
-        print(i.reserved())
+        from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric
         reserved = len(i.reserved()['celery@{}'.format(platform.node())])
         send_tsdb_metric('ingester.queue_length', reserved)
-        print(reserved)
+        print('reserved items: {}'.format(reserved))
         sleep(2)  # metrics do not block
+        print('task done')
 
 
 @app.task
