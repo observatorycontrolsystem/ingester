@@ -33,6 +33,7 @@ class Listener(ConsumerMixin):
 
 
 if __name__ == '__main__':
+    logger.info('starting listener')
     listener = Listener(
         os.getenv('API_ROOT', 'http://localhost'),
         os.getenv('S3_BUCKET', 'lcogtarchive'),
