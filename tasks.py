@@ -1,28 +1,20 @@
-import os
 from celery import Celery
 from ingester import Ingester
 from time import sleep
 import platform
 
-
-app = Celery('tasks', broker=os.getenv('QUEUE_BROKER', 'memory://localhost'))
-app.conf.update(
-    CELERY_TASK_SERIALIZER='json',
-    CELERY_ACCEPT_CONTENT=['json'],
-    CELERY_TIMEZONE='UTC',
-    CELERY_ENABLE_UTC=True,
-    CELERYBEAT_SCHEDULE={},
-)
+app = Celery('tasks')
+app.config_from_object('settings')
 
 
 @app.task
-def do_ingest(path, api_root, s3_bucket):
+def do_ingest(path):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
-    ingester = Ingester(api_root, s3_bucket)
-    ingester.ingest(path)
+    ingester = Ingester(path)
+    ingester.ingest()
     #  Metrics
     i = app.control.inspect()
     if i.reserved():
