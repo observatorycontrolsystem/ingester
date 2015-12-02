@@ -28,7 +28,7 @@ class Listener(ConsumerMixin):
 
     def on_message(self, body, message):
         logger.info('sending task {}'.format(body))
-        tasks.do_ingest.delay(body, self.api_root, self.s3_bucket)
+        tasks.do_ingest.delay(body)
         message.ack()  # acknowledge to the sender we got this message (it can be popped)
 
 

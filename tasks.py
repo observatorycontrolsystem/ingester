@@ -16,13 +16,13 @@ app.conf.update(
 
 
 @app.task
-def do_ingest(path, api_root, s3_bucket):
+def do_ingest(path):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
-    ingester = Ingester(api_root, s3_bucket)
-    ingester.ingest(path)
+    ingester = Ingester(path)
+    ingester.ingest()
     #  Metrics
     i = app.control.inspect()
     if i.reserved():
