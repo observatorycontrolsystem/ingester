@@ -12,8 +12,6 @@ except:
     logging.basicConfig()
 logger = logging.getLogger('ingester')
 
-HEADER_BLACKLIST = ['HISTORY', '']
-
 
 class Ingester(object):
     def __init__(self, path):
