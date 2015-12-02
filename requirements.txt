@@ -5,3 +5,4 @@ celery[redis]
 lcogt-logging
 astropy
 opentsdb_python_metrics
+boto3
