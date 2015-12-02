@@ -7,23 +7,28 @@ app = Celery('tasks')
 app.config_from_object('settings')
 
 
-@app.task
-def do_ingest(path):
+@app.task(bind=True, max_retries=3)
+def do_ingest(self, path):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
-    ingester = Ingester(path)
-    ingester.ingest()
+    try:
+        ingester = Ingester(path)
+        ingester.ingest()
+    except Exception as exc:
+        raise self.retry(exc=exc)
+
     #  Metrics
     i = app.control.inspect()
     if i.reserved():
         from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric
-        reserved = len(i.reserved()['celery@{}'.format(platform.node())])
-        send_tsdb_metric('ingester.queue_length', reserved)
-        print('reserved items: {}'.format(reserved))
+        host_string = 'celery@{}'.format(platform.node())
+        reserved = len(i.reserved()[host_string])
+        active = len(i.active()[host_string])
+        send_tsdb_metric('ingester.queue_length', reserved + active)
+        print('reserved items: {}'.format(reserved + active))
         sleep(2)  # metrics do not block
-        print('task done')
 
 
 @app.task
