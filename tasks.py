@@ -29,8 +29,3 @@ def do_ingest(self, path):
         send_tsdb_metric('ingester.queue_length', reserved + active)
         print('queue size: {}'.format(reserved + active))
         sleep(2)  # metrics do not block
-
-
-@app.task
-def heartbeat():
-    print('sending heartbeat')
