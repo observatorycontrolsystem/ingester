@@ -1,8 +1,8 @@
 import logging
 import json
 import tasks
-import os
 import sys
+import settings
 from logging.config import dictConfig
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue
@@ -16,11 +16,9 @@ logger = logging.getLogger('ingester')
 
 
 class Listener(ConsumerMixin):
-    def __init__(self, api_root, s3_bucket, queue_name, broker):
-        self.api_root = api_root
-        self.s3_bucket = s3_bucket
+    def __init__(self, queue_name, broker_url):
         self.queue_name = queue_name
-        self.broker = broker
+        self.broker_url = broker_url
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue],
@@ -35,13 +33,11 @@ class Listener(ConsumerMixin):
 if __name__ == '__main__':
     logger.info('starting listener')
     listener = Listener(
-        os.getenv('API_ROOT', 'http://localhost'),
-        os.getenv('S3_BUCKET', 'lcogtarchive'),
-        os.getenv('INGEST_QUEUE', 'ingest_queue'),
-        os.getenv('QUEUE_BROKER', 'memory://localhost')
+        settings.QUEUE_NAME,
+        settings.BROKER_URL
     )
 
-    with Connection(listener.broker) as connection:
+    with Connection(listener.broker_url) as connection:
         listener.connection = connection
         listener.queue = Queue(listener.queue_name)
         try:

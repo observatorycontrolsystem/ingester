@@ -1,18 +1,10 @@
-import os
 from celery import Celery
 from ingester import Ingester
 from time import sleep
 import platform
 
-
-app = Celery('tasks', broker=os.getenv('QUEUE_BROKER', 'memory://localhost'))
-app.conf.update(
-    CELERY_TASK_SERIALIZER='json',
-    CELERY_ACCEPT_CONTENT=['json'],
-    CELERY_TIMEZONE='UTC',
-    CELERY_ENABLE_UTC=True,
-    CELERYBEAT_SCHEDULE={},
-)
+app = Celery('tasks')
+app.config_from_object('settings')
 
 
 @app.task
