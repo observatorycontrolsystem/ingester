@@ -21,13 +21,13 @@ def do_ingest(self, path):
 
     #  Metrics
     i = app.control.inspect()
-    if i.reserved():
+    if i.reserved() or i.active():
         from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric
         host_string = 'celery@{}'.format(platform.node())
         reserved = len(i.reserved()[host_string])
-        active = len(i.active()[host_string])
+        active = len(i.active()[host_string]) - 1  # exclude this (done) task
         send_tsdb_metric('ingester.queue_length', reserved + active)
-        print('reserved items: {}'.format(reserved + active))
+        print('queue size: {}'.format(reserved + active))
         sleep(2)  # metrics do not block
 
 
