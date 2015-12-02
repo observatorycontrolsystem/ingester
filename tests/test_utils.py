@@ -1,6 +1,6 @@
 import unittest
 import os
-from ingester import HEADER_BLACKLIST
+from settings import HEADER_BLACKLIST
 from utils.fits import fits_to_dict
 
 FITS_PATH = os.path.join(
