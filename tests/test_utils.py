@@ -1,7 +1,7 @@
 import unittest
 import os
-from ingester import Ingester, HEADER_BLACKLIST
-from utils import fits_to_dict
+from ingester import HEADER_BLACKLIST
+from utils.fits import fits_to_dict
 
 FITS_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -21,8 +21,3 @@ class TestUtils(unittest.TestCase):
             'coj1m011-kb05-20150219-0125-e00.fits',
             result['ORIGNAME']
         )
-
-
-class TestIngester(unittest.TestCase):
-    def setUp(self):
-        self.ingester = Ingester('http://localhost', 'fakebucket')

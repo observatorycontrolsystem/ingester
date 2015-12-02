@@ -8,4 +8,4 @@ ingester:
         links:
                 - redis
         environment:
-                QUEUE_BROKER: redis://redis
+                BROKER_URL: redis://redis
