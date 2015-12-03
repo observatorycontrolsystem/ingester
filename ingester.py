@@ -1,17 +1,9 @@
-import json
-import logging
 import os
 import settings
-from logging.config import dictConfig
 from utils.s3 import get_client, filename_to_s3_key
+from utils.logging import getLogger
 
-try:
-    config = json.loads(open('log_conf.json').read())
-    dictConfig(config)
-except:
-    logging.basicConfig()
-    logging.warn('Falling back to basic logger')
-logger = logging.getLogger('ingester')
+logger = getLogger()
 
 
 class Ingester(object):
@@ -26,7 +18,6 @@ class Ingester(object):
         key, version = self.upload_to_s3(filename, data)
 
         logger.info('finished ingesting {0} version {1}'.format(key, version))
-        return True
 
     def upload_to_s3(self, filename, data):
         key = filename_to_s3_key(filename)

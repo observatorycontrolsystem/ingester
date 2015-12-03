@@ -1,19 +1,11 @@
-import logging
-import json
 import tasks
 import sys
 import settings
-from logging.config import dictConfig
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue
+from utils.logging import getLogger
 
-try:
-    config = json.loads(open('log_conf.json').read())
-    dictConfig(config)
-except:
-    logging.basicConfig()
-    logging.warn('Falling back to basic logger')
-logger = logging.getLogger('ingester')
+logger = getLogger()
 
 
 class Listener(ConsumerMixin):
