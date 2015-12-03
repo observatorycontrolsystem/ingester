@@ -21,8 +21,9 @@ def do_ingest(self, path):
     except Exception as exc:
         logger.fatal('Exception raised while processing {0}: {1}'.format(path, exc))
         raise self.retry(exc=exc)
+    collect_queue_length_metric()
 
-    #  Metrics
+def collect_queue_length_metric():
     i = app.control.inspect()
     if i.reserved() or i.active():
         from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric
