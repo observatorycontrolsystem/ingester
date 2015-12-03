@@ -28,7 +28,7 @@ def create_bucket():
 
 
 @mock_s3
-@patch('requests.get')  # for metrics reporting
+@patch('tasks.collect_queue_length_metric')
 class TestCelery(unittest.TestCase):
     def setUp(self):
         create_bucket()
