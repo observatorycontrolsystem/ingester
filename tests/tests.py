@@ -16,7 +16,6 @@ FITS_PATH = os.path.join(
 )
 
 
-@mock_s3
 def create_bucket():
     test_bucket = 'testbucket'
     settings.BUCKET = test_bucket
@@ -70,10 +69,7 @@ class TestUtils(unittest.TestCase):
     def test_fits_to_dict(self):
         result = fits_to_dict(FITS_PATH, settings.HEADER_BLACKLIST)
         for header in settings.HEADER_BLACKLIST:
-            self.assertNotIn(
-                header,
-                result.keys()
-            ),
+            self.assertNotIn(header, result.keys())
         self.assertEqual(
             'coj1m011-kb05-20150219-0125-e00.fits',
             result['ORIGNAME']
