@@ -23,6 +23,7 @@ def do_ingest(self, path):
         raise self.retry(exc=exc)
     collect_queue_length_metric()
 
+
 def collect_queue_length_metric():
     i = app.control.inspect()
     if i.reserved() or i.active():
