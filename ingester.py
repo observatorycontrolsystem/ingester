@@ -26,6 +26,7 @@ class Ingester(object):
         key, version = self.upload_to_s3(filename, data)
 
         logger.info('finished ingesting {0} version {1}'.format(key, version))
+        return True
 
     def upload_to_s3(self, filename, data):
         key = filename_to_s3_key(filename)
