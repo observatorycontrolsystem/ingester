@@ -1,4 +1,5 @@
 import hashlib
+import os
 import boto3
 
 
@@ -11,4 +12,5 @@ def get_client(access_key, secret_key, region):
 
 
 def filename_to_s3_key(filename):
+    filename = os.path.basename(filename)
     return '/'.join((hashlib.sha1(filename.encode('utf-8')).hexdigest()[0:4], filename))
