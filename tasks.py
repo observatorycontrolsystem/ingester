@@ -2,7 +2,9 @@ from celery import Celery
 from ingester import Ingester
 from time import sleep
 import platform
+from utils.logging import getLogger
 
+logger = getLogger()
 app = Celery('tasks')
 app.config_from_object('settings')
 
@@ -17,6 +19,7 @@ def do_ingest(self, path):
         ingester = Ingester(path)
         ingester.ingest()
     except Exception as exc:
+        logger.fatal('Exception raised while processing {0}: {1}'.format(path, exc))
         raise self.retry(exc=exc)
 
     #  Metrics
