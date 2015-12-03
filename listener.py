@@ -12,6 +12,7 @@ try:
     dictConfig(config)
 except:
     logging.basicConfig()
+    logging.warn('Falling back to basic logger')
 logger = logging.getLogger('ingester')
 
 

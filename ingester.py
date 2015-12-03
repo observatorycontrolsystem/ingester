@@ -3,13 +3,14 @@ import logging
 import os
 import settings
 from logging.config import dictConfig
-from utils.s3 import get_client, s3_key
+from utils.s3 import get_client, filename_to_s3_key
 
 try:
     config = json.loads(open('log_conf.json').read())
     dictConfig(config)
 except:
     logging.basicConfig()
+    logging.warn('Falling back to basic logger')
 logger = logging.getLogger('ingester')
 
 
@@ -27,7 +28,7 @@ class Ingester(object):
         logger.info('finished ingesting {0} version {1}'.format(key, version))
 
     def upload_to_s3(self, filename, data):
-        key = s3_key(filename)
+        key = filename_to_s3_key(filename)
         content_disposition = 'attachment; filename={}'.format(filename)
         content_type = 'image/fits'
         client = get_client(
