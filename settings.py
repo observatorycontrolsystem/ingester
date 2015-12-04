@@ -1,17 +1,32 @@
 import os
 import logging
 from logging.config import dictConfig
-import json
+from lcogt_logging import LCOGTFormatter
 
 
-def getLogger():
-    try:
-        config = json.loads(open('log_conf.json').read())
-        dictConfig(config)
-    except:
-        logging.basicConfig()
-        logging.warn('Falling back to basic logger')
-    return logging.getLogger('ingester')
+# logging
+logConf = {
+    "formatters": {
+        "default": {
+            "()": LCOGTFormatter
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default"
+        }
+    },
+    "loggers": {
+        "ingester": {
+            "handlers": ["console"],
+            "level": logging.INFO
+        }
+    },
+    "version": 1
+}
+
+dictConfig(logConf)
 
 #  General settings
 QUEUE_NAME = os.getenv('QUEUE_NAME', 'ingest_queue')
