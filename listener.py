@@ -1,9 +1,10 @@
+#!/bin/env python
 import tasks
 import sys
 import settings
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue
-from utils.logging import getLogger
+from settings import getLogger
 
 logger = getLogger()
 
@@ -19,7 +20,13 @@ class Listener(ConsumerMixin):
 
     def on_message(self, body, message):
         logger.info('sending task {}'.format(body))
-        tasks.do_ingest.delay(body)
+        tasks.do_ingest.delay(
+            body,
+            settings.AWS_ACCESS_KEY_ID,
+            settings.AWS_SECRET_ACCESS_KEY,
+            settings.REGION_NAME,
+            settings.BUCKET
+        )
         message.ack()  # acknowledge to the sender we got this message (it can be popped)
 
 

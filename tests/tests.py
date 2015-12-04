@@ -4,10 +4,10 @@ import boto3
 import settings
 from moto import mock_s3
 from unittest.mock import patch
-from ingester import Ingester
+from ingester.ingester import Ingester
 from tasks import do_ingest
-from utils.s3 import filename_to_s3_key
-from utils.fits import fits_to_dict
+from ingester.utils.s3 import filename_to_s3_key
+from ingester.utils.fits import fits_to_dict
 
 
 FITS_PATH = os.path.join(
@@ -15,10 +15,17 @@ FITS_PATH = os.path.join(
     'fits/coj1m011-kb05-20150219-0125-e90.fits'
 )
 
+test_bucket = 'testbucket'
+
+aws_kwargs = {
+    'access_key': 'fakekey',
+    'secret_key': 'sosecure',
+    'region': 'us-west-1',
+    'bucket': test_bucket
+}
+
 
 def create_bucket():
-    test_bucket = 'testbucket'
-    settings.BUCKET = test_bucket
     s3 = boto3.resource('s3')
     s3.create_bucket(Bucket=test_bucket)
     bucket_versioning = s3.BucketVersioning(test_bucket)
@@ -34,10 +41,13 @@ class TestCelery(unittest.TestCase):
         settings.CELERY_ALWAYS_EAGER = True
 
     def test_task_success(self, mock):
-        self.assertTrue(do_ingest.delay(FITS_PATH).successful())
+        result = do_ingest.delay(FITS_PATH, **aws_kwargs)
+        print(result.result)
+        self.assertTrue(result.successful())
+        self.assertTrue(do_ingest.delay(FITS_PATH, **aws_kwargs).successful())
 
     def test_task_failure(self, mock):
-        result = do_ingest.delay('/pathdoesnot/exit.fits')
+        result = do_ingest.delay('/pathdoesnot/exit.fits', **aws_kwargs)
         self.assertIs(result.result.__class__, FileNotFoundError)
         self.assertTrue(result.failed())
 
@@ -45,21 +55,21 @@ class TestCelery(unittest.TestCase):
 @mock_s3
 class TestS3(unittest.TestCase):
     def setUp(self):
-        test_bucket_name = create_bucket()
+        create_bucket()
         s3 = boto3.resource('s3')
-        self.bucket = s3.Bucket(test_bucket_name)
+        self.bucket = s3.Bucket(test_bucket)
 
     def get_bucket_keys(self):
         return [k.key for k in self.bucket.objects.all()]
 
     def test_ingest_good_file(self):
-        ingester = Ingester(FITS_PATH)
+        ingester = Ingester(FITS_PATH, **aws_kwargs)
         ingester.ingest()
         self.assertIn(filename_to_s3_key(FITS_PATH), self.get_bucket_keys())
 
     def test_ingest_missing_file(self):
         badpath = '/doesnot/exist.fits'
-        ingester = Ingester(badpath)
+        ingester = Ingester(badpath, **aws_kwargs)
         with self.assertRaises(FileNotFoundError):
             ingester.ingest()
         self.assertNotIn(filename_to_s3_key(badpath), self.get_bucket_keys())
