@@ -15,7 +15,6 @@ REGION_NAME = os.getenv('REGION_NAME', 'us-west-2')
 BUCKET = os.getenv('BUCKET', 'lcogtarchivetest')
 
 # Celery Settings
-CELERY_RESULT_BACKEND = BROKER_URL
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = 'UTC'
