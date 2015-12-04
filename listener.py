@@ -22,9 +22,6 @@ class Listener(ConsumerMixin):
         logger.info('sending task {}'.format(body))
         tasks.do_ingest.delay(
             body,
-            settings.AWS_ACCESS_KEY_ID,
-            settings.AWS_SECRET_ACCESS_KEY,
-            settings.REGION_NAME,
             settings.BUCKET
         )
         message.ack()  # acknowledge to the sender we got this message (it can be popped)
