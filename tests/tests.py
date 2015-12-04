@@ -41,13 +41,12 @@ class TestCelery(unittest.TestCase):
         settings.CELERY_ALWAYS_EAGER = True
 
     def test_task_success(self, mock):
-        result = do_ingest.delay(FITS_PATH, **aws_kwargs)
-        print(result.result)
+        result = do_ingest.delay(FITS_PATH, test_bucket)
         self.assertTrue(result.successful())
-        self.assertTrue(do_ingest.delay(FITS_PATH, **aws_kwargs).successful())
+        self.assertTrue(do_ingest.delay(FITS_PATH, test_bucket).successful())
 
     def test_task_failure(self, mock):
-        result = do_ingest.delay('/pathdoesnot/exit.fits', **aws_kwargs)
+        result = do_ingest.delay('/pathdoesnot/exit.fits', test_bucket)
         self.assertIs(result.result.__class__, FileNotFoundError)
         self.assertTrue(result.failed())
 
@@ -63,13 +62,13 @@ class TestS3(unittest.TestCase):
         return [k.key for k in self.bucket.objects.all()]
 
     def test_ingest_good_file(self):
-        ingester = Ingester(FITS_PATH, **aws_kwargs)
+        ingester = Ingester(FITS_PATH, test_bucket)
         ingester.ingest()
         self.assertIn(filename_to_s3_key(FITS_PATH), self.get_bucket_keys())
 
     def test_ingest_missing_file(self):
         badpath = '/doesnot/exist.fits'
-        ingester = Ingester(badpath, **aws_kwargs)
+        ingester = Ingester(badpath, test_bucket)
         with self.assertRaises(FileNotFoundError):
             ingester.ingest()
         self.assertNotIn(filename_to_s3_key(badpath), self.get_bucket_keys())

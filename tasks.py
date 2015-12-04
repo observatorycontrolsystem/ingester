@@ -11,13 +11,13 @@ app.config_from_object('settings')
 
 
 @app.task(bind=True, max_retries=3)
-def do_ingest(self, path, access_key, secret_key, region, bucket):
+def do_ingest(self, path, bucket):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
     try:
-        ingester = Ingester(path, access_key, secret_key, region, bucket)
+        ingester = Ingester(path, bucket)
         ingester.ingest()
     except Exception as exc:
         logger.fatal('Exception raised while processing {0}: {1}'.format(path, exc))

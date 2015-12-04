@@ -1,16 +1,14 @@
 import os
-from .utils.s3 import get_client, filename_to_s3_key
+from .utils.s3 import filename_to_s3_key
+import boto3
 import logging
 
 logger = logging.getLogger('ingester')
 
 
 class Ingester(object):
-    def __init__(self, path, access_key, secret_key, region, bucket):
+    def __init__(self, path, bucket):
         self.path = path
-        self.access_key = access_key
-        self.secret_key = secret_key
-        self.region = region
         self.bucket = bucket
 
     def ingest(self):
@@ -26,15 +24,9 @@ class Ingester(object):
         key = filename_to_s3_key(filename)
         content_disposition = 'attachment; filename={}'.format(filename)
         content_type = 'image/fits'
-        client = get_client(
-            self.access_key,
-            self.secret_key,
-            self.region
-        )
-        response = client.put_object(
+        s3 = boto3.resource('s3')
+        response = s3.Object(self.bucket, key).put(
             Body=data,
-            Key=key,
-            Bucket=self.bucket,
             ContentDisposition=content_disposition,
             ContentType=content_type
         )
