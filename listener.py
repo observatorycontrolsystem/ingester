@@ -2,11 +2,11 @@
 import tasks
 import sys
 import settings
+import logging
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue
-from settings import getLogger
 
-logger = getLogger()
+logger = logging.getLogger('ingester')
 
 
 class Listener(ConsumerMixin):

@@ -2,9 +2,9 @@ from celery import Celery
 from ingester.ingester import Ingester
 from time import sleep
 import platform
-from settings import getLogger
+import logging
 
-logger = getLogger()
+logger = logging.getLogger('ingester')
 
 app = Celery('tasks')
 app.config_from_object('settings')
