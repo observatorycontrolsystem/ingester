@@ -1,4 +1,17 @@
 import os
+import logging
+from logging.config import dictConfig
+import json
+
+
+def getLogger():
+    try:
+        config = json.loads(open('log_conf.json').read())
+        dictConfig(config)
+    except:
+        logging.basicConfig()
+        logging.warn('Falling back to basic logger')
+    return logging.getLogger('ingester')
 
 #  General settings
 QUEUE_NAME = os.getenv('QUEUE_NAME', 'ingest_queue')
@@ -20,3 +33,4 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = 'UTC'
 CELERY_ENABLE_UTC = True
 CELERYBEAT_SCHEDULE = {}
+WORKER_HIJACK_ROOT_LOGGER = False

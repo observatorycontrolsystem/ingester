@@ -1,14 +1,17 @@
 import os
-import settings
-from utils.s3 import get_client, filename_to_s3_key
-from utils.logging import getLogger
+from .utils.s3 import get_client, filename_to_s3_key
+import logging
 
-logger = getLogger()
+logger = logging.getLogger('ingester')
 
 
 class Ingester(object):
-    def __init__(self, path):
+    def __init__(self, path, access_key, secret_key, region, bucket):
         self.path = path
+        self.access_key = access_key
+        self.secret_key = secret_key
+        self.region = region
+        self.bucket = bucket
 
     def ingest(self):
         logger.info('ingesting {0}'.format(self.path))
@@ -24,14 +27,14 @@ class Ingester(object):
         content_disposition = 'attachment; filename={}'.format(filename)
         content_type = 'image/fits'
         client = get_client(
-            settings.AWS_ACCESS_KEY_ID,
-            settings.AWS_SECRET_ACCESS_KEY,
-            settings.REGION_NAME
+            self.access_key,
+            self.secret_key,
+            self.region
         )
         response = client.put_object(
             Body=data,
             Key=key,
-            Bucket=settings.BUCKET,
+            Bucket=self.bucket,
             ContentDisposition=content_disposition,
             ContentType=content_type
         )

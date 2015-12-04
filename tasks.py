@@ -1,22 +1,23 @@
 from celery import Celery
-from ingester import Ingester
+from ingester.ingester import Ingester
 from time import sleep
 import platform
-from utils.logging import getLogger
+from settings import getLogger
 
 logger = getLogger()
+
 app = Celery('tasks')
 app.config_from_object('settings')
 
 
 @app.task(bind=True, max_retries=3)
-def do_ingest(self, path):
+def do_ingest(self, path, access_key, secret_key, region, bucket):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
     try:
-        ingester = Ingester(path)
+        ingester = Ingester(path, access_key, secret_key, region, bucket)
         ingester.ingest()
     except Exception as exc:
         logger.fatal('Exception raised while processing {0}: {1}'.format(path, exc))
