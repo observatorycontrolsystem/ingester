@@ -9,3 +9,8 @@ ingester:
                 - redis
         environment:
                 BROKER_URL: redis://redis
+                AWS_ACCESS_KEY_ID: AKIAIZBYNSZZGYN3EAQQ
+                AWS_SECRET_ACCESS_KEY: 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
+                AWS_DEFAULT_REGION: us-west-2
+        ports:
+                - "5555:5555"

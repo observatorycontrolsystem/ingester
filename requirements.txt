@@ -2,6 +2,7 @@
 flake8
 nose
 celery[redis]
+flower
 lcogt-logging
 astropy
 opentsdb_python_metrics

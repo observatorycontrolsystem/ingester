@@ -16,4 +16,6 @@ RUN pip install -r requirements.txt --trusted-host=buildsba.lco.gtn
 
 ENV C_FORCE_ROOT true
 
+EXPOSE 5555
+
 CMD ["supervisord", "-n"]
