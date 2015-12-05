@@ -8,6 +8,8 @@ from ingester.ingester import Ingester
 from tasks import do_ingest
 from ingester.utils.s3 import filename_to_s3_key
 from ingester.utils.fits import fits_to_dict
+import opentsdb_python_metrics.metric_wrappers
+opentsdb_python_metrics.metric_wrappers.test_mode = True
 
 
 FITS_PATH = os.path.join(
