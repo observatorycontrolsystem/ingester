@@ -25,7 +25,7 @@ def do_ingest(self, path, bucket):
         raise exc
     except (EndpointConnectionError, ConnectionClosedError) as exc:
         logger.warn('Connection error: {0} Will retry'.format(exc))
-        raise self.retry(exc=exc, coutdown=2 ** self.retries)
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries)
     except Exception as exc:
         logger.fatal('Exception raised while processing {0}: {1}'.format(path, exc))
         raise self.retry(exc=exc)
