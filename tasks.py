@@ -3,7 +3,7 @@ from ingester.ingester import Ingester
 import platform
 import logging
 from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric, metric_timer
-
+from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 logger = logging.getLogger('ingester')
 
 app = Celery('tasks')
@@ -20,6 +20,12 @@ def do_ingest(self, path, bucket):
     try:
         ingester = Ingester(path, bucket)
         ingester.ingest()
+    except FileNotFoundError as exc:
+        logger.fatal('Path was not found: {0}. Aborting'.format(exc))
+        raise exc
+    except (EndpointConnectionError, ConnectionClosedError) as exc:
+        logger.warn('Connection error: {0} Will retry'.format(exc))
+        raise self.retry(exc=exc, coutdown=2 ** self.retries)
     except Exception as exc:
         logger.fatal('Exception raised while processing {0}: {1}'.format(path, exc))
         raise self.retry(exc=exc)
