@@ -15,9 +15,8 @@ class Ingester(object):
     def ingest(self):
         logger.info('ingesting {0}'.format(self.path))
         filename = os.path.basename(self.path)
-        f = open(self.path, 'rb')
-        key, version = self.upload_to_s3(filename, f)
-        f.close()
+        with open(self.path, 'rb') as f:
+            key, version = self.upload_to_s3(filename, f)
         logger.info('finished ingesting {0} version {1}'.format(key, version))
 
     def upload_to_s3(self, filename, f):
