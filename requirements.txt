@@ -7,4 +7,3 @@ lcogt-logging
 astropy
 opentsdb_python_metrics
 boto3
-moto
