@@ -1,33 +1,40 @@
 from celery import Celery
 from ingester.ingester import Ingester
+from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError
 import platform
 import logging
 from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric, metric_timer
-from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 logger = logging.getLogger('ingester')
 
 app = Celery('tasks')
 app.config_from_object('settings')
 
 
-@app.task(bind=True, max_retries=3)
+@app.task(bind=True, max_retries=3, default_retry_delay=3 * 60)
 @metric_timer('ingester', async=False)
 def do_ingest(self, path, bucket):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
+    log_tags = {'tags': {'path': path, 'attempt': self.request.retries + 1}}
     try:
         ingester = Ingester(path, bucket)
         ingester.ingest()
-    except FileNotFoundError as exc:
-        logger.fatal('Path was not found: {0}. Aborting'.format(exc))
+    except DoNotRetryError as exc:
+        logger.fatal('Exception occured: {0}. Aboring.'.format(exc), extra=log_tags)
         raise exc
-    except (ConnectionError, EndpointConnectionError, ConnectionClosedError) as exc:
-        logger.warn('Connection error: {0} Will retry'.format(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries)
-    except Exception as exc:
-        logger.fatal('Exception raised while processing {0}: {1}'.format(path, exc))
+    except BackoffRetryError as exc:
+        logger.warn(
+            'Exception occured: {0}. Will attempt exponential backoff'.format(exc),
+            extra=log_tags
+        )
+        raise self.retry(exc=exc, countdown=5 ** self.request.retries)
+    except RetryError as exc:
+        logger.fatal(
+            'Exception occured: {0}. Will retry'.format(exc),
+            extra=log_tags
+        )
         raise self.retry(exc=exc)
     collect_queue_length_metric()
 
