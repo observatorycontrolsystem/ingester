@@ -23,7 +23,7 @@ def do_ingest(self, path, bucket):
     except FileNotFoundError as exc:
         logger.fatal('Path was not found: {0}. Aborting'.format(exc))
         raise exc
-    except (EndpointConnectionError, ConnectionClosedError) as exc:
+    except (ConnectionError, EndpointConnectionError, ConnectionClosedError) as exc:
         logger.warn('Connection error: {0} Will retry'.format(exc))
         raise self.retry(exc=exc, countdown=2 ** self.request.retries)
     except Exception as exc:
