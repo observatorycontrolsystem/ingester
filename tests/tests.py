@@ -5,6 +5,7 @@ from unittest.mock import patch
 from tasks import do_ingest
 from ingester.utils.fits import fits_to_dict
 from ingester.ingester import Ingester
+from ingester.exceptions import DoNotRetryError, BackoffRetryError
 import opentsdb_python_metrics.metric_wrappers
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 
@@ -28,13 +29,14 @@ class TestCelery(unittest.TestCase):
 
     def test_task_failure(self, s3_mock):
         result = do_ingest.delay('/pathdoesnot/exit.fits', test_bucket)
-        self.assertIs(result.result.__class__, FileNotFoundError)
+        self.assertIs(result.result.__class__, DoNotRetryError)
         self.assertTrue(result.failed())
 
-    @patch.object(Ingester, 'upload_to_s3',  side_effect=ConnectionError())
+    @patch.object(Ingester, 'upload_to_s3',  side_effect=BackoffRetryError())
     def test_task_retry(self, upload_mock, s3_mock):
         result = do_ingest.delay(FITS_PATH, test_bucket)
         self.assertEqual(upload_mock.call_count, 4)
+        self.assertIs(result.result.__class__, BackoffRetryError)
         self.assertTrue(result.failed())
 
 
