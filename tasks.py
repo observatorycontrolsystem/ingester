@@ -25,11 +25,18 @@ def do_ingest(self, path, bucket):
         logger.fatal('Exception occured: {0}. Aboring.'.format(exc), extra=log_tags)
         raise exc
     except BackoffRetryError as exc:
-        logger.warn(
-            'Exception occured: {0}. Will attempt exponential backoff'.format(exc),
-            extra=log_tags
-        )
-        raise self.retry(exc=exc, countdown=5 ** self.request.retries)
+        if self.request.retries < self.max_retries:
+            logger.warn(
+                'Exception occured: {0}. Will attempt exponential backoff'.format(exc),
+                extra=log_tags
+            )
+            raise self.retry(exc=exc, countdown=5 ** self.request.retries)
+        else:
+            logger.fatal(
+                'Excpetion occured: {0}. No more retries, aborting.'.format(exc),
+                extra=log_tags
+            )
+            raise exc
     except RetryError as exc:
         logger.fatal(
             'Exception occured: {0}. Will retry'.format(exc),

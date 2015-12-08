@@ -32,7 +32,7 @@ class TestCelery(unittest.TestCase):
         self.assertIs(result.result.__class__, DoNotRetryError)
         self.assertTrue(result.failed())
 
-    @patch.object(Ingester, 'upload_to_s3',  side_effect=BackoffRetryError())
+    @patch.object(Ingester, 'upload_to_s3',  side_effect=BackoffRetryError('Timeout'))
     def test_task_retry(self, upload_mock, s3_mock):
         result = do_ingest.delay(FITS_PATH, test_bucket)
         self.assertEqual(upload_mock.call_count, 4)
