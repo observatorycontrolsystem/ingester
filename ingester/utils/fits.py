@@ -1,9 +1,20 @@
 from astropy.io import fits
 
 
-def fits_to_dict(path, blacklist=[]):
-    hdulist = fits.open(path)
+def fits_to_dict(f):
+    hdulist = fits.open(f, mode='denywrite')
     full_dict = dict(hdulist[0].header)
-    for header in blacklist:
-        del(full_dict[header])
     return full_dict
+
+
+def remove_headers(dictionary, blacklist):
+    for header in blacklist:
+        try:
+            del(dictionary[header])
+        except KeyError:
+            pass
+    return dictionary
+
+
+def missing_keys(dictionary, required):
+    return [k for k in required if k not in dictionary]
