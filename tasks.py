@@ -12,14 +12,14 @@ app.config_from_object('settings')
 
 @app.task(bind=True, max_retries=3, default_retry_delay=3 * 60)
 @metric_timer('ingester', async=False)
-def do_ingest(self, path, bucket):
+def do_ingest(self, path, bucket, required=[], blacklist=[]):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
     log_tags = {'tags': {'path': path, 'attempt': self.request.retries + 1}}
     try:
-        ingester = Ingester(path, bucket)
+        ingester = Ingester(path, bucket, required, blacklist)
         ingester.ingest()
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=log_tags)
@@ -41,6 +41,7 @@ def do_ingest(self, path, bucket):
             )
             raise exc
     collect_queue_length_metric()
+    logger.info('Task suceeded', extra=log_tags)
 
 
 def collect_queue_length_metric():
