@@ -2,9 +2,9 @@ import os
 import boto3
 import requests
 import logging
-from .utils.s3 import filename_to_s3_key
-from .utils.fits import fits_to_dict, remove_headers, missing_keys
-from .exceptions import DoNotRetryError, BackoffRetryError
+from ingester.utils.s3 import filename_to_s3_key
+from ingester.utils.fits import fits_to_dict, remove_headers, missing_keys
+from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
 
