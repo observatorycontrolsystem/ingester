@@ -57,4 +57,7 @@ class Ingester(object):
         return response['VersionId']
 
     def call_api(self, fits_dict, version):
-        requests.post(self.api_root, data={'fits': fits_dict, 'version': version})
+        try:
+            requests.post(self.api_root, data={'fits': fits_dict, 'version': version})
+        except requests.exceptions.ConnectionError as exc:
+            raise BackoffRetryError(exc)
