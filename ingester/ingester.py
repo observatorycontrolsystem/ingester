@@ -12,12 +12,12 @@ logger = logging.getLogger('ingester')
 
 
 class Ingester(object):
-    def __init__(self, path, bucket, api_root, required_headers=[], blacklist_headers=[]):
+    def __init__(self, path, bucket, api_root, required_headers=None, blacklist_headers=None):
         self.path = path
         self.bucket = bucket
         self.api_root = api_root
-        self.required_headers = required_headers
-        self.blacklist_headers = blacklist_headers
+        self.required_headers = required_headers if required_headers else []
+        self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
     def ingest(self):
         logger.info('ingesting {0}'.format(self.path))
