@@ -23,6 +23,7 @@ class Listener(ConsumerMixin):
         tasks.do_ingest.delay(
             body,
             settings.BUCKET,
+            settings.API_ROOT,
             settings.REQUIRED_HEADERS,
             settings.HEADER_BLACKLIST
         )

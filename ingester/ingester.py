@@ -1,19 +1,21 @@
 import os
+import boto3
+import requests
+import logging
 from .utils.s3 import filename_to_s3_key
 from .utils.fits import fits_to_dict, remove_headers, missing_keys
 from .exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
-import boto3
-import logging
 
 
 logger = logging.getLogger('ingester')
 
 
 class Ingester(object):
-    def __init__(self, path, bucket, required_headers=[], blacklist_headers=[]):
+    def __init__(self, path, bucket, api_root, required_headers=[], blacklist_headers=[]):
         self.path = path
         self.bucket = bucket
+        self.api_root = api_root
         self.required_headers = required_headers
         self.blacklist_headers = blacklist_headers
 
@@ -22,16 +24,21 @@ class Ingester(object):
         filename = os.path.basename(self.path)
         try:
             with open(self.path, 'rb') as f:
-                fits_dict = fits_to_dict(self.path)
-                fits_dict = remove_headers(fits_dict, self.blacklist_headers)
-                missing_headers = missing_keys(fits_dict, self.required_headers)
-                if missing_headers:
-                    raise DoNotRetryError('Fits file missing headers! {0}'.format(missing_headers))
-                f.seek(0)  # astropy has read the file, so rewind before giving it to s3
-                key, version = self.upload_to_s3(filename, f)
+                fits_dict = self.get_fits_dictionary(f)
+                f.seek(0)  # return to beginning of file
+                version = self.upload_to_s3(filename, f)
+                self.call_api(fits_dict, version)
         except FileNotFoundError as exc:
             raise DoNotRetryError(exc)
-        logger.info('finished ingesting {0} version {1}'.format(key, version))
+        logger.info('finished ingesting {0} version {1}'.format(self.path, version))
+
+    def get_fits_dictionary(self, f):
+        fits_dict = fits_to_dict(f)
+        fits_dict = remove_headers(fits_dict, self.blacklist_headers)
+        missing_headers = missing_keys(fits_dict, self.required_headers)
+        if missing_headers:
+            raise DoNotRetryError('Fits file missing headers! {0}'.format(missing_headers))
+        return fits_dict
 
     def upload_to_s3(self, filename, f):
         key = filename_to_s3_key(filename)
@@ -46,4 +53,7 @@ class Ingester(object):
             )
         except (ConnectionError, EndpointConnectionError, ConnectionClosedError) as exc:
             raise BackoffRetryError(exc)
-        return key, response['VersionId']
+        return response['VersionId']
+
+    def call_api(self, fits_dict, version):
+        requests.post(self.api_root, data={'fits': fits_dict, 'version': version})
