@@ -23,13 +23,14 @@ class Ingester(object):
         logger.info('ingesting {0}'.format(self.path))
         filename = os.path.basename(self.path)
         try:
-            with open(self.path, 'rb') as f:
-                fits_dict = self.get_fits_dictionary(f)
-                f.seek(0)  # return to beginning of file
-                version = self.upload_to_s3(filename, f)
-                self.call_api(fits_dict, version)
+            f = open(self.path, 'rb')
         except FileNotFoundError as exc:
             raise DoNotRetryError(exc)
+        with f:
+            fits_dict = self.get_fits_dictionary(f)
+            f.seek(0)  # return to beginning of file
+            version = self.upload_to_s3(filename, f)
+        self.call_api(fits_dict, version)
         logger.info('finished ingesting {0} version {1}'.format(self.path, version))
 
     def get_fits_dictionary(self, f):
