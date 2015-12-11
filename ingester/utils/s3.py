@@ -14,3 +14,12 @@ def get_client(access_key, secret_key, region):
 def filename_to_s3_key(filename):
     filename = os.path.basename(filename)
     return '/'.join((hashlib.sha1(filename.encode('utf-8')).hexdigest()[0:4], filename))
+
+
+def strip_quotes_from_etag(etag):
+    """
+    Amazon returns the md5 sum of the uploaded
+    file in the 'ETag' header wrapped in quotes
+    """
+    if etag.startswith('"') and etag.endswith('"'):
+        return etag[1:-1]
