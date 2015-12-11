@@ -2,7 +2,7 @@ import os
 import boto3
 import requests
 import logging
-from ingester.utils.s3 import filename_to_s3_key
+from ingester.utils.s3 import filename_to_s3_key, strip_quotes_from_etag
 from ingester.utils.fits import fits_to_dict, remove_headers, missing_keys
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
@@ -29,8 +29,8 @@ class Ingester(object):
         with f:
             fits_dict = self.get_fits_dictionary(f)
             f.seek(0)  # return to beginning of file
-            version = self.upload_to_s3(filename, f)
-        self.call_api(fits_dict, version)
+            version, md5 = self.upload_to_s3(filename, f)
+        self.call_api(fits_dict, version, md5)
         logger.info('finished ingesting {0} version {1}'.format(self.path, version))
 
     def get_fits_dictionary(self, f):
@@ -54,10 +54,12 @@ class Ingester(object):
             )
         except (ConnectionError, EndpointConnectionError, ConnectionClosedError) as exc:
             raise BackoffRetryError(exc)
-        return response['VersionId']
+        md5 = strip_quotes_from_etag(response['ETag'])
+        version = response['VersionId']
+        return version, md5
 
-    def call_api(self, fits_dict, version):
+    def call_api(self, fits_dict, version, md5):
         try:
-            requests.post(self.api_root, data={'fits': fits_dict, 'version': version})
+            requests.post(self.api_root, data={'fits': fits_dict, 'version': version, 'md5': md5})
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
