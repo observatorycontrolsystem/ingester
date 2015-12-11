@@ -34,7 +34,10 @@ BROKER_URL = os.getenv('BROKER_URL', 'memory://localhost')
 API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000')
 
 # Fits headers we don't want to ingest
-HEADER_BLACKLIST = ['HISTORY', '']
+HEADER_BLACKLIST = ('HISTORY', '')
+
+# Fits headers that must be present
+REQUIRED_HEADERS = ('USERID', 'PROPID', 'DAY-OBS', 'INSTRUME')
 
 #  AWS Credentials and defaults
 BUCKET = os.getenv('BUCKET', 'lcogtarchivetest')

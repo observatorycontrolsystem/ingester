@@ -22,7 +22,10 @@ class Listener(ConsumerMixin):
         logger.info('sending task {}'.format(body))
         tasks.do_ingest.delay(
             body,
-            settings.BUCKET
+            settings.BUCKET,
+            settings.API_ROOT,
+            settings.REQUIRED_HEADERS,
+            settings.HEADER_BLACKLIST
         )
         message.ack()  # acknowledge to the sender we got this message (it can be popped)
 
