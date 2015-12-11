@@ -3,8 +3,8 @@ import os
 import settings
 from unittest.mock import patch
 from tasks import do_ingest
-from ingester.utils.fits import fits_to_dict
 from ingester.ingester import Ingester
+from ingester.exceptions import DoNotRetryError, BackoffRetryError
 import opentsdb_python_metrics.metric_wrappers
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 
@@ -17,33 +17,72 @@ FITS_PATH = os.path.join(
 test_bucket = 'testbucket'
 
 
-@patch('boto3.resource')
 class TestCelery(unittest.TestCase):
     def setUp(self):
         settings.CELERY_ALWAYS_EAGER = True
 
-    def test_task_success(self, s3_mock):
-        result = do_ingest.delay(FITS_PATH, test_bucket)
+    @patch.object(Ingester, 'ingest', return_value=None)
+    def test_task_success(self, ingest_mock):
+        result = do_ingest.delay(None, None, None, None, None)
         self.assertTrue(result.successful())
 
-    def test_task_failure(self, s3_mock):
-        result = do_ingest.delay('/pathdoesnot/exit.fits', test_bucket)
-        self.assertIs(result.result.__class__, FileNotFoundError)
+    @patch.object(Ingester, 'ingest', side_effect=DoNotRetryError('missing file'))
+    def test_task_failure(self, ingest_mock):
+        result = do_ingest.delay(None, None, None, None, None)
+        self.assertIs(result.result.__class__, DoNotRetryError)
         self.assertTrue(result.failed())
 
-    @patch.object(Ingester, 'upload_to_s3',  side_effect=ConnectionError())
-    def test_task_retry(self, upload_mock, s3_mock):
-        result = do_ingest.delay(FITS_PATH, test_bucket)
-        self.assertEqual(upload_mock.call_count, 4)
+    @patch.object(Ingester, 'ingest',  side_effect=BackoffRetryError('Timeout'))
+    def test_task_retry(self, ingest_mock):
+        result = do_ingest.delay(None, None, None, None, None)
+        self.assertEqual(ingest_mock.call_count, 4)
+        self.assertIs(result.result.__class__, BackoffRetryError)
         self.assertTrue(result.failed())
 
 
-class TestUtils(unittest.TestCase):
-    def test_fits_to_dict(self):
-        result = fits_to_dict(FITS_PATH, settings.HEADER_BLACKLIST)
-        for header in settings.HEADER_BLACKLIST:
-            self.assertNotIn(header, result.keys())
-        self.assertEqual(
-            'coj1m011-kb05-20150219-0125-e00.fits',
-            result['ORIGNAME']
+@patch('boto3.resource')
+@patch('requests.post')
+class TestIngester(unittest.TestCase):
+    def test_ingest_file(self, requests_mock, s3_mock):
+        ingester = Ingester(FITS_PATH, 'testbucket', 'http://testendpoint')
+        ingester.ingest()
+        self.assertTrue(s3_mock.called)
+        self.assertTrue(requests_mock.called)
+
+    def test_missing_file(self, requests_mock, s3_mock):
+        ingester = Ingester('/path/does/not/exist.fits', 'testbucket', 'http://testendpoint')
+        with self.assertRaises(DoNotRetryError):
+            ingester.ingest()
+        self.assertFalse(s3_mock.called)
+        self.assertFalse(requests_mock.called)
+
+    def test_required(self, requests_mock, s3_mock):
+        ingester = Ingester(
+            FITS_PATH,
+            'test_bucket',
+            'http://testendpoint',
+            required_headers=['fooheader']
         )
+        with self.assertRaises(DoNotRetryError):
+            ingester.ingest()
+        self.assertFalse(s3_mock.called)
+        self.assertFalse(requests_mock.called)
+        ingester = Ingester(
+            FITS_PATH,
+            'test_bucket',
+            'http://testendpoint',
+            required_headers=['DAY-OBS']
+        )
+        ingester.ingest()
+        self.assertTrue(s3_mock.called)
+        self.assertTrue(requests_mock.called)
+
+    def test_blacklist(self, requests_mock, s3_mock):
+        ingester = Ingester(
+            FITS_PATH,
+            'test_bucket',
+            'http://testendpoint',
+            blacklist_headers=['DAY-OBS']
+        )
+        ingester.ingest()
+        self.assertNotIn('DAY-OBS', requests_mock.call_args[1]['data']['fits'].keys())
