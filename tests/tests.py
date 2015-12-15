@@ -85,4 +85,4 @@ class TestIngester(unittest.TestCase):
             blacklist_headers=['DAY-OBS']
         )
         ingester.ingest()
-        self.assertNotIn('DAY-OBS', requests_mock.call_args[1]['data']['fits'].keys())
+        self.assertNotIn('DAY-OBS', requests_mock.call_args[1]['json']['fits'].keys())

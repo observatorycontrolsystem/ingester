@@ -29,8 +29,8 @@ class Ingester(object):
         with f:
             fits_dict = self.get_fits_dictionary(f)
             f.seek(0)  # return to beginning of file
-            version, md5 = self.upload_to_s3(filename, f)
-        self.call_api(fits_dict, version, md5)
+            version = self.upload_to_s3(filename, f)
+        self.call_api(fits_dict, version)
         logger.info('finished ingesting {0} version {1}'.format(self.path, version))
 
     def get_fits_dictionary(self, f):
@@ -55,11 +55,11 @@ class Ingester(object):
         except (ConnectionError, EndpointConnectionError, ConnectionClosedError) as exc:
             raise BackoffRetryError(exc)
         md5 = strip_quotes_from_etag(response['ETag'])
-        version = response['VersionId']
-        return version, md5
+        key = response['VersionId']
+        return {'version': {'key': key, 'md5':  md5}}
 
-    def call_api(self, fits_dict, version, md5):
+    def call_api(self, fits_dict, version):
         try:
-            requests.post(self.api_root, data={'fits': fits_dict, 'version': version, 'md5': md5})
+            requests.post(self.api_root, json={'fits': fits_dict, 'version': version})
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
