@@ -30,7 +30,7 @@ class Ingester(object):
             fits_dict = self.get_fits_dictionary(f)
             f.seek(0)  # return to beginning of file
             version = self.upload_to_s3(filename, f)
-        self.call_api(fits_dict, version)
+        self.call_api(fits_dict, version, filename)
         logger.info('finished ingesting {0} version {1}'.format(self.path, version))
 
     def get_fits_dictionary(self, f):
@@ -58,8 +58,8 @@ class Ingester(object):
         key = response['VersionId']
         return {'version': {'key': key, 'md5':  md5}}
 
-    def call_api(self, fits_dict, version):
+    def call_api(self, fits_dict, version, filename):
         try:
-            requests.post(self.api_root, json={'fits': fits_dict, 'version': version})
+            requests.post(self.api_root, json={'fits': fits_dict, 'version': version, 'filename': filename})
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
