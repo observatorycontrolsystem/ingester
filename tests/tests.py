@@ -15,6 +15,7 @@ FITS_PATH = os.path.join(
 )
 
 test_bucket = 'testbucket'
+blacklist_headers = ['', 'COMMENT', 'HISTORY']
 
 
 class TestCelery(unittest.TestCase):
@@ -44,7 +45,7 @@ class TestCelery(unittest.TestCase):
 @patch('requests.post')
 class TestIngester(unittest.TestCase):
     def test_ingest_file(self, requests_mock, s3_mock):
-        ingester = Ingester(FITS_PATH, 'testbucket', 'http://testendpoint')
+        ingester = Ingester(FITS_PATH, 'testbucket', 'http://testendpoint', blacklist_headers=blacklist_headers)
         ingester.ingest()
         self.assertTrue(s3_mock.called)
         self.assertTrue(requests_mock.called)
@@ -61,6 +62,7 @@ class TestIngester(unittest.TestCase):
             FITS_PATH,
             'test_bucket',
             'http://testendpoint',
+            blacklist_headers=blacklist_headers,
             required_headers=['fooheader']
         )
         with self.assertRaises(DoNotRetryError):
@@ -71,6 +73,7 @@ class TestIngester(unittest.TestCase):
             FITS_PATH,
             'test_bucket',
             'http://testendpoint',
+            blacklist_headers=blacklist_headers,
             required_headers=['DAY-OBS']
         )
         ingester.ingest()
@@ -82,7 +85,7 @@ class TestIngester(unittest.TestCase):
             FITS_PATH,
             'test_bucket',
             'http://testendpoint',
-            blacklist_headers=['DAY-OBS']
+            blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY']
         )
         ingester.ingest()
-        self.assertNotIn('DAY-OBS', requests_mock.call_args[1]['json']['fits'].keys())
+        self.assertNotIn('DAY-OBS', requests_mock.call_args[1]['json'].keys())

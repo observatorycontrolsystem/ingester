@@ -3,9 +3,9 @@ import boto3
 import requests
 import logging
 from ingester.utils.s3 import filename_to_s3_key, strip_quotes_from_etag
-from ingester.utils.fits import fits_to_dict, remove_headers, missing_keys
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
+from ingester.utils.fits import fits_to_dict, remove_headers, missing_keys, wcs_corners_from_dict
 
 
 logger = logging.getLogger('ingester')
@@ -30,7 +30,8 @@ class Ingester(object):
             fits_dict = self.get_fits_dictionary(f)
             f.seek(0)  # return to beginning of file
             version = self.upload_to_s3(filename, f)
-        self.call_api(fits_dict, version, filename)
+        area = wcs_corners_from_dict(fits_dict)
+        self.call_api(fits_dict, version, filename, area)
         logger.info('finished ingesting {0} version {1}'.format(self.path, version))
 
     def get_fits_dictionary(self, f):
@@ -56,10 +57,13 @@ class Ingester(object):
             raise BackoffRetryError(exc)
         md5 = strip_quotes_from_etag(response['ETag'])
         key = response['VersionId']
-        return {'version': {'key': key, 'md5':  md5}}
+        return {'key': key, 'md5':  md5}
 
-    def call_api(self, fits_dict, version, filename):
+    def call_api(self, fits_dict, version, filename, area):
+        fits_dict['version_set'] = [version]
+        fits_dict['filename'] = filename
+        fits_dict['area'] = area
         try:
-            requests.post(self.api_root, json={'fits': fits_dict, 'version': version, 'filename': filename})
+            requests.post(self.api_root, json=fits_dict)
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
