@@ -20,8 +20,9 @@ class Ingester(object):
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
     def ingest(self):
-        logger.info('ingesting {0}'.format(self.path))
         filename = os.path.basename(self.path)
+        logger_tags = {'tags': {'filename': filename}}
+        logger.info('ingesting {0}'.format(self.path), extra=logger_tags)
         try:
             f = open(self.path, 'rb')
         except FileNotFoundError as exc:
@@ -32,7 +33,7 @@ class Ingester(object):
             version = self.upload_to_s3(filename, f)
         area = wcs_corners_from_dict(fits_dict)
         self.call_api(fits_dict, version, filename, area)
-        logger.info('finished ingesting {0} version {1}'.format(self.path, version))
+        logger.info('finished ingesting {0} version {1}'.format(self.path, version), extra=logger_tags)
 
     def get_fits_dictionary(self, f):
         fits_dict = fits_to_dict(f)
