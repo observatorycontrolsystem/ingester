@@ -3,6 +3,7 @@ from ingester.ingester import Ingester
 from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError
 import platform
 import logging
+import os
 from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric, metric_timer
 
 logger = logging.getLogger('ingester')
@@ -11,7 +12,14 @@ app.config_from_object('settings')
 
 
 def task_log(task):
-    return {'tags': {'path': task.request.args[0], 'attempt': task.request.retries + 1}}
+    path = task.request.args[0] or ''
+    return {
+        'tags': {
+            'filename': os.path.basename(path),
+            'path': path,
+            'attempt': task.request.retries + 1
+        }
+    }
 
 
 @app.task(bind=True, max_retries=3, default_retry_delay=3 * 60)
