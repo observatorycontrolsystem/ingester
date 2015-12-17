@@ -1,14 +1,10 @@
 import os
 import boto3
 import requests
-import logging
 from ingester.utils.s3 import filename_to_s3_key, strip_quotes_from_etag
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 from ingester.utils.fits import fits_to_dict, remove_headers, missing_keys, wcs_corners_from_dict
-
-
-logger = logging.getLogger('ingester')
 
 
 class Ingester(object):
@@ -21,8 +17,6 @@ class Ingester(object):
 
     def ingest(self):
         filename = os.path.basename(self.path)
-        logger_tags = {'tags': {'filename': filename}}
-        logger.info('ingesting {0}'.format(self.path), extra=logger_tags)
         try:
             f = open(self.path, 'rb')
         except FileNotFoundError as exc:
@@ -33,7 +27,6 @@ class Ingester(object):
             version = self.upload_to_s3(filename, f)
         area = wcs_corners_from_dict(fits_dict)
         self.call_api(fits_dict, version, filename, area)
-        logger.info('finished ingesting {0} version {1}'.format(self.path, version), extra=logger_tags)
 
     def get_fits_dictionary(self, f):
         fits_dict = fits_to_dict(f)
