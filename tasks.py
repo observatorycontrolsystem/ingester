@@ -29,6 +29,7 @@ def do_ingest(self, path, bucket, api_root, required_headers, blacklist_headers)
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
+    logger.info('Starting ingest', extra=task_log(self))
     try:
         ingester = Ingester(path, bucket, api_root, required_headers, blacklist_headers)
         ingester.ingest()
@@ -46,7 +47,7 @@ def do_ingest(self, path, bucket, api_root, required_headers, blacklist_headers)
         else:
             raise exc
     collect_queue_length_metric()
-    logger.info('Task suceeded', extra=task_log(self))
+    logger.info('Ingest suceeded', extra=task_log(self))
 
 
 def task_should_retry(task, exception):
