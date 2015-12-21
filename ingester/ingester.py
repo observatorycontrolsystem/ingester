@@ -23,7 +23,7 @@ class Ingester(object):
             raise DoNotRetryError(exc)
         with f:
             fits_dict = self.get_fits_dictionary(f)
-            area = wcs_corners_from_dict(fits_dict)
+            area = self.get_area(fits_dict)
             f.seek(0)  # return to beginning of file
             version = self.upload_to_s3(filename, f)
         self.call_api(fits_dict, version, filename, area)
@@ -35,6 +35,13 @@ class Ingester(object):
         if missing_headers:
             raise DoNotRetryError('Fits file missing headers! {0}'.format(missing_headers))
         return fits_dict
+
+    def get_area(self, fits_dict):
+        if not fits_dict.get('CTYPE'):
+            # This file doesn't have wcs information
+            return None
+        else:
+            return wcs_corners_from_dict(fits_dict)
 
     def upload_to_s3(self, filename, f):
         key = filename_to_s3_key(filename)
