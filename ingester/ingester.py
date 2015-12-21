@@ -59,5 +59,7 @@ class Ingester(object):
         fits_dict['area'] = area
         try:
             requests.post(self.api_root, json=fits_dict).raise_for_status()
-        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as exc:
+        except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
+        except requests.exceptions.HTTPError as exc:
+            raise DoNotRetryError(exc)
