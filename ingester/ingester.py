@@ -23,9 +23,9 @@ class Ingester(object):
             raise DoNotRetryError(exc)
         with f:
             fits_dict = self.get_fits_dictionary(f)
+            area = wcs_corners_from_dict(fits_dict)
             f.seek(0)  # return to beginning of file
             version = self.upload_to_s3(filename, f)
-        area = wcs_corners_from_dict(fits_dict)
         self.call_api(fits_dict, version, filename, area)
 
     def get_fits_dictionary(self, f):

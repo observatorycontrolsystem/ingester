@@ -9,10 +9,22 @@ def fits_to_dict(f):
 
 
 def wcs_corners_from_dict(fits_dict):
+    """
+    TODO:
+    This will ONLY work if North is up and
+    East is left!
+    use https://github.com/LCOGT/satellite/blob/crosscorr/src/satellite/trails_cc.py#L181
+    0 left handed (Existing)
+    1 flip
+    """
     w = wcs.WCS(fits_dict)
-    sw = w.all_pix2world(1, 1, 1)
+    if fits_dict.get('NAXIS3'):
+        sw = w.all_pix2world(fits_dict['NAXIS1'], 1, 1, 1)
+        ne = w.all_pix2world(1, fits_dict['NAXIS2'], 1, 1)
+    else:
+        sw = w.all_pix2world(fits_dict['NAXIS1'], 1, 1)
+        ne = w.all_pix2world(1, fits_dict['NAXIS2'], 1)
     sw = tuple([float(x) for x in sw])
-    ne = w.all_pix2world(fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1)
     ne = tuple([float(x) for x in ne])
     return (sw, ne)
 
