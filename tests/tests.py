@@ -11,8 +11,13 @@ opentsdb_python_metrics.metric_wrappers.test_mode = True
 
 FITS_PATH = os.path.join(
     os.path.dirname(__file__),
+    'fits/'
+)
+FITS_FILE = os.path.join(
+    os.path.dirname(__file__),
     'fits/coj1m011-kb05-20150219-0125-e90.fits'
 )
+
 
 test_bucket = 'testbucket'
 blacklist_headers = ['', 'COMMENT', 'HISTORY']
@@ -45,10 +50,13 @@ class TestCelery(unittest.TestCase):
 @patch('requests.post')
 class TestIngester(unittest.TestCase):
     def test_ingest_file(self, requests_mock, s3_mock):
-        ingester = Ingester(FITS_PATH, 'testbucket', 'http://testendpoint', blacklist_headers=blacklist_headers)
-        ingester.ingest()
-        self.assertTrue(s3_mock.called)
-        self.assertTrue(requests_mock.called)
+        for filename in [f for f in os.listdir(FITS_PATH) if os.path.isfile(f)]:
+            path = os.path.join(FITS_PATH, filename)
+            print('testing', path)
+            ingester = Ingester(path, 'testbucket', 'http://testendpoint', blacklist_headers=blacklist_headers)
+            ingester.ingest()
+            self.assertTrue(s3_mock.called)
+            self.assertTrue(requests_mock.called)
 
     def test_missing_file(self, requests_mock, s3_mock):
         ingester = Ingester('/path/does/not/exist.fits', 'testbucket', 'http://testendpoint')
@@ -59,7 +67,7 @@ class TestIngester(unittest.TestCase):
 
     def test_required(self, requests_mock, s3_mock):
         ingester = Ingester(
-            FITS_PATH,
+            FITS_FILE,
             'test_bucket',
             'http://testendpoint',
             blacklist_headers=blacklist_headers,
@@ -70,7 +78,7 @@ class TestIngester(unittest.TestCase):
         self.assertFalse(s3_mock.called)
         self.assertFalse(requests_mock.called)
         ingester = Ingester(
-            FITS_PATH,
+            FITS_FILE,
             'test_bucket',
             'http://testendpoint',
             blacklist_headers=blacklist_headers,
@@ -82,7 +90,7 @@ class TestIngester(unittest.TestCase):
 
     def test_blacklist(self, requests_mock, s3_mock):
         ingester = Ingester(
-            FITS_PATH,
+            FITS_FILE,
             'test_bucket',
             'http://testendpoint',
             blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY']
