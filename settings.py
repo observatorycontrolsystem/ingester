@@ -37,7 +37,7 @@ API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000/frames/')
 HEADER_BLACKLIST = ('HISTORY', 'COMMENT', '')
 
 # Fits headers that must be present
-REQUIRED_HEADERS = ('USERID', 'PROPID', 'DAY-OBS', 'INSTRUME')
+REQUIRED_HEADERS = ('USERID', 'PROPID', 'DATE-OBS', 'INSTRUME')
 
 #  AWS Credentials and defaults
 BUCKET = os.getenv('BUCKET', 'lcogtarchivetest')
