@@ -50,7 +50,7 @@ class TestCelery(unittest.TestCase):
 @patch('requests.post')
 class TestIngester(unittest.TestCase):
     def test_ingest_file(self, requests_mock, s3_mock):
-        for filename in [f for f in os.listdir(FITS_PATH) if os.path.isfile(f)]:
+        for filename in [os.path.join(FITS_PATH, f) for f in os.listdir(FITS_PATH)]:
             path = os.path.join(FITS_PATH, filename)
             ingester = Ingester(path, 'testbucket', 'http://testendpoint', blacklist_headers=blacklist_headers)
             ingester.ingest()
