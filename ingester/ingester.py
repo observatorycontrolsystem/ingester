@@ -37,7 +37,7 @@ class Ingester(object):
         return fits_dict
 
     def get_area(self, fits_dict):
-        if not fits_dict.get('CD1_1'):
+        if fits_dict.get('CD1_1') is None:
             # This file doesn't have wcs information
             return None
         else:
