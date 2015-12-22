@@ -2,6 +2,10 @@ redis:
         image: redis:3
         ports:
                 - "6379:6379"
+        command: redis-server --appendonly yes
+        volumes:
+            - "/archive:/archive"
+            - "/home/eng/docker/archive/redis:/data"
 
 ingester:
         image: docker.lcogt.net/ingester:latest
