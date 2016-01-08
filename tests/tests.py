@@ -17,6 +17,10 @@ FITS_FILE = os.path.join(
     os.path.dirname(__file__),
     'fits/coj1m011-kb05-20150219-0125-e90.fits'
 )
+CAT_FILE = os.path.join(
+    os.path.dirname(__file__),
+    'fits/cpt1m010-kb70-20151219-0073-e10_cat.fits'
+)
 
 
 test_bucket = 'testbucket'
@@ -49,10 +53,15 @@ class TestCelery(unittest.TestCase):
 @patch('boto3.resource')
 @patch('requests.post')
 class TestIngester(unittest.TestCase):
+    def setUp(self):
+        fits_files = [os.path.join(FITS_PATH, f) for f in os.listdir(FITS_PATH)]
+        self.ingesters = [
+            Ingester(path, 'testbucket', 'http://testendpoint', blacklist_headers=blacklist_headers)
+            for path in fits_files
+        ]
+
     def test_ingest_file(self, requests_mock, s3_mock):
-        for filename in [os.path.join(FITS_PATH, f) for f in os.listdir(FITS_PATH)]:
-            path = os.path.join(FITS_PATH, filename)
-            ingester = Ingester(path, 'testbucket', 'http://testendpoint', blacklist_headers=blacklist_headers)
+        for ingester in self.ingesters:
             ingester.ingest()
             self.assertTrue(s3_mock.called)
             self.assertTrue(requests_mock.called)
@@ -96,3 +105,20 @@ class TestIngester(unittest.TestCase):
         )
         ingester.ingest()
         self.assertNotIn('DAY-OBS', requests_mock.call_args[1]['json'].keys())
+
+    def test_reduction_level(self, requests_mock, s3_mock):
+        for ingester in self.ingesters:
+            ingester.ingest()
+            self.assertIn('RLEVEL', requests_mock.call_args[1]['json'].keys())
+
+    def test_catalog_related(self, requests_mock, s3_mock):
+        ingester = Ingester(
+            CAT_FILE,
+            'test_bucket',
+            'http://testendpoint',
+        )
+        ingester.ingest()
+        self.assertEqual(
+            'cpt1m010-kb70-20151219-0073-e10.fits',
+            requests_mock.call_args[1]['json']['L1IDCAT']
+        )

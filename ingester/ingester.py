@@ -4,7 +4,9 @@ import requests
 from ingester.utils.s3 import filename_to_s3_key, strip_quotes_from_etag
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
-from ingester.utils.fits import fits_to_dict, remove_headers, missing_keys, wcs_corners_from_dict
+from ingester.utils.fits import (fits_to_dict, remove_headers, missing_keys,
+                                 wcs_corners_from_dict, reduction_level,
+                                 related_for_catalog)
 
 
 class Ingester(object):
@@ -23,6 +25,7 @@ class Ingester(object):
             raise DoNotRetryError(exc)
         with f:
             fits_dict = self.get_fits_dictionary(f)
+            fits_dict = self.add_required_headers(filename, fits_dict)
             area = self.get_area(fits_dict)
             f.seek(0)  # return to beginning of file
             version = self.upload_to_s3(filename, f)
@@ -34,6 +37,17 @@ class Ingester(object):
         missing_headers = missing_keys(fits_dict, self.required_headers)
         if missing_headers:
             raise DoNotRetryError('Fits file missing headers! {0}'.format(missing_headers))
+        return fits_dict
+
+    def add_required_headers(self, filename, fits_dict):
+        # TODO: Remove this function entirely. We need these for now
+        # because the pipeline does not write them as headers
+        if not fits_dict.get('RLEVEL'):
+            rlevel = reduction_level(filename)
+            fits_dict['RLEVEL'] = rlevel
+        if filename.endswith('_cat.fits') and not fits_dict.get('L1IDCAT'):
+            l1idcat = related_for_catalog(filename)
+            fits_dict['L1IDCAT'] = l1idcat
         return fits_dict
 
     def get_area(self, fits_dict):
