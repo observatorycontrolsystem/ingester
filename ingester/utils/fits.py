@@ -40,3 +40,19 @@ def remove_headers(dictionary, blacklist):
 
 def missing_keys(dictionary, required):
     return [k for k in required if k not in dictionary]
+
+
+def reduction_level(filename):
+    # TODO: Pipeline should write this value instead of
+    # being inferred from the filename
+    try:
+        rlevel = int(filename[-7:-5])
+    except ValueError:
+        rlevel = 0
+    return rlevel
+
+
+def related_for_catalog(filename):
+    # TODO: Pipeline should write this value instead of
+    # being inferred from the filename
+    return filename.replace('_cat', '')
