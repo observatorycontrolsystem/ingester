@@ -55,4 +55,4 @@ def reduction_level(filename):
 def related_for_catalog(filename):
     # TODO: Pipeline should write this value instead of
     # being inferred from the filename
-    return filename.replace('_cat', '')
+    return filename.replace('_cat', '').replace('.fits', '')

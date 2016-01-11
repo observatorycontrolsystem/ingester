@@ -119,6 +119,6 @@ class TestIngester(unittest.TestCase):
         )
         ingester.ingest()
         self.assertEqual(
-            'cpt1m010-kb70-20151219-0073-e10.fits',
+            'cpt1m010-kb70-20151219-0073-e10',
             requests_mock.call_args[1]['json']['L1IDCAT']
         )
