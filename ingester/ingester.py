@@ -51,8 +51,8 @@ class Ingester(object):
         return fits_dict
 
     def get_area(self, fits_dict):
-        if fits_dict.get('CD1_1') is None:
-            # This file doesn't have wcs information
+        if any([fits_dict.get(k) is None for k in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2']]):
+            # This file doesn't have sufficient information to provide an area
             return None
         else:
             return wcs_corners_from_dict(fits_dict)
