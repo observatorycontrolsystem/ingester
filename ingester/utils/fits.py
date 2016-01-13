@@ -1,7 +1,5 @@
 from astropy.io import fits
 from astropy import wcs
-import numpy as np
-from math import degrees
 
 
 def fits_to_dict(f):
@@ -24,84 +22,39 @@ def wcs_corners_from_dict(fits_dict):
         return None
 
     w = wcs.WCS(fits_dict)
-    angle, parity = cd_to_rot(
-        fits_dict['CD1_1'],
-        fits_dict['CD1_2'],
-        fits_dict['CD2_1'],
-        fits_dict['CD2_2']
-    )
 
-    if parity == -1:
-        if np.abs(angle) < 10:
-            pix_2_world_arg_ne = [1, fits_dict['NAXIS2'], 1]
-            pix_2_world_arg_sw = [fits_dict['NAXIS1'], 1, 1]
-        if np.abs(angle - 90) < 10:
-            pix_2_world_arg_ne = [1, 1, 1]
-            pix_2_world_arg_sw = [fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1]
-        if (np.abs(angle - 180) < 10) or (np.abs(angle + 180) < 10):
-            pix_2_world_arg_ne = [fits_dict['NAXIS1'], 1, 1]
-            pix_2_world_arg_sw = [1, fits_dict['NAXIS2'], 1]
-        if np.abs(angle + 90) < 10:
-            pix_2_world_arg_ne = [fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1]
-            pix_2_world_arg_sw = [1, 1, 1]
+    c1 = w.all_pix2world(1, 1, 1)
+    c2 = w.all_pix2world(1, fits_dict['NAXIS2'], 1)
+    c3 = w.all_pix2world(fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1)
+    c4 = w.all_pix2world(fits_dict['NAXIS1'], 1, 1)
 
-    elif parity == 1:
-        if np.abs(angle) < 10:
-            pix_2_world_arg_ne = [fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1]
-            pix_2_world_arg_sw = [1, 1, 1]
-        if np.abs(angle - 90) < 10:
-            pix_2_world_arg_ne = [1, fits_dict['NAXIS2'], 1]
-            pix_2_world_arg_sw = [fits_dict['NAXIS1'], 1, 1]
-        if (np.abs(angle - 180) < 10) or (np.abs(angle + 180) < 10):
-            pix_2_world_arg_ne = [1, 1, 1]
-            pix_2_world_arg_sw = [fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1]
-        if np.abs(angle + 90) < 10:
-            pix_2_world_arg_ne = [fits_dict['NAXIS1'], 1, 1]
-            pix_2_world_arg_sw = [1, fits_dict['NAXIS2'], 1]
-
-    else:
-        raise ValueError("WCS projection returns wrong parity/angle")
-
-    sw = w.all_pix2world(*pix_2_world_arg_sw)
-    ne = w.all_pix2world(*pix_2_world_arg_ne)
-    sw = tuple([float(x) for x in sw[0:2]])
-    ne = tuple([float(x) for x in ne[0:2]])
-
-    return (sw, ne)
-
-
-def cd_to_rot(cd11, cd12, cd21, cd22):
-    """
-    Convert a CD matrix from a fits header to a rotation angle and parity
-    (right vs left handed coordinates).
-    :param cd11: CD1_1 header keyword
-    :param cd12: CD1_2 header keyword
-    :param cd21: CD2_1 header keyword
-    :param cd22: CD2_2 header keyword
-    :return posang: Position angle measured counter clockwise
-    :return xparity: 1.0 if right handed coordinate system, -1.0 if left handed
-    The CD matrix is given by
-    CD = scale * (  cos(posang)     sin(posang) ) ( xparity  0 )
-                 ( -sin(posang)     cos(posang) ) (    0     1 )
-    """
-
-    # Figure out which direction the x-axis is pointing
-    if np.abs(cd22) > 0:
-        if cd11 / cd22 < 0:
-            xparity = -1
-            posang = degrees(np.arctan2(cd12, cd22))
-        else:
-            xparity = 1
-            posang = degrees(np.arctan2(cd12, cd22))
-    else:
-        if cd12 / cd21 > 0:
-            xparity = -1
-            posang = degrees(np.arctan2(cd12, cd22))
-        else:
-            xparity = 1
-            posang = degrees(np.arctan2(cd12, cd22))
-
-    return posang, xparity
+    return {
+        'type': 'Polygon',
+        'coordinates': [
+            [
+                [
+                    float(c1[0]),
+                    float(c1[1])
+                ],
+                [
+                    float(c2[0]),
+                    float(c2[1])
+                ],
+                [
+                    float(c3[0]),
+                    float(c3[1])
+                ],
+                [
+                    float(c4[0]),
+                    float(c4[1])
+                ],
+                [
+                    float(c1[0]),
+                    float(c1[1])
+                ]
+            ]
+        ]
+    }
 
 
 def remove_headers(dictionary, blacklist):

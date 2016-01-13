@@ -51,7 +51,8 @@ class Ingester(object):
         return fits_dict
 
     def get_area(self, fits_dict):
-        if any([fits_dict.get(k) is None for k in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2']]):
+        if any([fits_dict.get(k) is None for k in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2']]) or \
+                fits_dict.get('NAXIS_3') is not None:
             # This file doesn't have sufficient information to provide an area
             return None
         else:
