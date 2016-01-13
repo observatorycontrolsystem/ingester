@@ -10,19 +10,12 @@ def fits_to_dict(f):
 
 def wcs_corners_from_dict(fits_dict):
     """
-    TODO:
-    The following logic is  taken from
-    https://github.com/LCOGT/satellite/blob/crosscorr/src/satellite/trails_cc.py#L181
-    parity -1 left handed coordinates -> North up / east left
-    parity 1 right handed coordinates - > North up / east right
-    Angle is east of north
+    Take a fits dictionary and pic out the RA, DEC of each of the four corners.
+    Then assemble a Polygon following the GeoJSON spec: http://geojson.org/geojson-spec.html#id4
+    Note there are 5 positions. The last is the same as the first. We are defining lines,
+    and you must close the polygon.
     """
-    if fits_dict.get('NAXIS3'):
-        # only used in spectral targets
-        return None
-
     w = wcs.WCS(fits_dict)
-
     c1 = w.all_pix2world(1, 1, 1)
     c2 = w.all_pix2world(1, fits_dict['NAXIS2'], 1)
     c3 = w.all_pix2world(fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1)
