@@ -96,6 +96,24 @@ class TestIngester(unittest.TestCase):
         self.assertTrue(s3_mock.called)
         self.assertTrue(requests_mock.called)
 
+    def test_get_area(self, requests_mock, s3_mock):
+        ingester = Ingester(
+            FITS_FILE,
+            'test_bucket',
+            'http://testendpoint',
+            blacklist_headers=blacklist_headers
+        )
+        ingester.ingest()
+        self.assertEqual('Polygon', requests_mock.call_args[1]['json']['area']['type'])
+        ingester = Ingester(
+            CAT_FILE,
+            'test_bucket',
+            'http://testendpoint',
+            blacklist_headers=blacklist_headers
+        )
+        ingester.ingest()
+        self.assertIsNone(requests_mock.call_args[1]['json']['area'])
+
     def test_blacklist(self, requests_mock, s3_mock):
         ingester = Ingester(
             FITS_FILE,
