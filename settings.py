@@ -32,6 +32,7 @@ dictConfig(logConf)
 QUEUE_NAME = os.getenv('QUEUE_NAME', 'ingest_queue')
 BROKER_URL = os.getenv('BROKER_URL', 'memory://localhost')
 API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000/frames/')
+AUTH_TOKEN = os.getenv('API_AUTH_TOKEN', '')
 
 # Fits headers we don't want to ingest
 HEADER_BLACKLIST = ('HISTORY', 'COMMENT', '')

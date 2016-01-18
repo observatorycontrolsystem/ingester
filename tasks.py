@@ -24,14 +24,14 @@ def task_log(task):
 
 @app.task(bind=True, max_retries=3, default_retry_delay=3 * 60)
 @metric_timer('ingester', async=False)
-def do_ingest(self, path, bucket, api_root, required_headers, blacklist_headers):
+def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blacklist_headers):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
     """
     logger.info('Starting ingest', extra=task_log(self))
     try:
-        ingester = Ingester(path, bucket, api_root, required_headers, blacklist_headers)
+        ingester = Ingester(path, bucket, api_root, auth_token, required_headers, blacklist_headers)
         ingester.ingest()
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))

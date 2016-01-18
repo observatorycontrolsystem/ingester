@@ -24,6 +24,7 @@ class Listener(ConsumerMixin):
             body,
             settings.BUCKET,
             settings.API_ROOT,
+            settings.AUTH_TOKEN,
             settings.REQUIRED_HEADERS,
             settings.HEADER_BLACKLIST
         )
