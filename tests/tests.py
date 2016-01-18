@@ -33,18 +33,18 @@ class TestCelery(unittest.TestCase):
 
     @patch.object(Ingester, 'ingest', return_value=None)
     def test_task_success(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None)
+        result = do_ingest.delay(None, None, None, None, None, None)
         self.assertTrue(result.successful())
 
     @patch.object(Ingester, 'ingest', side_effect=DoNotRetryError('missing file'))
     def test_task_failure(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None)
+        result = do_ingest.delay(None, None, None, None, None, None)
         self.assertIs(result.result.__class__, DoNotRetryError)
         self.assertTrue(result.failed())
 
     @patch.object(Ingester, 'ingest',  side_effect=BackoffRetryError('Timeout'))
     def test_task_retry(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None)
+        result = do_ingest.delay(None, None, None, None, None, None)
         self.assertEqual(ingest_mock.call_count, 4)
         self.assertIs(result.result.__class__, BackoffRetryError)
         self.assertTrue(result.failed())
@@ -56,7 +56,7 @@ class TestIngester(unittest.TestCase):
     def setUp(self):
         fits_files = [os.path.join(FITS_PATH, f) for f in os.listdir(FITS_PATH)]
         self.ingesters = [
-            Ingester(path, 'testbucket', 'http://testendpoint', blacklist_headers=blacklist_headers)
+            Ingester(path, 'testbucket', 'http://testendpoint', '',  blacklist_headers=blacklist_headers)
             for path in fits_files
         ]
 
@@ -67,7 +67,7 @@ class TestIngester(unittest.TestCase):
             self.assertTrue(requests_mock.called)
 
     def test_missing_file(self, requests_mock, s3_mock):
-        ingester = Ingester('/path/does/not/exist.fits', 'testbucket', 'http://testendpoint')
+        ingester = Ingester('/path/does/not/exist.fits', 'testbucket', '',  'http://testendpoint')
         with self.assertRaises(DoNotRetryError):
             ingester.ingest()
         self.assertFalse(s3_mock.called)
@@ -78,6 +78,7 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
+            '',
             blacklist_headers=blacklist_headers,
             required_headers=['fooheader']
         )
@@ -89,6 +90,7 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
+            '',
             blacklist_headers=blacklist_headers,
             required_headers=['DAY-OBS']
         )
@@ -101,6 +103,7 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
+            '',
             blacklist_headers=blacklist_headers
         )
         ingester.ingest()
@@ -109,6 +112,7 @@ class TestIngester(unittest.TestCase):
             CAT_FILE,
             'test_bucket',
             'http://testendpoint',
+            '',
             blacklist_headers=blacklist_headers
         )
         ingester.ingest()
@@ -119,6 +123,7 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
+            '',
             blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY']
         )
         ingester.ingest()
@@ -134,6 +139,7 @@ class TestIngester(unittest.TestCase):
             CAT_FILE,
             'test_bucket',
             'http://testendpoint',
+            '',
         )
         ingester.ingest()
         self.assertEqual(

@@ -10,10 +10,11 @@ from ingester.utils.fits import (fits_to_dict, remove_headers, missing_keys,
 
 
 class Ingester(object):
-    def __init__(self, path, bucket, api_root, required_headers=None, blacklist_headers=None):
+    def __init__(self, path, bucket, api_root, auth_token, required_headers=None, blacklist_headers=None):
         self.path = path
         self.bucket = bucket
         self.api_root = api_root
+        self.auth_token = auth_token
         self.required_headers = required_headers if required_headers else []
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
@@ -79,8 +80,9 @@ class Ingester(object):
         fits_dict['version_set'] = [version]
         fits_dict['filename'] = filename
         fits_dict['area'] = area
+        headers = {'Authorization': 'Token {}'.format(self.auth_token)}
         try:
-            requests.post(self.api_root, json=fits_dict).raise_for_status()
+            requests.post(self.api_root, json=fits_dict, headers=headers).raise_for_status()
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
         except requests.exceptions.HTTPError as exc:
