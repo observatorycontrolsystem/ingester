@@ -1,11 +1,9 @@
 import unittest
 import os
-import settings
 import tarfile
 from unittest.mock import patch, MagicMock
-from tasks import do_ingest
 from ingester.ingester import Ingester
-from ingester.exceptions import DoNotRetryError, BackoffRetryError
+from ingester.exceptions import DoNotRetryError
 import opentsdb_python_metrics.metric_wrappers
 import dateutil
 opentsdb_python_metrics.metric_wrappers.test_mode = True
@@ -31,29 +29,6 @@ SPECTRO_FILE = os.path.join(
 
 test_bucket = 'testbucket'
 blacklist_headers = ['', 'COMMENT', 'HISTORY']
-
-
-class TestCelery(unittest.TestCase):
-    def setUp(self):
-        settings.CELERY_ALWAYS_EAGER = True
-
-    @patch.object(Ingester, 'ingest', return_value=None)
-    def test_task_success(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None, None)
-        self.assertTrue(result.successful())
-
-    @patch.object(Ingester, 'ingest', side_effect=DoNotRetryError('missing file'))
-    def test_task_failure(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None, None)
-        self.assertIs(result.result.__class__, DoNotRetryError)
-        self.assertTrue(result.failed())
-
-    @patch.object(Ingester, 'ingest',  side_effect=BackoffRetryError('Timeout'))
-    def test_task_retry(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None, None)
-        self.assertEqual(ingest_mock.call_count, 4)
-        self.assertIs(result.result.__class__, BackoffRetryError)
-        self.assertTrue(result.failed())
 
 
 @patch('boto3.resource')
@@ -140,16 +115,39 @@ class TestIngester(unittest.TestCase):
             ingester.ingest()
             self.assertIn('RLEVEL', requests_mock.call_args[1]['json'].keys())
 
+    def test_related(self, requests_mock, s3_mock):
+        ingester = Ingester(
+            FITS_FILE,
+            'test_bucket',
+            'http://testendpoint',
+            '',
+            blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY']
+        )
+        ingester.ingest()
+        self.assertEqual(
+            'bias_kb05_20150219_bin2x2.fits',
+            requests_mock.call_args[1]['json']['L1IDBIAS']
+        )
+        self.assertEqual(
+            'dark_kb05_20150219_bin2x2.fits',
+            requests_mock.call_args[1]['json']['L1IDDARK']
+        )
+        self.assertEqual(
+            'flat_kb05_20150219_SKYFLAT_bin2x2_V.fits',
+            requests_mock.call_args[1]['json']['L1IDFLAT']
+        )
+
     def test_catalog_related(self, requests_mock, s3_mock):
         ingester = Ingester(
             CAT_FILE,
             'test_bucket',
             'http://testendpoint',
             '',
+            blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY']
         )
         ingester.ingest()
         self.assertEqual(
-            'cpt1m010-kb70-20151219-0073-e10',
+            'cpt1m010-kb70-20151219-0073-e10.fits',
             requests_mock.call_args[1]['json']['L1IDCAT']
         )
 
