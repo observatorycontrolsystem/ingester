@@ -1,12 +1,11 @@
 import os
 import boto3
 import requests
-from ingester.utils.s3 import filename_to_s3_key, strip_quotes_from_etag
+from ingester.utils.s3 import filename_to_s3_key, strip_quotes_from_etag, filename_to_content_type
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
-from ingester.utils.fits import (fits_to_dict, remove_headers, missing_keys,
-                                 wcs_corners_from_dict, reduction_level,
-                                 related_for_catalog)
+from ingester.utils.fits import (fits_to_dict, remove_headers, missing_keys, wcs_corners_from_dict,
+                                 get_meta_file_from_targz, add_required_headers)
 
 
 class Ingester(object):
@@ -19,50 +18,32 @@ class Ingester(object):
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
     def ingest(self):
-        filename = os.path.basename(self.path)
+        self.filename = os.path.basename(self.path)
         try:
             f = open(self.path, 'rb')
         except FileNotFoundError as exc:
             raise DoNotRetryError(exc)
         with f:
             fits_dict = self.get_fits_dictionary(f)
-            fits_dict = self.add_required_headers(filename, fits_dict)
-            area = self.get_area(fits_dict)
-            f.seek(0)  # return to beginning of file
-            version = self.upload_to_s3(filename, f)
-        self.call_api(fits_dict, version, filename, area)
+            version = self.upload_to_s3(f)
+        area = wcs_corners_from_dict(fits_dict)
+        self.call_api(fits_dict, version, area)
 
     def get_fits_dictionary(self, f):
+        if self.filename.endswith('tar.gz'):
+            f = get_meta_file_from_targz(f)
         fits_dict = fits_to_dict(f)
+        fits_dict = add_required_headers(self.filename, fits_dict)
         fits_dict = remove_headers(fits_dict, self.blacklist_headers)
         missing_headers = missing_keys(fits_dict, self.required_headers)
         if missing_headers:
             raise DoNotRetryError('Fits file missing headers! {0}'.format(missing_headers))
         return fits_dict
 
-    def add_required_headers(self, filename, fits_dict):
-        # TODO: Remove this function entirely. We need these for now
-        # because the pipeline does not write them as headers
-        if not fits_dict.get('RLEVEL'):
-            rlevel = reduction_level(filename)
-            fits_dict['RLEVEL'] = rlevel
-        if filename.endswith('_cat.fits') and not fits_dict.get('L1IDCAT'):
-            l1idcat = related_for_catalog(filename)
-            fits_dict['L1IDCAT'] = l1idcat
-        return fits_dict
-
-    def get_area(self, fits_dict):
-        if any([fits_dict.get(k) is None for k in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2']]) or \
-                fits_dict.get('NAXIS3') is not None:
-            # This file doesn't have sufficient information to provide an area
-            return None
-        else:
-            return wcs_corners_from_dict(fits_dict)
-
-    def upload_to_s3(self, filename, f):
-        key = filename_to_s3_key(filename)
-        content_disposition = 'attachment; filename={}'.format(filename)
-        content_type = 'image/fits'
+    def upload_to_s3(self, f):
+        key = filename_to_s3_key(self.filename)
+        content_disposition = 'attachment; filename={}'.format(self.filename)
+        content_type = filename_to_content_type(self.filename)
         try:
             s3 = boto3.resource('s3')
             response = s3.Object(self.bucket, key).put(
@@ -76,9 +57,9 @@ class Ingester(object):
         key = response['VersionId']
         return {'key': key, 'md5':  md5}
 
-    def call_api(self, fits_dict, version, filename, area):
+    def call_api(self, fits_dict, version, area):
         fits_dict['version_set'] = [version]
-        fits_dict['filename'] = filename
+        fits_dict['filename'] = self.filename
         fits_dict['area'] = area
         headers = {'Authorization': 'Token {}'.format(self.auth_token)}
         try:
