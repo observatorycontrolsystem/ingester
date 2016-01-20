@@ -3,6 +3,7 @@ from astropy import wcs
 from ingester.exceptions import DoNotRetryError
 import tarfile
 import dateutil
+import os
 from datetime import timedelta
 
 
@@ -17,7 +18,6 @@ def get_meta_file_from_targz(f):
 def fits_to_dict(f):
     hdulist = fits.open(f, mode='denywrite')
     full_dict = dict(hdulist[0].header)
-    f.seek(0)
     return full_dict
 
 
@@ -34,6 +34,26 @@ def add_required_headers(filename, fits_dict):
         fits_dict['L1PUBDAT'] = str(
             dateutil.parser.parse(fits_dict['DATE-OBS']) + timedelta(days=365)
         )
+    return fits_dict
+
+
+def normalize_related(fits_dict):
+    related_frame_keys = [
+        'L1IDBIAS', 'L1IDDARK', 'L1IDFLAT', 'L1IDSHUT',
+        'L1IDMASK', 'L1IDFRNG', 'L1IDCAT', 'TARFILE',
+    ]
+    for key in related_frame_keys:
+        base_filename = fits_dict.get(key)
+        if base_filename and base_filename != 'N/A':
+            if os.path.splitext(base_filename)[1]:
+                pass
+            else:
+                fits_dict[key] = '{}.fits'.format(base_filename)
+        else:
+            try:
+                del fits_dict[key]
+            except KeyError:
+                pass
     return fits_dict
 
 
@@ -111,4 +131,4 @@ def reduction_level(filename):
 def related_for_catalog(filename):
     # TODO: Pipeline should write this value instead of
     # being inferred from the filename
-    return filename.replace('_cat', '').replace('.fits', '')
+    return filename.replace('_cat', '')

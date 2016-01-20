@@ -5,7 +5,7 @@ from ingester.utils.s3 import filename_to_s3_key, strip_quotes_from_etag, filena
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 from ingester.utils.fits import (fits_to_dict, remove_headers, missing_keys, wcs_corners_from_dict,
-                                 get_meta_file_from_targz, add_required_headers)
+                                 get_meta_file_from_targz, add_required_headers, normalize_related)
 
 
 class Ingester(object):
@@ -25,6 +25,7 @@ class Ingester(object):
             raise DoNotRetryError(exc)
         with f:
             fits_dict = self.get_fits_dictionary(f)
+            f.seek(0)
             version = self.upload_to_s3(f)
         area = wcs_corners_from_dict(fits_dict)
         self.call_api(fits_dict, version, area)
@@ -35,6 +36,7 @@ class Ingester(object):
         fits_dict = fits_to_dict(f)
         fits_dict = add_required_headers(self.filename, fits_dict)
         fits_dict = remove_headers(fits_dict, self.blacklist_headers)
+        fits_dict = normalize_related(fits_dict)
         missing_headers = missing_keys(fits_dict, self.required_headers)
         if missing_headers:
             raise DoNotRetryError('Fits file missing headers! {0}'.format(missing_headers))
