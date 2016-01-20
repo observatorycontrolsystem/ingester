@@ -16,6 +16,17 @@ def filename_to_s3_key(filename):
     return '/'.join((hashlib.sha1(filename.encode('utf-8')).hexdigest()[0:4], filename))
 
 
+def filename_to_content_type(filename):
+    content_types = {
+        '.fits': 'image/fits',
+        '.tar.gz': 'application/x-tar',
+    }
+    for t in content_types:
+        if filename.endswith(t):
+            return content_types[t]
+        return ''
+
+
 def strip_quotes_from_etag(etag):
     """
     Amazon returns the md5 sum of the uploaded

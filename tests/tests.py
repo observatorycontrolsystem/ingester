@@ -1,11 +1,13 @@
 import unittest
 import os
 import settings
-from unittest.mock import patch
+import tarfile
+from unittest.mock import patch, MagicMock
 from tasks import do_ingest
 from ingester.ingester import Ingester
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 import opentsdb_python_metrics.metric_wrappers
+import dateutil
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 
 
@@ -20,6 +22,10 @@ FITS_FILE = os.path.join(
 CAT_FILE = os.path.join(
     os.path.dirname(__file__),
     'fits/cpt1m010-kb70-20151219-0073-e10_cat.fits'
+)
+SPECTRO_FILE = os.path.join(
+    os.path.dirname(__file__),
+    'fits/KEY2014A-002_0000483537_ftn_20160119_57407.tar.gz'
 )
 
 
@@ -146,3 +152,25 @@ class TestIngester(unittest.TestCase):
             'cpt1m010-kb70-20151219-0073-e10',
             requests_mock.call_args[1]['json']['L1IDCAT']
         )
+
+    def test_spectograph(self, requests_mock, s3_mock):
+        ingester = Ingester(
+            SPECTRO_FILE,
+            'test_bucket',
+            'http://testendpoint',
+            '',
+        )
+        ingester.ingest()
+        self.assertEqual(90, requests_mock.call_args[1]['json']['RLEVEL'])
+        self.assertTrue(dateutil.parser.parse(requests_mock.call_args[1]['json']['L1PUBDAT']))
+
+    def test_spectrograph_missing_meta(self, requests_mock, s3_mock):
+        tarfile.TarFile.getnames = MagicMock(return_value=[''])
+        ingester = Ingester(
+            SPECTRO_FILE,
+            'test_bucket',
+            'http://testendpoint',
+            '',
+        )
+        with self.assertRaises(DoNotRetryError):
+            ingester.ingest()

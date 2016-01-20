@@ -1,11 +1,40 @@
 from astropy.io import fits
 from astropy import wcs
+from ingester.exceptions import DoNotRetryError
+import tarfile
+import dateutil
+from datetime import timedelta
+
+
+def get_meta_file_from_targz(f):
+    tf = tarfile.open(fileobj=f)
+    for member in tf.getnames():
+        if 'e00.fits' in member:
+            return tf.extractfile(member)
+    raise DoNotRetryError('Spectral package missing meta fits!')
 
 
 def fits_to_dict(f):
     hdulist = fits.open(f, mode='denywrite')
     full_dict = dict(hdulist[0].header)
+    f.seek(0)
     return full_dict
+
+
+def add_required_headers(filename, fits_dict):
+    # TODO: Remove this function entirely. We need these for now
+    # because the pipeline does not write them as headers
+    if not fits_dict.get('RLEVEL'):
+        rlevel = reduction_level(filename)
+        fits_dict['RLEVEL'] = rlevel
+    if filename.endswith('_cat.fits') and not fits_dict.get('L1IDCAT'):
+        l1idcat = related_for_catalog(filename)
+        fits_dict['L1IDCAT'] = l1idcat
+    if not fits_dict.get('L1PUBDAT') and fits_dict['RLEVEL'] > 0:
+        fits_dict['L1PUBDAT'] = str(
+            dateutil.parser.parse(fits_dict['DATE-OBS']) + timedelta(days=365)
+        )
+    return fits_dict
 
 
 def wcs_corners_from_dict(fits_dict):
@@ -15,6 +44,10 @@ def wcs_corners_from_dict(fits_dict):
     Note there are 5 positions. The last is the same as the first. We are defining lines,
     and you must close the polygon.
     """
+    if any([fits_dict.get(k) is None for k in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2']]) or \
+            fits_dict.get('NAXIS3') is not None:
+        # This file doesn't have sufficient information to provide an area
+        return None
     w = wcs.WCS(fits_dict)
     c1 = w.all_pix2world(1, 1, 1)
     c2 = w.all_pix2world(1, fits_dict['NAXIS2'], 1)
@@ -66,11 +99,13 @@ def missing_keys(dictionary, required):
 def reduction_level(filename):
     # TODO: Pipeline should write this value instead of
     # being inferred from the filename
-    try:
-        rlevel = int(filename[-7:-5])
-    except ValueError:
-        rlevel = 0
-    return rlevel
+    if filename.endswith('tar.gz'):
+        return 90
+    else:
+        try:
+            return int(filename[-7:-5])
+        except ValueError:
+            return 0
 
 
 def related_for_catalog(filename):
