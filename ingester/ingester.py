@@ -9,6 +9,11 @@ from ingester.utils.fits import (fits_to_dict, remove_headers, missing_keys, wcs
 
 
 class Ingester(object):
+    """ Ingester - ingest a single file into the archive
+    A single instance of this class is responsbile for parsing a fits file,
+    uploading the data to s3, and making a call to the archive api.
+    """
+
     def __init__(self, path, bucket, api_root, auth_token, required_headers=None, blacklist_headers=None):
         self.path = path
         self.bucket = bucket
