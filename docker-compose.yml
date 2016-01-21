@@ -18,6 +18,7 @@ ingester:
                 API_ROOT: http://cerberus.lco.gtn/frames/
                 BOSUN_HOSTNAME: alerts.lco.gtn
                 OPENTSDB_HOSTNANE: opentsdb.lco.gtn
+                AUTH_TOKEN: 48d03ec62ce69fef68bd545a751ccb1efef689a5
         volumes:
                 - "/archive:/archive"
         ports:
