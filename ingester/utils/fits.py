@@ -6,7 +6,7 @@ import dateutil
 import os
 from datetime import timedelta
 
-CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL', 'ARC', 'LAMPFLAT']
+CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
 
 
 def get_meta_file_from_targz(f):
