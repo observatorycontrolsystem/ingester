@@ -1,5 +1,4 @@
 import hashlib
-import os
 import boto3
 """
 This module contains helper functions for uploading files to amazon s3
@@ -14,25 +13,21 @@ def get_client(access_key, secret_key, region):
     ).client('s3')
 
 
-def filename_to_s3_key(filename):
+def basename_to_s3_key(basename):
     """
     Place files in subfolders where the folders are the first 4 characters of
     the sha1 checksum of the filename. This is to avoid potential performance
     issues with s3
     """
-    filename = os.path.basename(filename)
-    return '/'.join((hashlib.sha1(filename.encode('utf-8')).hexdigest()[0:4], filename))
+    return '/'.join((hashlib.sha1(basename.encode('utf-8')).hexdigest()[0:4], basename))
 
 
-def filename_to_content_type(filename):
+def extension_to_content_type(extension):
     content_types = {
         '.fits': 'image/fits',
         '.tar.gz': 'application/x-tar',
     }
-    for t in content_types:
-        if filename.endswith(t):
-            return content_types[t]
-        return ''
+    return content_types.get(extension, '')
 
 
 def strip_quotes_from_etag(etag):

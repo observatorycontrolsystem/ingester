@@ -9,31 +9,47 @@ from datetime import timedelta
 CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
 
 
+def get_basename_and_extension(path):
+    filename = os.path.basename(path)
+    if filename.find('.') > 0:
+        basename = filename[:filename.index('.')]
+        extension = filename[filename.index('.'):]
+    else:
+        basename = filename
+        extension = ''
+    return basename, extension
+
+
 def get_meta_file_from_targz(f):
     #  f is an already open fileobj
     tf = tarfile.open(fileobj=f)
     for member in tf.getnames():
-        if 'e00.fits' in member:
+        if 'e00' in member:
             return tf.extractfile(member)
     raise DoNotRetryError('Spectral package missing meta fits!')
 
 
-def fits_to_dict(f):
+def fits_to_dict(f, required_keys, blacklist_headers):
     hdulist = fits.open(f, mode='denywrite')
-    full_dict = dict(hdulist[0].header)
-    return full_dict
+    for hdu in hdulist:
+        fits_dict = dict(hdu.header)
+        if any([k for k in required_keys if k not in fits_dict]):
+            pass
+        else:
+            return remove_headers(fits_dict, blacklist_headers)
+    raise DoNotRetryError('Could not find required headers!')
 
 
-def add_required_headers(filename, fits_dict):
+def add_required_headers(basename, extension, fits_dict):
     # TODO: Remove this function entirely. We need these for now
     # because the pipeline does not write them as headers
     if not fits_dict.get('RLEVEL'):
         # Check if the frame contains its reduction level, if not deduce it
-        rlevel = reduction_level(filename)
+        rlevel = reduction_level(basename, extension)
         fits_dict['RLEVEL'] = rlevel
-    if filename.endswith('_cat.fits') and not fits_dict.get('L1IDCAT'):
+    if '_cat' in basename and not fits_dict.get('L1IDCAT'):
         # Check if the catalog file contains it's target frame, if not deduce it
-        l1idcat = related_for_catalog(filename)
+        l1idcat = related_for_catalog(basename)
         fits_dict['L1IDCAT'] = l1idcat
     if not fits_dict.get('L1PUBDAT') and fits_dict['OBSTYPE'] not in CALIBRATION_TYPES:
         # Check if the frame doesnt specify a public date. If it doesn't and its
@@ -52,23 +68,23 @@ def normalize_related(fits_dict):
     'N/A' to represent null, sometimes they contain filenames with
     the file extension appended, sometimes without an extension.
     This function attempts to normalize these values to not exist
-    if the value should be null, or if they do, be the full filename
-    including extension.
+    if the value should be null, or if they do, be the filename
+    without extension.
     """
     related_frame_keys = [
         'L1IDBIAS', 'L1IDDARK', 'L1IDFLAT', 'L1IDSHUT',
         'L1IDMASK', 'L1IDFRNG', 'L1IDCAT', 'TARFILE',
     ]
     for key in related_frame_keys:
-        base_filename = fits_dict.get(key)
-        if base_filename and base_filename != 'N/A':
+        filename = fits_dict.get(key)
+        if filename and filename != 'N/A':
             # The key has a value that isn't NA, we have a related frame
-            _, found_ext = os.path.splitext(base_filename)
-            if found_ext:
-                # This value has an extention, so it is already good.
-                pass
+            basename, extension = get_basename_and_extension(filename)
+            if extension:
+                # This value has an extention, so remove it.
+                fits_dict[key] = basename
             else:
-                fits_dict[key] = '{}.fits'.format(base_filename)
+                pass
         else:
             # If the value is NA or the key doesn't exit, make sure it
             # is not the in dictionary we return
@@ -136,29 +152,25 @@ def remove_headers(dictionary, blacklist):
     return dictionary
 
 
-def missing_keys(dictionary, required):
-    return [k for k in required if k not in dictionary]
-
-
-def reduction_level(filename):
+def reduction_level(basename, extension):
     # TODO: Pipeline should write this value instead of
     # being inferred from the filename
     MAX_REDUCTION = 90
     MIN_REDUCTION = 0
-    if filename.endswith('tar.gz'):
+    if extension == '.tar.gz':
         return MAX_REDUCTION
     else:
         try:
-            # lsc1m005-kb78-20151007-0214-x00.fits
+            # lsc1m005-kb78-20151007-0214-x00
             # extract reduction level at the position of 00
-            return int(filename[-7:-5])
+            return int(basename[-2:])
         except ValueError:
             # Some filenames don't have this extension - return a sensible default
             return MIN_REDUCTION
 
 
-def related_for_catalog(filename):
+def related_for_catalog(basename):
     # TODO: Pipeline should write this value instead of
     # being inferred from the filename
     # a file's corresponding catalog is that filename + _cat
-    return filename.replace('_cat', '')
+    return basename.replace('_cat', '')
