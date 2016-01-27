@@ -14,4 +14,4 @@ class TestFitsUtils(unittest.TestCase):
         }
         fits_dict = normalize_related(fits_dict)
         for key in fits_dict:
-            self.assertTrue(os.path.splitext(fits_dict[key])[1])
+            self.assertFalse(os.path.splitext(fits_dict[key])[1])

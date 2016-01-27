@@ -38,7 +38,7 @@ AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 HEADER_BLACKLIST = ('HISTORY', 'COMMENT', '')
 
 # Fits headers that must be present
-REQUIRED_HEADERS = ('USERID', 'PROPID', 'DATE-OBS', 'INSTRUME')
+REQUIRED_HEADERS = ('USERID', 'PROPID', 'DATE-OBS', 'INSTRUME', 'OBSTYPE')
 
 #  AWS Credentials and defaults
 BUCKET = os.getenv('BUCKET', 'lcogtarchivetest')

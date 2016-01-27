@@ -4,6 +4,7 @@ import tarfile
 from unittest.mock import patch, MagicMock
 from ingester.ingester import Ingester
 from ingester.exceptions import DoNotRetryError
+import settings
 import opentsdb_python_metrics.metric_wrappers
 import dateutil
 opentsdb_python_metrics.metric_wrappers.test_mode = True
@@ -15,11 +16,11 @@ FITS_PATH = os.path.join(
 )
 FITS_FILE = os.path.join(
     os.path.dirname(__file__),
-    'fits/coj1m011-kb05-20150219-0125-e90.fits'
+    'fits/coj1m011-kb05-20150219-0125-e90.fits.fz'
 )
 CAT_FILE = os.path.join(
     os.path.dirname(__file__),
-    'fits/cpt1m010-kb70-20151219-0073-e10_cat.fits'
+    'fits/cpt1m010-kb70-20151219-0073-e10_cat.fits.fz'
 )
 SPECTRO_FILE = os.path.join(
     os.path.dirname(__file__),
@@ -37,7 +38,11 @@ class TestIngester(unittest.TestCase):
     def setUp(self):
         fits_files = [os.path.join(FITS_PATH, f) for f in os.listdir(FITS_PATH)]
         self.ingesters = [
-            Ingester(path, 'testbucket', 'http://testendpoint', '',  blacklist_headers=blacklist_headers)
+            Ingester(
+                path, 'testbucket', 'http://testendpoint', auth_token='',
+                required_headers=settings.REQUIRED_HEADERS,
+                blacklist_headers=settings.HEADER_BLACKLIST,
+                )
             for path in fits_files
         ]
 
@@ -48,7 +53,11 @@ class TestIngester(unittest.TestCase):
             self.assertTrue(requests_mock.called)
 
     def test_missing_file(self, requests_mock, s3_mock):
-        ingester = Ingester('/path/does/not/exist.fits', 'testbucket', '',  'http://testendpoint')
+        ingester = Ingester(
+            '/path/does/not/exist.fits.fz', 'testbucket', 'http://testendpoint', auth_token='',
+            required_headers=settings.REQUIRED_HEADERS,
+            blacklist_headers=settings.HEADER_BLACKLIST,
+        )
         with self.assertRaises(DoNotRetryError):
             ingester.ingest()
         self.assertFalse(s3_mock.called)
@@ -59,8 +68,8 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
-            blacklist_headers=blacklist_headers,
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
             required_headers=['fooheader']
         )
         with self.assertRaises(DoNotRetryError):
@@ -71,9 +80,9 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
-            blacklist_headers=blacklist_headers,
-            required_headers=['DAY-OBS']
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
         )
         ingester.ingest()
         self.assertTrue(s3_mock.called)
@@ -84,8 +93,9 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
-            blacklist_headers=blacklist_headers
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
         )
         ingester.ingest()
         self.assertEqual('Polygon', requests_mock.call_args[1]['json']['area']['type'])
@@ -93,8 +103,9 @@ class TestIngester(unittest.TestCase):
             CAT_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
-            blacklist_headers=blacklist_headers
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
         )
         ingester.ingest()
         self.assertIsNone(requests_mock.call_args[1]['json']['area'])
@@ -104,8 +115,9 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
-            blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY']
+            auth_token='',
+            blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY'],
+            required_headers=settings.REQUIRED_HEADERS
         )
         ingester.ingest()
         self.assertNotIn('DAY-OBS', requests_mock.call_args[1]['json'].keys())
@@ -120,20 +132,21 @@ class TestIngester(unittest.TestCase):
             FITS_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
-            blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY']
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
         )
         ingester.ingest()
         self.assertEqual(
-            'bias_kb05_20150219_bin2x2.fits',
+            'bias_kb05_20150219_bin2x2',
             requests_mock.call_args[1]['json']['L1IDBIAS']
         )
         self.assertEqual(
-            'dark_kb05_20150219_bin2x2.fits',
+            'dark_kb05_20150219_bin2x2',
             requests_mock.call_args[1]['json']['L1IDDARK']
         )
         self.assertEqual(
-            'flat_kb05_20150219_SKYFLAT_bin2x2_V.fits',
+            'flat_kb05_20150219_SKYFLAT_bin2x2_V',
             requests_mock.call_args[1]['json']['L1IDFLAT']
         )
 
@@ -142,12 +155,13 @@ class TestIngester(unittest.TestCase):
             CAT_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
-            blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY']
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
         )
         ingester.ingest()
         self.assertEqual(
-            'cpt1m010-kb70-20151219-0073-e10.fits',
+            'cpt1m010-kb70-20151219-0073-e10',
             requests_mock.call_args[1]['json']['L1IDCAT']
         )
 
@@ -156,7 +170,9 @@ class TestIngester(unittest.TestCase):
             SPECTRO_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
         )
         ingester.ingest()
         self.assertEqual(90, requests_mock.call_args[1]['json']['RLEVEL'])
@@ -168,7 +184,9 @@ class TestIngester(unittest.TestCase):
             SPECTRO_FILE,
             'test_bucket',
             'http://testendpoint',
-            '',
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
         )
         with self.assertRaises(DoNotRetryError):
             ingester.ingest()

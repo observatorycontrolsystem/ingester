@@ -1,11 +1,11 @@
-import os
 import boto3
 import requests
-from ingester.utils.s3 import filename_to_s3_key, strip_quotes_from_etag, filename_to_content_type
+from ingester.utils.s3 import basename_to_s3_key, strip_quotes_from_etag, extension_to_content_type
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
-from ingester.utils.fits import (fits_to_dict, remove_headers, missing_keys, wcs_corners_from_dict,
-                                 get_meta_file_from_targz, add_required_headers, normalize_related)
+from ingester.utils.fits import (fits_to_dict, wcs_corners_from_dict,
+                                 get_basename_and_extension, get_meta_file_from_targz,
+                                 add_required_headers, normalize_related)
 
 
 class Ingester(object):
@@ -23,7 +23,7 @@ class Ingester(object):
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
     def ingest(self):
-        self.filename = os.path.basename(self.path)
+        self.basename, self.extension = get_basename_and_extension(self.path)
         try:
             f = open(self.path, 'rb')
         except FileNotFoundError as exc:
@@ -36,21 +36,17 @@ class Ingester(object):
         self.call_api(fits_dict, version, area)
 
     def get_fits_dictionary(self, f):
-        if self.filename.endswith('tar.gz'):
+        if self.extension == '.tar.gz':
             f = get_meta_file_from_targz(f)
-        fits_dict = fits_to_dict(f)
-        fits_dict = add_required_headers(self.filename, fits_dict)
-        fits_dict = remove_headers(fits_dict, self.blacklist_headers)
+        fits_dict = fits_to_dict(f, self.required_headers, self.blacklist_headers)
+        fits_dict = add_required_headers(self.basename, self.extension, fits_dict)
         fits_dict = normalize_related(fits_dict)
-        missing_headers = missing_keys(fits_dict, self.required_headers)
-        if missing_headers:
-            raise DoNotRetryError('Fits file missing headers! {0}'.format(missing_headers))
         return fits_dict
 
     def upload_to_s3(self, f):
-        key = filename_to_s3_key(self.filename)
-        content_disposition = 'attachment; filename={}'.format(self.filename)
-        content_type = filename_to_content_type(self.filename)
+        key = basename_to_s3_key(self.basename)
+        content_disposition = 'attachment; filename={0}{1}'.format(self.basename, self.extension)
+        content_type = extension_to_content_type(self.extension)
         try:
             s3 = boto3.resource('s3')
             response = s3.Object(self.bucket, key).put(
@@ -62,11 +58,11 @@ class Ingester(object):
             raise BackoffRetryError(exc)
         md5 = strip_quotes_from_etag(response['ETag'])
         key = response['VersionId']
-        return {'key': key, 'md5':  md5}
+        return {'key': key, 'md5':  md5, 'extension': self.extension}
 
     def call_api(self, fits_dict, version, area):
         fits_dict['version_set'] = [version]
-        fits_dict['filename'] = self.filename
+        fits_dict['basename'] = self.basename
         fits_dict['area'] = area
         headers = {'Authorization': 'Token {}'.format(self.auth_token)}
         try:
