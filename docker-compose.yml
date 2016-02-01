@@ -1,17 +1,16 @@
-redis:
-        image: redis:3
-        ports:
-                - "6379:6379"
-        command: redis-server --appendonly yes
-        volumes:
-            - "/home/eng/docker/archive/redis:/data"
+rabbitmq:
 
+        image: rabbitmq:3-management
+        ports:
+                - "15672:15672"
+        volumes:
+                - "/home/eng/docker/archive/rabbitmq:/var/lib/rabbitmq"
 ingester:
         image: docker.lcogt.net/ingester:latest
         links:
-                - redis
+                - rabbitmq
         environment:
-                BROKER_URL: redis://redis
+                BROKER_URL: amqp://guest:guest@rabbitmq
                 AWS_ACCESS_KEY_ID: AKIAIZBYNSZZGYN3EAQQ
                 AWS_SECRET_ACCESS_KEY: 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
                 AWS_DEFAULT_REGION: us-west-2
