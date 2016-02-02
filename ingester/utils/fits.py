@@ -4,7 +4,7 @@ from ingester.exceptions import DoNotRetryError
 import tarfile
 import dateutil
 import os
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
 
@@ -51,12 +51,15 @@ def add_required_headers(basename, extension, fits_dict):
         # Check if the catalog file contains it's target frame, if not deduce it
         l1idcat = related_for_catalog(basename)
         fits_dict['L1IDCAT'] = l1idcat
-    if not fits_dict.get('L1PUBDAT') and fits_dict['OBSTYPE'] not in CALIBRATION_TYPES:
-        # Check if the frame doesnt specify a public date. If it doesn't and its
-        # not a calibration frame, set it to a year from DATE-OBS
-        fits_dict['L1PUBDAT'] = str(
-            dateutil.parser.parse(fits_dict['DATE-OBS']) + timedelta(days=365)
-        )
+    if not fits_dict.get('L1PUBDAT'):
+        # Check if the frame doesnt specify a public date.
+        if fits_dict['OBSTYPE'] not in CALIBRATION_TYPES:
+            # This should be proprietarty, set it to a year from DATE-OBS
+            fits_dict['L1PUBDAT'] = str(
+                dateutil.parser.parse(fits_dict['DATE-OBS']) + timedelta(days=365)
+            )
+        else:
+            fits_dict['L1PUBDAT'] = str(datetime(1, 1, 1))
     return fits_dict
 
 
