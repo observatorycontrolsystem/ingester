@@ -13,7 +13,7 @@ class TestCelery(unittest.TestCase):
     @patch.object(Ingester, 'ingest', return_value=None)
     def test_task_success(self, ingest_mock):
         result = do_ingest.delay(None, None, None, None, None, None)
-        self.assertTrue(result.successful())
+        self.assertTrue(result)
 
     @patch.object(Ingester, 'ingest', side_effect=DoNotRetryError('missing file'))
     def test_task_failure(self, ingest_mock):
