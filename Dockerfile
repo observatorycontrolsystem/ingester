@@ -6,13 +6,13 @@ ENV APPLICATION_ROOT /ingester
 RUN apt-get update
 RUN apt-get install -y supervisor
 
+COPY requirements.txt $APPLICATION_ROOT/
+RUN pip install -r $APPLICATION_ROOT/requirements.txt --trusted-host=buildsba.lco.gtn
+
+COPY deploy/supervisor-app.conf /etc/supervisor/conf.d/
+
 RUN mkdir -p $APPLICATION_ROOT
 ADD . $APPLICATION_ROOT
-WORKDIR $APPLICATION_ROOT
-
-RUN cp deploy/supervisor-app.conf /etc/supervisor/conf.d/
-
-RUN pip install -r requirements.txt --trusted-host=buildsba.lco.gtn
 
 ENV C_FORCE_ROOT true
 
