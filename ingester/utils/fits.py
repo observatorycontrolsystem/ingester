@@ -4,7 +4,7 @@ from ingester.exceptions import DoNotRetryError
 import tarfile
 import dateutil
 import os
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
 
@@ -59,7 +59,7 @@ def add_required_headers(basename, extension, fits_dict):
                 dateutil.parser.parse(fits_dict['DATE-OBS']) + timedelta(days=365)
             )
         else:
-            fits_dict['L1PUBDAT'] = str(datetime(1, 1, 1))
+            fits_dict['L1PUBDAT'] = fits_dict['DATE-OBS']
     return fits_dict
 
 
