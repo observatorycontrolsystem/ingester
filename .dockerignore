@@ -1,0 +1,5 @@
+tests/
+scratch/
+.git/
+.tox/
+*.swp
