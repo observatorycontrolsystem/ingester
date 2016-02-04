@@ -40,6 +40,14 @@ def fits_to_dict(f, required_keys, blacklist_headers):
     raise DoNotRetryError('Could not find required headers!')
 
 
+def normalize_null_values(fits_dict):
+    #  Sometimes keywords use N/A to mean null
+    for k, v in fits_dict.items():
+        if v == 'N/A':
+            fits_dict[k] = ''
+    return fits_dict
+
+
 def add_required_headers(basename, extension, fits_dict):
     # TODO: Remove this function entirely. We need these for now
     # because the pipeline does not write them as headers

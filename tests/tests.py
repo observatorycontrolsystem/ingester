@@ -15,21 +15,17 @@ FITS_PATH = os.path.join(
     'fits/'
 )
 FITS_FILE = os.path.join(
-    os.path.dirname(__file__),
-    'fits/coj1m011-kb05-20150219-0125-e90.fits.fz'
+    FITS_PATH,
+    'coj1m011-kb05-20150219-0125-e90.fits.fz'
 )
 CAT_FILE = os.path.join(
-    os.path.dirname(__file__),
-    'fits/cpt1m010-kb70-20151219-0073-e10_cat.fits.fz'
+    FITS_PATH,
+    'cpt1m010-kb70-20151219-0073-e10_cat.fits.fz'
 )
 SPECTRO_FILE = os.path.join(
-    os.path.dirname(__file__),
-    'fits/KEY2014A-002_0000483537_ftn_20160119_57407.tar.gz'
+    FITS_PATH,
+    'KEY2014A-002_0000483537_ftn_20160119_57407.tar.gz'
 )
-
-
-test_bucket = 'testbucket'
-blacklist_headers = ['', 'COMMENT', 'HISTORY']
 
 
 @patch('boto3.resource')
@@ -46,6 +42,17 @@ class TestIngester(unittest.TestCase):
             for path in fits_files
         ]
 
+    def create_ingester_for_path(self, path=FITS_FILE):
+        ingester = Ingester(
+            path,
+            'test_bucket',
+            'http://testendpoint',
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
+        )
+        return ingester
+
     def test_ingest_file(self, requests_mock, s3_mock):
         for ingester in self.ingesters:
             ingester.ingest()
@@ -53,11 +60,7 @@ class TestIngester(unittest.TestCase):
             self.assertTrue(requests_mock.called)
 
     def test_missing_file(self, requests_mock, s3_mock):
-        ingester = Ingester(
-            '/path/does/not/exist.fits.fz', 'testbucket', 'http://testendpoint', auth_token='',
-            required_headers=settings.REQUIRED_HEADERS,
-            blacklist_headers=settings.HEADER_BLACKLIST,
-        )
+        ingester = self.create_ingester_for_path('/path/doesnot/exist.fits.fz')
         with self.assertRaises(DoNotRetryError):
             ingester.ingest()
         self.assertFalse(s3_mock.called)
@@ -76,37 +79,12 @@ class TestIngester(unittest.TestCase):
             ingester.ingest()
         self.assertFalse(s3_mock.called)
         self.assertFalse(requests_mock.called)
-        ingester = Ingester(
-            FITS_FILE,
-            'test_bucket',
-            'http://testendpoint',
-            auth_token='',
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=settings.REQUIRED_HEADERS
-        )
-        ingester.ingest()
-        self.assertTrue(s3_mock.called)
-        self.assertTrue(requests_mock.called)
 
     def test_get_area(self, requests_mock, s3_mock):
-        ingester = Ingester(
-            FITS_FILE,
-            'test_bucket',
-            'http://testendpoint',
-            auth_token='',
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=settings.REQUIRED_HEADERS
-        )
+        ingester = self.create_ingester_for_path(FITS_FILE)
         ingester.ingest()
         self.assertEqual('Polygon', requests_mock.call_args[1]['json']['area']['type'])
-        ingester = Ingester(
-            CAT_FILE,
-            'test_bucket',
-            'http://testendpoint',
-            auth_token='',
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=settings.REQUIRED_HEADERS
-        )
+        ingester = self.create_ingester_for_path(CAT_FILE)
         ingester.ingest()
         self.assertIsNone(requests_mock.call_args[1]['json']['area'])
 
@@ -128,14 +106,7 @@ class TestIngester(unittest.TestCase):
             self.assertIn('RLEVEL', requests_mock.call_args[1]['json'].keys())
 
     def test_related(self, requests_mock, s3_mock):
-        ingester = Ingester(
-            FITS_FILE,
-            'test_bucket',
-            'http://testendpoint',
-            auth_token='',
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=settings.REQUIRED_HEADERS
-        )
+        ingester = self.create_ingester_for_path(FITS_FILE)
         ingester.ingest()
         self.assertEqual(
             'bias_kb05_20150219_bin2x2',
@@ -151,14 +122,7 @@ class TestIngester(unittest.TestCase):
         )
 
     def test_catalog_related(self, requests_mock, s3_mock):
-        ingester = Ingester(
-            CAT_FILE,
-            'test_bucket',
-            'http://testendpoint',
-            auth_token='',
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=settings.REQUIRED_HEADERS
-        )
+        ingester = self.create_ingester_for_path(CAT_FILE)
         ingester.ingest()
         self.assertEqual(
             'cpt1m010-kb70-20151219-0073-e10',
@@ -166,27 +130,21 @@ class TestIngester(unittest.TestCase):
         )
 
     def test_spectograph(self, requests_mock, s3_mock):
-        ingester = Ingester(
-            SPECTRO_FILE,
-            'test_bucket',
-            'http://testendpoint',
-            auth_token='',
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=settings.REQUIRED_HEADERS
-        )
+        ingester = self.create_ingester_for_path(SPECTRO_FILE)
         ingester.ingest()
         self.assertEqual(90, requests_mock.call_args[1]['json']['RLEVEL'])
         self.assertTrue(dateutil.parser.parse(requests_mock.call_args[1]['json']['L1PUBDAT']))
 
     def test_spectrograph_missing_meta(self, requests_mock, s3_mock):
         tarfile.TarFile.getnames = MagicMock(return_value=[''])
-        ingester = Ingester(
-            SPECTRO_FILE,
-            'test_bucket',
-            'http://testendpoint',
-            auth_token='',
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=settings.REQUIRED_HEADERS
-        )
+        ingester = self.create_ingester_for_path(SPECTRO_FILE)
         with self.assertRaises(DoNotRetryError):
             ingester.ingest()
+
+    def test_empty_string_for_na(self, requests_mock, s3_mock):
+        ingester = self.create_ingester_for_path(
+            os.path.join(FITS_PATH, 'coj1m011-fl08-20151216-0049-b00.fits')
+        )
+        ingester.ingest()
+        self.assertFalse(requests_mock.call_args[1]['json']['OBJECT'])
+        self.assertTrue(requests_mock.call_args[1]['json']['DATE-OBS'])

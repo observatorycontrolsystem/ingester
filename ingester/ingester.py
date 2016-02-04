@@ -3,7 +3,7 @@ import requests
 from ingester.utils.s3 import basename_to_s3_key, strip_quotes_from_etag, extension_to_content_type
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
-from ingester.utils.fits import (fits_to_dict, wcs_corners_from_dict,
+from ingester.utils.fits import (fits_to_dict, wcs_corners_from_dict, normalize_null_values,
                                  get_basename_and_extension, get_meta_file_from_targz,
                                  add_required_headers, normalize_related)
 
@@ -41,6 +41,7 @@ class Ingester(object):
         fits_dict = fits_to_dict(f, self.required_headers, self.blacklist_headers)
         fits_dict = add_required_headers(self.basename, self.extension, fits_dict)
         fits_dict = normalize_related(fits_dict)
+        fits_dict = normalize_null_values(fits_dict)
         return fits_dict
 
     def upload_to_s3(self, f):
