@@ -3,10 +3,11 @@ import os
 import tarfile
 from unittest.mock import patch, MagicMock
 from ingester.ingester import Ingester
-from ingester.exceptions import DoNotRetryError
+from ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
 import settings
 import opentsdb_python_metrics.metric_wrappers
 import dateutil
+import requests
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 
 
@@ -28,10 +29,25 @@ SPECTRO_FILE = os.path.join(
 )
 
 
+def mocked_requests_get(*args, **kwargs):
+    class MockResponse:
+        def __init__(self, json_data):
+            self.json_data = json_data
+
+        def json(self):
+            return self.json_data
+
+    if args[0].startswith('http://return1/'):
+        return MockResponse({'count': 1})
+
+    return MockResponse({'count': 0})
+
+
 @patch('boto3.resource')
 @patch('requests.post')
 class TestIngester(unittest.TestCase):
     def setUp(self):
+        requests.get = MagicMock(side_effect=mocked_requests_get)
         fits_files = [os.path.join(FITS_PATH, f) for f in os.listdir(FITS_PATH)]
         self.ingesters = [
             Ingester(
@@ -148,3 +164,16 @@ class TestIngester(unittest.TestCase):
         ingester.ingest()
         self.assertFalse(requests_mock.call_args[1]['json']['OBJECT'])
         self.assertTrue(requests_mock.call_args[1]['json']['DATE-OBS'])
+
+    def test_existing_version(self, requests_mock, s3_mock):
+        requests.get = MagicMock(side_effect=mocked_requests_get)
+        ingester = Ingester(
+            FITS_FILE,
+            'test_bucket',
+            'http://return1/',
+            auth_token='',
+            blacklist_headers=settings.HEADER_BLACKLIST,
+            required_headers=settings.REQUIRED_HEADERS
+        )
+        with self.assertRaises(NonFatalDoNotRetryError):
+            ingester.ingest()

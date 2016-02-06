@@ -26,3 +26,10 @@ class BackoffRetryError(Exception):
     a later time.
     """
     pass
+
+
+class NonFatalDoNotRetryError(Exception):
+    """
+    An exception has been raised, but everything
+    should be OK anyway
+    """

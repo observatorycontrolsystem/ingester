@@ -1,7 +1,8 @@
 import boto3
 import requests
+import hashlib
 from ingester.utils.s3 import basename_to_s3_key, strip_quotes_from_etag, extension_to_content_type
-from ingester.exceptions import DoNotRetryError, BackoffRetryError
+from ingester.exceptions import DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 from ingester.utils.fits import (fits_to_dict, wcs_corners_from_dict, normalize_null_values,
                                  get_basename_and_extension, get_meta_file_from_targz,
@@ -29,11 +30,22 @@ class Ingester(object):
         except FileNotFoundError as exc:
             raise DoNotRetryError(exc)
         with f:
+            self.check_for_existing_version(f)
+            f.seek(0)
             fits_dict = self.get_fits_dictionary(f)
             f.seek(0)
             version = self.upload_to_s3(f)
         area = wcs_corners_from_dict(fits_dict)
         self.call_api(fits_dict, version, area)
+
+    def check_for_existing_version(self, f):
+        md5 = hashlib.md5(f.read()).hexdigest()
+        response = requests.get(
+            '{0}versions/?md5={1}'.format(self.api_root, md5),
+            headers={'Authorization': 'Token {}'.format(self.auth_token)}
+        ).json()
+        if response['count'] > 0:
+            raise NonFatalDoNotRetryError('Version with this md5 already exists')
 
     def get_fits_dictionary(self, f):
         if self.extension == '.tar.gz':
@@ -67,7 +79,11 @@ class Ingester(object):
         fits_dict['area'] = area
         headers = {'Authorization': 'Token {}'.format(self.auth_token)}
         try:
-            requests.post(self.api_root, json=fits_dict, headers=headers).raise_for_status()
+            requests.post(
+                self.api_root + 'frames/',
+                json=fits_dict,
+                headers=headers
+            ).raise_for_status()
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
         except requests.exceptions.HTTPError as exc:
