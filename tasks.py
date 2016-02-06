@@ -1,6 +1,6 @@
 from celery import Celery
 from ingester.ingester import Ingester
-from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError
+from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 import platform
 import logging
 import os
@@ -35,6 +35,9 @@ def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blackl
         ingester.ingest()
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
+        raise exc
+    except NonFatalDoNotRetryError as exc:
+        logger.warn('Excpetion occured: {0}. Aborting.'.format(exc), extra=task_log(self))
         raise exc
     except BackoffRetryError as exc:
         if task_should_retry(self, exc):
