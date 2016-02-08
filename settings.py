@@ -2,6 +2,7 @@ import os
 import logging
 from logging.config import dictConfig
 from lcogt_logging import LCOGTFormatter
+from datetime import timedelta
 
 
 # logging
@@ -49,5 +50,19 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = 'UTC'
 CELERY_ENABLE_UTC = True
-CELERYBEAT_SCHEDULE = {}
 WORKER_HIJACK_ROOT_LOGGER = False
+
+CELERYBEAT_SCHEDULE = {
+    'queue-length-every-15-seconds': {
+        'task': 'tasks.collect_queue_length_metric',
+        'schedule': timedelta(seconds=15),
+        'args': ('http://cerberus.lco.gtn:15672/',),
+        'options': {'queue': 'periodic'}
+    },
+    'total-holdings-every-5-minutes': {
+        'task': 'tasks.total_holdings',
+        'schedule': timedelta(seconds=5),
+        'args': (API_ROOT, AUTH_TOKEN),
+        'options': {'queue': 'periodic'}
+    }
+}
