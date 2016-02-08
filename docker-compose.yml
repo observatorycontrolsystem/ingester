@@ -22,5 +22,6 @@ ingester:
                 AUTH_TOKEN: 48d03ec62ce69fef68bd545a751ccb1efef689a5
         volumes:
                 - "/archive:/archive"
+                - "/net/mfs/data4/scratch/pipeline-test:/net/mfs/data4/scratch/pipeline-test"
         ports:
                 - "5555:5555"
