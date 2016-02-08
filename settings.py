@@ -53,9 +53,9 @@ CELERY_ENABLE_UTC = True
 WORKER_HIJACK_ROOT_LOGGER = False
 
 CELERYBEAT_SCHEDULE = {
-    'queue-length-every-15-seconds': {
+    'queue-length-every-minute': {
         'task': 'tasks.collect_queue_length_metric',
-        'schedule': timedelta(seconds=15),
+        'schedule': timedelta(minutes=1),
         'args': ('http://cerberus.lco.gtn:15672/',),
         'options': {'queue': 'periodic'}
     },

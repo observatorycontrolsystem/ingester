@@ -84,5 +84,4 @@ def total_holdings(api_root, auth_token):
         '{0}frames/'.format(api_root),
         headers={'Authorization': 'Token {0}'.format(auth_token)}
     ).json()
-    logger.info(response['count'])
     send_tsdb_metric('archive.total_products', response['count'], async=False)
