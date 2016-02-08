@@ -1,10 +1,11 @@
 from celery import Celery
 from ingester.ingester import Ingester
 from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
-import platform
 import logging
 import os
-from opentsdb_python_metrics.metric_wrappers import send_tsdb_metric, metric_timer
+import requests
+from requests.auth import HTTPBasicAuth
+from opentsdb_python_metrics.metric_wrappers import metric_timer, send_tsdb_metric
 
 logger = logging.getLogger('ingester')
 app = Celery('tasks')
@@ -49,7 +50,6 @@ def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blackl
             raise self.retry(exc=exc)
         else:
             raise exc
-    collect_queue_length_metric()
     logger.info('Ingest suceeded', extra=task_log(self))
 
 
@@ -68,10 +68,21 @@ def task_should_retry(task, exception):
         return False
 
 
-def collect_queue_length_metric():
-    i = app.control.inspect()
-    if i.reserved() or i.active():
-        host_string = 'celery@{}'.format(platform.node())
-        reserved = len(i.reserved()[host_string])
-        active = len(i.active()[host_string]) - 1  # exclude this (done) task
-        send_tsdb_metric('ingester.queue_length', reserved + active, async=False)
+@app.task
+def collect_queue_length_metric(rabbit_api_root):
+    response = requests.get(
+        '{0}api/queues/%2f/celery/'.format(rabbit_api_root),
+        auth=HTTPBasicAuth('guest', 'guest')
+    ).json()
+    send_tsdb_metric('ingester.queue_length', response['messages'])
+
+
+@app.task
+@metric_timer('archive.response_time', async=False)
+def total_holdings(api_root, auth_token):
+    response = requests.get(
+        '{0}frames/'.format(api_root),
+        headers={'Authorization': 'Token {0}'.format(auth_token)}
+    ).json()
+    logger.info(response['count'])
+    send_tsdb_metric('archive.total_products', response['count'])
