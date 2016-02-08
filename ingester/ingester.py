@@ -1,7 +1,7 @@
 import boto3
 import requests
-import hashlib
-from ingester.utils.s3 import basename_to_s3_key, strip_quotes_from_etag, extension_to_content_type
+from ingester.utils.s3 import (basename_to_s3_key, strip_quotes_from_etag,
+                               extension_to_content_type, get_md5)
 from ingester.exceptions import DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 from ingester.utils.fits import (fits_to_dict, wcs_corners_from_dict, normalize_null_values,
@@ -30,7 +30,8 @@ class Ingester(object):
         except FileNotFoundError as exc:
             raise DoNotRetryError(exc)
         with f:
-            self.check_for_existing_version(f)
+            self.md5 = get_md5(f)
+            self.check_for_existing_version()
             f.seek(0)
             fits_dict = self.get_fits_dictionary(f)
             f.seek(0)
@@ -38,10 +39,9 @@ class Ingester(object):
         area = wcs_corners_from_dict(fits_dict)
         self.call_api(fits_dict, version, area)
 
-    def check_for_existing_version(self, f):
-        md5 = hashlib.md5(f.read()).hexdigest()
+    def check_for_existing_version(self):
         response = requests.get(
-            '{0}versions/?md5={1}'.format(self.api_root, md5),
+            '{0}versions/?md5={1}'.format(self.api_root, self.md5),
             headers={'Authorization': 'Token {}'.format(self.auth_token)}
         ).json()
         if response['count'] > 0:
@@ -69,20 +69,21 @@ class Ingester(object):
             )
         except (ConnectionError, EndpointConnectionError, ConnectionClosedError) as exc:
             raise BackoffRetryError(exc)
-        md5 = strip_quotes_from_etag(response['ETag'])
+        s3_md5 = strip_quotes_from_etag(response['ETag'])
+        if s3_md5 != self.md5:
+            raise BackoffRetryError('S3 md5 did not match ours')
         key = response['VersionId']
-        return {'key': key, 'md5':  md5, 'extension': self.extension}
+        return {'key': key, 'md5':  self.md5, 'extension': self.extension}
 
     def call_api(self, fits_dict, version, area):
         fits_dict['version_set'] = [version]
         fits_dict['basename'] = self.basename
         fits_dict['area'] = area
-        headers = {'Authorization': 'Token {}'.format(self.auth_token)}
         try:
             requests.post(
                 self.api_root + 'frames/',
                 json=fits_dict,
-                headers=headers
+                headers={'Authorization': 'Token {}'.format(self.auth_token)}
             ).raise_for_status()
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
