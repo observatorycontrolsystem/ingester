@@ -8,6 +8,7 @@ import settings
 import opentsdb_python_metrics.metric_wrappers
 import dateutil
 import requests
+import hashlib
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 
 
@@ -43,10 +44,34 @@ def mocked_requests_get(*args, **kwargs):
     return MockResponse({'count': 0})
 
 
-@patch('boto3.resource')
+def mocked_s3_put(*args, **kwargs):
+    class MockPut:
+        class Object:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def put(self, *args, **kwargs):
+                return {'ETag': '"fakemd5"', 'VersionId': 'fakeversion'}
+
+    return MockPut()
+
+
+def mock_hashlib_md5(*args, **kwargs):
+    class MockHash:
+        def __init__(self):
+            pass
+
+        def hexdigest(self):
+            return 'fakemd5'
+
+    return MockHash()
+
+
+@patch('boto3.resource', side_effect=mocked_s3_put)
 @patch('requests.post')
 class TestIngester(unittest.TestCase):
     def setUp(self):
+        hashlib.md5 = MagicMock(side_effect=mock_hashlib_md5)
         requests.get = MagicMock(side_effect=mocked_requests_get)
         fits_files = [os.path.join(FITS_PATH, f) for f in os.listdir(FITS_PATH)]
         self.ingesters = [
