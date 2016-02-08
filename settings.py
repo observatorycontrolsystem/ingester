@@ -61,7 +61,7 @@ CELERYBEAT_SCHEDULE = {
     },
     'total-holdings-every-5-minutes': {
         'task': 'tasks.total_holdings',
-        'schedule': timedelta(seconds=5),
+        'schedule': timedelta(minutes=5),
         'args': (API_ROOT, AUTH_TOKEN),
         'options': {'queue': 'periodic'}
     }
