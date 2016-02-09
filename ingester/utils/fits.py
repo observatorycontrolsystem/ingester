@@ -61,7 +61,7 @@ def add_required_headers(basename, extension, fits_dict):
         fits_dict['L1IDCAT'] = l1idcat
     if not fits_dict.get('L1PUBDAT'):
         # Check if the frame doesnt specify a public date.
-        if fits_dict['OBSTYPE'] not in CALIBRATION_TYPES:
+        if fits_dict['OBSTYPE'] not in CALIBRATION_TYPES and 'EPO' not in fits_dict['PROPID']:
             # This should be proprietarty, set it to a year from DATE-OBS
             fits_dict['L1PUBDAT'] = str(
                 dateutil.parser.parse(fits_dict['DATE-OBS']) + timedelta(days=365)
