@@ -27,3 +27,10 @@ class TestCelery(unittest.TestCase):
         self.assertEqual(ingest_mock.call_count, 4)
         self.assertIs(result.result.__class__, BackoffRetryError)
         self.assertTrue(result.failed())
+
+    @patch.object(Ingester, 'ingest',  side_effect=Exception('An unexpected exception'))
+    def test_task_unexpected_exception(self, ingest_mock):
+        result = do_ingest.delay(None, None, None, None, None, None)
+        self.assertEqual(ingest_mock.call_count, 4)
+        self.assertIs(result.result.__class__, Exception)
+        self.assertTrue(result.failed())
