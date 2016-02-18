@@ -7,6 +7,7 @@ import os
 from datetime import timedelta
 
 CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
+PUBLIC_PROPOSALS = ['EPO', 'calib']
 
 
 def get_basename_and_extension(path):
@@ -61,13 +62,14 @@ def add_required_headers(basename, extension, fits_dict):
         fits_dict['L1IDCAT'] = l1idcat
     if not fits_dict.get('L1PUBDAT'):
         # Check if the frame doesnt specify a public date.
-        if fits_dict['OBSTYPE'] not in CALIBRATION_TYPES and 'EPO' not in fits_dict['PROPID']:
+        if (fits_dict['OBSTYPE'] in CALIBRATION_TYPES or
+                any([prop in fits_dict['PROPID'] for prop in PUBLIC_PROPOSALS])):
+            fits_dict['L1PUBDAT'] = fits_dict['DATE-OBS']
+        else:
             # This should be proprietarty, set it to a year from DATE-OBS
             fits_dict['L1PUBDAT'] = str(
                 dateutil.parser.parse(fits_dict['DATE-OBS']) + timedelta(days=365)
             )
-        else:
-            fits_dict['L1PUBDAT'] = fits_dict['DATE-OBS']
     return fits_dict
 
 
