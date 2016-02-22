@@ -1,9 +1,10 @@
 import boto3
 import requests
+from io import BytesIO
 from ingester.utils.s3 import (basename_to_s3_key, strip_quotes_from_etag,
                                extension_to_content_type, get_md5)
 from ingester.exceptions import DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError, RetryError
-from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
+from botocore.exceptions import EndpointConnectionError, ConnectionClosedError, ClientError
 from ingester.utils.fits import (fits_to_dict, wcs_corners_from_dict, normalize_null_values,
                                  get_basename_and_extension, get_meta_file_from_targz,
                                  add_required_headers, normalize_related)
@@ -26,9 +27,10 @@ class Ingester(object):
     def ingest(self):
         self.basename, self.extension = get_basename_and_extension(self.path)
         try:
-            f = open(self.path, 'rb')
-        except FileNotFoundError as exc:
+            f = self.get_image_data()
+        except (FileNotFoundError, ClientError) as exc:
             raise DoNotRetryError(exc)
+
         with f:
             self.md5 = get_md5(f)
             self.check_for_existing_version()
@@ -36,8 +38,21 @@ class Ingester(object):
             fits_dict = self.get_fits_dictionary(f)
             f.seek(0)
             version = self.upload_to_s3(f)
+
         area = wcs_corners_from_dict(fits_dict)
         self.call_api(fits_dict, version, area)
+
+    def get_image_data(self):
+        protocal_preface = 's3://'
+        if self.path.startswith(protocal_preface):
+            s3 = boto3.resource('s3')
+            plist = self.path[len(protocal_preface):].split('/')
+            bucket = plist[0]
+            key = '/'.join(plist[1:])
+            o = s3.Object(key=key, bucket_name=bucket)
+            return BytesIO(o.get()['Body'].read())
+        else:
+            return open(self.path, 'rb')
 
     def check_for_existing_version(self):
         response = requests.get(
