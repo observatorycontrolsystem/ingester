@@ -44,8 +44,8 @@ def mocked_requests_get(*args, **kwargs):
     return MockResponse({'count': 0})
 
 
-def mocked_s3_put(*args, **kwargs):
-    class MockPut:
+def mocked_s3_object(*args, **kwargs):
+    class MockS3Object:
         class Object:
             def __init__(self, *args, **kwargs):
                 pass
@@ -53,7 +53,10 @@ def mocked_s3_put(*args, **kwargs):
             def put(self, *args, **kwargs):
                 return {'ETag': '"fakemd5"', 'VersionId': 'fakeversion'}
 
-    return MockPut()
+            def get(self, *args, **kwargs):
+                return {'Body': open(FITS_FILE, 'rb')}
+
+    return MockS3Object()
 
 
 def mock_hashlib_md5(*args, **kwargs):
@@ -67,7 +70,7 @@ def mock_hashlib_md5(*args, **kwargs):
     return MockHash()
 
 
-@patch('boto3.resource', side_effect=mocked_s3_put)
+@patch('boto3.resource', side_effect=mocked_s3_object)
 @patch('requests.post')
 class TestIngester(unittest.TestCase):
     def setUp(self):
@@ -202,3 +205,9 @@ class TestIngester(unittest.TestCase):
         )
         with self.assertRaises(NonFatalDoNotRetryError):
             ingester.ingest()
+
+    def test_s3_get(self, requests_mock, s3_mock):
+        ingester = self.create_ingester_for_path('s3://testbucket/testfile.fits')
+        ingester.ingest()
+        self.assertTrue(s3_mock.called)
+        self.assertTrue(requests_mock.called)
