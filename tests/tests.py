@@ -38,6 +38,9 @@ def mocked_requests_get(*args, **kwargs):
         def json(self):
             return self.json_data
 
+        def raise_for_status(self):
+            return None
+
     if args[0].startswith('http://return1/'):
         return MockResponse({'count': 1})
 

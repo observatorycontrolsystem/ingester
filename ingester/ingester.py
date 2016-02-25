@@ -55,12 +55,22 @@ class Ingester(object):
             return open(self.path, 'rb')
 
     def check_for_existing_version(self):
-        response = requests.get(
-            '{0}versions/?md5={1}'.format(self.api_root, self.md5),
-            headers={'Authorization': 'Token {}'.format(self.auth_token)}
-        ).json()
-        if response['count'] > 0:
-            raise NonFatalDoNotRetryError('Version with this md5 already exists')
+        try:
+            response = requests.get(
+                '{0}versions/?md5={1}'.format(self.api_root, self.md5),
+                headers={'Authorization': 'Token {}'.format(self.auth_token)}
+            )
+            response.raise_for_status()
+            result = response.json()
+        except requests.exceptions.ConnectionError as exc:
+            raise BackoffRetryError(exc)
+        except requests.exceptions.HTTPError as exc:
+            raise RetryError(exc)
+        try:
+            if result['count'] > 0:
+                raise NonFatalDoNotRetryError('Version with this md5 already exists')
+        except KeyError as exc:
+            raise BackoffRetryError(exc)
 
     def get_fits_dictionary(self, f):
         if self.extension == '.tar.gz':
