@@ -2,7 +2,7 @@ from astropy.io import fits
 from astropy import wcs
 from ingester.exceptions import DoNotRetryError
 import tarfile
-import dateutil
+from dateutil.parser import parse
 import os
 from datetime import timedelta
 
@@ -56,10 +56,13 @@ def add_required_headers(basename, extension, fits_dict):
         # Check if the frame contains its reduction level, if not deduce it
         rlevel = reduction_level(basename, extension)
         fits_dict['RLEVEL'] = rlevel
-    if '_cat' in basename and not fits_dict.get('L1IDCAT'):
-        # Check if the catalog file contains it's target frame, if not deduce it
-        l1idcat = related_for_catalog(basename)
-        fits_dict['L1IDCAT'] = l1idcat
+    if '_cat' in basename:
+        if not fits_dict.get('L1IDCAT'):
+            # Check if the catalog file contains it's target frame, if not deduce it
+            l1idcat = related_for_catalog(basename)
+            fits_dict['L1IDCAT'] = l1idcat
+        # set obstype to CATALOG even though it's set to EXPOSE by the pipeline
+        fits_dict['OBSTYPE'] = 'CATALOG'
     if not fits_dict.get('L1PUBDAT'):
         # Check if the frame doesnt specify a public date.
         if (fits_dict['OBSTYPE'] in CALIBRATION_TYPES or
@@ -68,7 +71,7 @@ def add_required_headers(basename, extension, fits_dict):
         else:
             # This should be proprietarty, set it to a year from DATE-OBS
             fits_dict['L1PUBDAT'] = str(
-                dateutil.parser.parse(fits_dict['DATE-OBS']) + timedelta(days=365)
+                parse(fits_dict['DATE-OBS']) + timedelta(days=365)
             )
     return fits_dict
 
