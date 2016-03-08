@@ -90,6 +90,7 @@ def normalize_related(fits_dict):
     related_frame_keys = [
         'L1IDBIAS', 'L1IDDARK', 'L1IDFLAT', 'L1IDSHUT',
         'L1IDMASK', 'L1IDFRNG', 'L1IDCAT', 'TARFILE',
+        'ORIGNAME',
     ]
     for key in related_frame_keys:
         filename = fits_dict.get(key)
