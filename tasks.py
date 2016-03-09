@@ -38,8 +38,8 @@ def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blackl
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
         raise exc
     except NonFatalDoNotRetryError as exc:
-        logger.warn('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
-        raise exc
+        logger.warn('Non-fatal Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
+        return
     except BackoffRetryError as exc:
         if task_should_retry(self, exc):
             raise self.retry(exc=exc, countdown=5 ** self.request.retries)
@@ -54,7 +54,7 @@ def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blackl
         logger.fatal('Unexpected exception: {0} Will retry.'.format(exc), extra=task_log(self))
         raise self.retry(exc=exc)
 
-    logger.info('Ingest suceeded', extra=task_log(self))
+    logger.info('Ingest succeeded', extra=task_log(self))
 
 
 def task_should_retry(task, exception):
