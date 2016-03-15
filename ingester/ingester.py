@@ -92,7 +92,8 @@ class Ingester(object):
                 ContentDisposition=content_disposition,
                 ContentType=content_type
             )
-        except (ConnectionError, EndpointConnectionError, ConnectionClosedError) as exc:
+        except (requests.exceptions.ConnectionError,
+                EndpointConnectionError, ConnectionClosedError) as exc:
             raise BackoffRetryError(exc)
         s3_md5 = strip_quotes_from_etag(response['ETag'])
         if s3_md5 != self.md5:
