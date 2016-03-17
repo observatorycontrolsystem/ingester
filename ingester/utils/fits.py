@@ -70,9 +70,9 @@ def add_required_headers(basename, extension, fits_dict):
             fits_dict['L1PUBDAT'] = fits_dict['DATE-OBS']
         else:
             # This should be proprietarty, set it to a year from DATE-OBS
-            fits_dict['L1PUBDAT'] = str(
+            fits_dict['L1PUBDAT'] = (
                 parse(fits_dict['DATE-OBS']) + timedelta(days=365)
-            )
+            ).isoformat()
     return fits_dict
 
 
