@@ -44,7 +44,7 @@ def fits_to_dict(f, required_keys, blacklist_headers):
 def normalize_null_values(fits_dict):
     #  Sometimes keywords use N/A to mean null
     for k, v in fits_dict.items():
-        if v == 'N/A':
+        if v == 'N/A' or v == 'UNKNOWN':
             fits_dict[k] = ''
     return fits_dict
 
