@@ -4,14 +4,21 @@ import sys
 import settings
 import logging
 from kombu.mixins import ConsumerMixin
-from kombu import Connection, Queue
+from kombu import Connection, Queue, Exchange
 
 logger = logging.getLogger('ingester')
 
+crawl_exchange = Exchange('fits_files', type='fanout')
+
+
+def filter_path(path):
+    if path and all([chars not in path for chars in settings.DISALLOWED_CHARS]):
+        return True
+    return False
+
 
 class Listener(ConsumerMixin):
-    def __init__(self, queue_name, broker_url):
-        self.queue_name = queue_name
+    def __init__(self, broker_url):
         self.broker_url = broker_url
 
     def get_consumers(self, Consumer, channel):
@@ -19,28 +26,31 @@ class Listener(ConsumerMixin):
                          callbacks=[self.on_message])]
 
     def on_message(self, body, message):
-        logger.info('sending task {}'.format(body))
-        tasks.do_ingest.delay(
-            body,
-            settings.BUCKET,
-            settings.API_ROOT,
-            settings.AUTH_TOKEN,
-            settings.REQUIRED_HEADERS,
-            settings.HEADER_BLACKLIST
-        )
+        path = body.get('path')
+        if filter_path(path):
+            logger.info('sending task {}'.format(path))
+            tasks.do_ingest.delay(
+                path,
+                settings.BUCKET,
+                settings.API_ROOT,
+                settings.AUTH_TOKEN,
+                settings.REQUIRED_HEADERS,
+                settings.HEADER_BLACKLIST
+            )
+        else:
+            logger.info('ignoring {}'.format(path))
         message.ack()  # acknowledge to the sender we got this message (it can be popped)
 
 
 if __name__ == '__main__':
     logger.info('starting listener')
     listener = Listener(
-        settings.QUEUE_NAME,
         settings.BROKER_URL
     )
 
     with Connection(listener.broker_url) as connection:
         listener.connection = connection
-        listener.queue = Queue(listener.queue_name)
+        listener.queue = Queue('archive_ingest', crawl_exchange)
         try:
             listener.run()
         except KeyboardInterrupt:
