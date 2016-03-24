@@ -1,3 +1,9 @@
+# ctags
+tags
+
+# virtualenv
+.venv
+
 # celerybeat stuff
 celerybeat.pid
 celerybeat-schedule
