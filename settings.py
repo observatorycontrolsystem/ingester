@@ -41,7 +41,7 @@ DISALLOWED_CHARS = ['-t00', '-x00', '-g00']
 HEADER_BLACKLIST = ('HISTORY', 'COMMENT', '')
 
 # Fits headers that must be present
-REQUIRED_HEADERS = ('PROPID', 'DATE-OBS', 'INSTRUME', 'SITEID', 'TELID', 'OBSTYPE')
+REQUIRED_HEADERS = ('PROPID', 'DATE-OBS', 'INSTRUME', 'SITEID', 'TELID', 'OBSTYPE', 'BLKUID')
 
 #  AWS Credentials and defaults
 BUCKET = os.getenv('BUCKET', 'lcogtarchivetest')
