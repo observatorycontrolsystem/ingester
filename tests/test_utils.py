@@ -1,6 +1,7 @@
 import unittest
 import os
-from ingester.utils.fits import normalize_related
+from ingester.utils.fits import (normalize_related, normalize_null_values,
+                                 get_basename_and_extension, reduction_level)
 
 
 class TestFitsUtils(unittest.TestCase):
@@ -15,3 +16,40 @@ class TestFitsUtils(unittest.TestCase):
         fits_dict = normalize_related(fits_dict)
         for key in fits_dict:
             self.assertFalse(os.path.splitext(fits_dict[key])[1])
+
+    def test_normalize_null(self):
+        fits_dict = {
+            'OBJECT':  'UNKNOWN',
+            'PROPID':  'N/A',
+            'BLKUID':  'N/A',
+            'INSTRUME':  'fl03'
+        }
+
+        normalized = normalize_null_values(fits_dict)
+        self.assertEqual('', normalized['OBJECT'])
+        self.assertEqual('', normalized['PROPID'])
+        self.assertIsNone(normalized['BLKUID'])
+        self.assertEqual('fl03', normalized['INSTRUME'])
+
+    def test_get_basename_and_extension(self):
+        path = '/archive/coj/kb84/20160325/raw/coj0m405-kb84-20160325-0095-e00.fits'
+        basename, extension = get_basename_and_extension(path)
+        self.assertEqual(basename, 'coj0m405-kb84-20160325-0095-e00')
+        self.assertEqual(extension, '.fits')
+
+        path = '/archive/coj/kb84/20160325/raw/coj0m405-kb84-20160325-0095-e00.fits.fz'
+        basename, extension = get_basename_and_extension(path)
+        self.assertEqual(basename, 'coj0m405-kb84-20160325-0095-e00')
+        self.assertEqual(extension, '.fits.fz')
+
+    def test_reduction_level(self):
+        basename = 'coj1m003-kb71-20160326-0063-e90'
+        extension = '.fits.fz'
+        self.assertEqual(reduction_level(basename, extension), 90)
+
+        basename = 'coj1m003-kb71-20160326-0063-e00'
+        self.assertEqual(reduction_level(basename, extension), 0)
+
+        basename = 'somecrazyfloydspackage'
+        extension = '.tar.gz'
+        self.assertEqual(reduction_level(basename, extension), 90)
