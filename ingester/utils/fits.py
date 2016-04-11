@@ -7,7 +7,7 @@ import os
 from datetime import timedelta
 
 CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
-PUBLIC_PROPOSALS = ['EPO', 'calib']
+PUBLIC_PROPOSALS = ['EPO', 'calib', 'standard']
 INTEGER_TYPES = ['BLKUID']
 
 
