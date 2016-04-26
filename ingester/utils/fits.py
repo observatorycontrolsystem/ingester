@@ -178,6 +178,10 @@ def reduction_level(basename, extension):
     # being inferred from the filename
     MAX_REDUCTION = 90
     MIN_REDUCTION = 0
+
+    # remove the _cat extension from catalog files
+    basename = basename.replace('_cat', '')
+
     if extension == '.tar.gz':
         return MAX_REDUCTION
     else:
