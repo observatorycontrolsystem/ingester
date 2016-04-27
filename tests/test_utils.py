@@ -11,7 +11,8 @@ class TestFitsUtils(unittest.TestCase):
             'L1IDBIAS': 'bias_kb78_20151110_bin2x2',
             'L1IDFLAT': 'flat_kb78_20151106_SKYFLAT_bin2x2_V',
             'L1IDDARK': 'dark_kb78_20151110_bin2x2',
-            'TARFILE': 'KEY2014A-002_0000476040_ftn_20160108_57396.tar.gz'
+            'TARFILE': 'KEY2014A-002_0000476040_ftn_20160108_57396.tar.gz',
+            'GUIDETAR': 'somekindoftarball.tar.gz'
         }
         fits_dict = normalize_related(fits_dict)
         for key in fits_dict:
