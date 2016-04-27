@@ -26,7 +26,7 @@ def get_meta_file_from_targz(f):
     #  f is an already open fileobj
     tf = tarfile.open(fileobj=f)
     for member in tf.getnames():
-        if 'e00' in member:
+        if 'e00' in member or 'e90' in member:
             return tf.extractfile(member)
     raise DoNotRetryError('Spectral package missing meta fits!')
 
@@ -94,7 +94,7 @@ def normalize_related(fits_dict):
     related_frame_keys = [
         'L1IDBIAS', 'L1IDDARK', 'L1IDFLAT', 'L1IDSHUT',
         'L1IDMASK', 'L1IDFRNG', 'L1IDCAT', 'TARFILE',
-        'ORIGNAME',
+        'ORIGNAME', 'ARCFILE', 'FLATFILE', 'GUIDETAR'
     ]
     for key in related_frame_keys:
         filename = fits_dict.get(key)
