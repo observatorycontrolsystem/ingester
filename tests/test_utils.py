@@ -53,3 +53,7 @@ class TestFitsUtils(unittest.TestCase):
         basename = 'somecrazyfloydspackage'
         extension = '.tar.gz'
         self.assertEqual(reduction_level(basename, extension), 90)
+
+        basename = 'coj1m003-kb71-20160326-0063-e10_cat'
+        extension = '.fits.fz'
+        self.assertEqual(reduction_level(basename, extension), 10)
