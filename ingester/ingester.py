@@ -3,7 +3,7 @@ import requests
 from io import BytesIO
 from ingester.utils.s3 import (basename_to_s3_key, strip_quotes_from_etag,
                                extension_to_content_type, get_md5)
-from ingester.exceptions import DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError, RetryError
+from ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, RetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError, ClientError
 from ingester.utils.fits import (fits_to_dict, wcs_corners_from_dict, normalize_null_values,
                                  get_basename_and_extension, get_meta_file_from_targz,
@@ -29,7 +29,7 @@ class Ingester(object):
         try:
             f = self.get_image_data()
         except (FileNotFoundError, ClientError) as exc:
-            raise DoNotRetryError(exc)
+            raise RetryError(exc)
 
         with f:
             self.md5 = get_md5(f)

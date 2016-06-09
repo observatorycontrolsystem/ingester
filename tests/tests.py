@@ -3,7 +3,7 @@ import os
 import tarfile
 from unittest.mock import patch, MagicMock
 from ingester.ingester import Ingester
-from ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
+from ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError, RetryError
 import settings
 import opentsdb_python_metrics.metric_wrappers
 import dateutil
@@ -108,7 +108,7 @@ class TestIngester(unittest.TestCase):
 
     def test_missing_file(self, requests_mock, s3_mock):
         ingester = self.create_ingester_for_path('/path/doesnot/exist.fits.fz')
-        with self.assertRaises(DoNotRetryError):
+        with self.assertRaises(RetryError):
             ingester.ingest()
         self.assertFalse(s3_mock.called)
         self.assertFalse(requests_mock.called)
