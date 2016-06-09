@@ -214,3 +214,12 @@ class TestIngester(unittest.TestCase):
         ingester.ingest()
         self.assertTrue(s3_mock.called)
         self.assertTrue(requests_mock.called)
+
+    def test_reqnum_null_or_int(self, requests_mock, s3_mock):
+        for ingester in self.ingesters:
+            ingester.ingest()
+            reqnum = requests_mock.call_args[1]['json']['REQNUM']
+            try:
+                self.assertIsNone(reqnum)
+            except AssertionError:
+                self.assertGreater(int(reqnum), -1)
