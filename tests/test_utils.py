@@ -20,10 +20,11 @@ class TestFitsUtils(unittest.TestCase):
 
     def test_normalize_null(self):
         fits_dict = {
-            'OBJECT':  'UNKNOWN',
-            'PROPID':  'N/A',
-            'BLKUID':  'N/A',
-            'INSTRUME':  'fl03'
+            'OBJECT': 'UNKNOWN',
+            'PROPID': 'N/A',
+            'BLKUID': 'N/A',
+            'INSTRUME': 'fl03',
+            'REQNUM': 'UNSPECIFIED'
         }
 
         normalized = normalize_null_values(fits_dict)
@@ -31,6 +32,7 @@ class TestFitsUtils(unittest.TestCase):
         self.assertEqual('', normalized['PROPID'])
         self.assertIsNone(normalized['BLKUID'])
         self.assertEqual('fl03', normalized['INSTRUME'])
+        self.assertIsNone(normalized['REQNUM'])
 
     def test_get_basename_and_extension(self):
         path = '/archive/coj/kb84/20160325/raw/coj0m405-kb84-20160325-0095-e00.fits'

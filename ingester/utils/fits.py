@@ -8,7 +8,7 @@ from datetime import timedelta
 
 CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
 PUBLIC_PROPOSALS = ['EPO', 'calib', 'standard']
-INTEGER_TYPES = ['BLKUID']
+INTEGER_TYPES = ['BLKUID', 'REQNUM']
 
 
 def get_basename_and_extension(path):
@@ -45,7 +45,7 @@ def fits_to_dict(f, required_keys, blacklist_headers):
 def normalize_null_values(fits_dict):
     #  Sometimes keywords use N/A to mean null
     for k, v in fits_dict.items():
-        if v == 'N/A' or v == 'UNKNOWN':
+        if v == 'N/A' or v == 'UNKNOWN' or v == 'UNSPECIFIED':
             if k in INTEGER_TYPES:
                 fits_dict[k] = None
             else:
