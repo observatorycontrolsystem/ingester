@@ -48,6 +48,11 @@ class TestArchiveService(unittest.TestCase):
             archive_service.check_for_existing_version('')
         self.assertFalse(post_mock.called)
 
+    def test_non_existing_md5(self, post_mock, get_mock):
+        archive_service = ArchiveService(api_root='http://fake/', auth_token='')
+        archive_service.check_for_existing_version('')
+        self.assertTrue(get_mock.called)
+
     def test_bad_response(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://return404/', auth_token='')
         with self.assertRaises(RetryError):
