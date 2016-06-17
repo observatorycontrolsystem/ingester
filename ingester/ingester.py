@@ -3,7 +3,7 @@ import requests
 from io import BytesIO
 from ingester.utils.s3 import (basename_to_s3_key, strip_quotes_from_etag,
                                extension_to_content_type, get_md5)
-from ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, RetryError
+from ingester.exceptions import BackoffRetryError, RetryError
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError, ClientError
 from ingester.utils.fits import (fits_to_dict, wcs_corners_from_dict, normalize_null_values,
                                  get_basename_and_extension, get_meta_file_from_targz,
@@ -16,11 +16,10 @@ class Ingester(object):
     uploading the data to s3, and making a call to the archive api.
     """
 
-    def __init__(self, path, bucket, api_root, auth_token, required_headers=None, blacklist_headers=None):
+    def __init__(self, path, bucket, archive_service, required_headers=None, blacklist_headers=None):
         self.path = path
         self.bucket = bucket
-        self.api_root = api_root
-        self.auth_token = auth_token
+        self.archive_service = archive_service
         self.required_headers = required_headers if required_headers else []
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
@@ -33,14 +32,17 @@ class Ingester(object):
 
         with f:
             self.md5 = get_md5(f)
-            self.check_for_existing_version()
+            self.archive_service.check_for_existing_version(self.md5)
             f.seek(0)
             fits_dict = self.get_fits_dictionary(f)
             f.seek(0)
             version = self.upload_to_s3(f)
 
         area = wcs_corners_from_dict(fits_dict)
-        self.call_api(fits_dict, version, area)
+        fits_dict['version_set'] = [version]
+        fits_dict['basename'] = self.basename
+        fits_dict['area'] = area
+        self.archive_service.post_frame(fits_dict)
 
     def get_image_data(self):
         protocal_preface = 's3://'
@@ -53,24 +55,6 @@ class Ingester(object):
             return BytesIO(o.get()['Body'].read())
         else:
             return open(self.path, 'rb')
-
-    def check_for_existing_version(self):
-        try:
-            response = requests.get(
-                '{0}versions/?md5={1}'.format(self.api_root, self.md5),
-                headers={'Authorization': 'Token {}'.format(self.auth_token)}
-            )
-            response.raise_for_status()
-            result = response.json()
-        except requests.exceptions.ConnectionError as exc:
-            raise BackoffRetryError(exc)
-        except requests.exceptions.HTTPError as exc:
-            raise RetryError(exc)
-        try:
-            if result['count'] > 0:
-                raise NonFatalDoNotRetryError('Version with this md5 already exists')
-        except KeyError as exc:
-            raise BackoffRetryError(exc)
 
     def get_fits_dictionary(self, f):
         if self.extension == '.tar.gz':
@@ -100,18 +84,3 @@ class Ingester(object):
             raise BackoffRetryError('S3 md5 did not match ours')
         key = response['VersionId']
         return {'key': key, 'md5':  self.md5, 'extension': self.extension}
-
-    def call_api(self, fits_dict, version, area):
-        fits_dict['version_set'] = [version]
-        fits_dict['basename'] = self.basename
-        fits_dict['area'] = area
-        try:
-            requests.post(
-                self.api_root + 'frames/',
-                json=fits_dict,
-                headers={'Authorization': 'Token {}'.format(self.auth_token)}
-            ).raise_for_status()
-        except requests.exceptions.ConnectionError as exc:
-            raise BackoffRetryError(exc)
-        except requests.exceptions.HTTPError as exc:
-            raise RetryError(exc)

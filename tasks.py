@@ -1,11 +1,14 @@
+from requests.auth import HTTPBasicAuth
+from opentsdb_python_metrics.metric_wrappers import metric_timer, send_tsdb_metric
 from celery import Celery
-from ingester.ingester import Ingester
-from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 import logging
 import os
 import requests
-from requests.auth import HTTPBasicAuth
-from opentsdb_python_metrics.metric_wrappers import metric_timer, send_tsdb_metric
+
+from ingester.archive import ArchiveService
+from ingester.ingester import Ingester
+from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
+
 
 logger = logging.getLogger('ingester')
 app = Celery('tasks')
@@ -13,7 +16,7 @@ app.config_from_object('settings')
 
 
 def task_log(task):
-    path = task.request.args[0] or ''
+    path = task.request.kwargs.get('path', '')
     return {
         'tags': {
             'filename': os.path.basename(path),
@@ -31,8 +34,10 @@ def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blackl
     ingest() method on a specific path
     """
     logger.info('Starting ingest', extra=task_log(self))
+    # Service instantiation
+    archive_service = ArchiveService(api_root=api_root, auth_token=auth_token)
     try:
-        ingester = Ingester(path, bucket, api_root, auth_token, required_headers, blacklist_headers)
+        ingester = Ingester(path, bucket, archive_service, required_headers, blacklist_headers)
         ingester.ingest()
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))

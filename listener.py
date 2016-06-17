@@ -30,12 +30,12 @@ class Listener(ConsumerMixin):
         if filter_path(path):
             logger.info('sending task {}'.format(path))
             tasks.do_ingest.delay(
-                path,
-                settings.BUCKET,
-                settings.API_ROOT,
-                settings.AUTH_TOKEN,
-                settings.REQUIRED_HEADERS,
-                settings.HEADER_BLACKLIST
+                path=path,
+                bucket=settings.BUCKET,
+                api_root=settings.API_ROOT,
+                auth_token=settings.AUTH_TOKEN,
+                required_headers=settings.REQUIRED_HEADERS,
+                blacklist_headers=settings.HEADER_BLACKLIST
             )
         else:
             logger.info('ignoring {}'.format(path))
