@@ -2,8 +2,6 @@ from astropy import wcs
 import tarfile
 import hashlib
 import os
-import boto3
-from io import BytesIO
 
 from ingester.exceptions import DoNotRetryError, RetryError
 
@@ -14,12 +12,8 @@ def get_fits_from_path(path):
         if 'tar.gz' in path:
             return get_meta_file_from_targz(path)
         elif path.startswith(protocal_preface):
-            s3 = boto3.resource('s3')
-            plist = path[len(protocal_preface):].split('/')
-            bucket = plist[0]
-            key = '/'.join(plist[1:])
-            o = s3.Object(key=key, bucket_name=bucket)
-            return BytesIO(o.get()['Body'].read())
+            from ingester.s3 import S3Service
+            return S3Service('').get_file(path)
         else:
             return open(path, 'rb')
     except FileNotFoundError as exc:
