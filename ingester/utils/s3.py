@@ -37,7 +37,3 @@ def strip_quotes_from_etag(etag):
     """
     if etag.startswith('"') and etag.endswith('"'):
         return etag[1:-1]
-
-
-def get_md5(file):
-    return hashlib.md5(file.read()).hexdigest()
