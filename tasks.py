@@ -6,6 +6,7 @@ import os
 import requests
 
 from ingester.archive import ArchiveService
+from ingester.s3 import S3Service
 from ingester.ingester import Ingester
 from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 
@@ -34,10 +35,13 @@ def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blackl
     ingest() method on a specific path
     """
     logger.info('Starting ingest', extra=task_log(self))
+
     # Service instantiation
     archive_service = ArchiveService(api_root=api_root, auth_token=auth_token)
+    s3_service = S3Service(bucket)
+
     try:
-        ingester = Ingester(path, bucket, archive_service, required_headers, blacklist_headers)
+        ingester = Ingester(path, s3_service, archive_service, required_headers, blacklist_headers)
         ingester.ingest()
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
