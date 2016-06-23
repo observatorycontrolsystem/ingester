@@ -1,11 +1,14 @@
 import hashlib
 import requests
 import boto3
+import logging
 from io import BytesIO
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
 from ingester.utils.fits import get_basename_and_extension, get_fits_from_path
 from ingester.exceptions import BackoffRetryError
+
+logger = logging.getLogger('ingester')
 
 
 class S3Service(object):
@@ -47,6 +50,12 @@ class S3Service(object):
             raise BackoffRetryError(exc)
         s3_md5 = self.strip_quotes_from_etag(response['ETag'])
         key = response['VersionId']
+        logger.info('Ingester uploaded file to s3', extra={
+            'tags': {
+                'filename': basename + extension,
+                'key': key,
+            }
+        })
         return {'key': key, 'md5':  s3_md5, 'extension': extension}
 
     def get_file(self, path):

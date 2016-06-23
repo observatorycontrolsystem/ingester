@@ -1,3 +1,4 @@
+import logging
 from astropy.io import fits
 from datetime import timedelta
 from dateutil.parser import parse
@@ -5,6 +6,8 @@ from dateutil.parser import parse
 from ingester.exceptions import DoNotRetryError
 from ingester.utils.fits import reduction_level, related_for_catalog
 from ingester.utils.fits import get_basename_and_extension, get_fits_from_path
+
+logger = logging.getLogger('ingester')
 
 
 class FitsDict(object):
@@ -27,6 +30,13 @@ class FitsDict(object):
                 pass
             else:
                 self.fits_dict = fits_dict
+                logger.info('Ingester extracted fits headers', extra={
+                        'tags': {
+                            'request_num': fits_dict.get('REQNUM'),
+                            'PROPID': fits_dict.get('PROPID'),
+                            'filename': self.basename + self.extension
+                        }
+                    })
                 return
         raise DoNotRetryError('Could no find required headers!')   # No headers met requirement
 
