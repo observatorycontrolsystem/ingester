@@ -52,7 +52,7 @@ class S3Service(object):
         key = response['VersionId']
         logger.info('Ingester uploaded file to s3', extra={
             'tags': {
-                'filename': basename + extension,
+                'filename': '{}{}'.format(basename, extension),
                 'key': key,
             }
         })
