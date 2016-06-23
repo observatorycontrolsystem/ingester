@@ -1,6 +1,9 @@
 import requests
+import logging
 
 from ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, RetryError
+
+logger = logging.getLogger('ingester')
 
 
 class ArchiveService(object):
@@ -32,4 +35,12 @@ class ArchiveService(object):
         response = requests.post(
             '{0}frames/'.format(self.api_root), json=fits_dict, headers=self.headers
         )
-        self.handle_response(response)
+        result = self.handle_response(response)
+        logger.info('Ingester posted frame to archive', extra={
+            'tags': {
+                'filename': result.get('filename'),
+                'request_num': fits_dict.get('REQNUM'),
+                'PROPID': result.get('PROPID'),
+                'id': result.get('id')
+            }
+        })
