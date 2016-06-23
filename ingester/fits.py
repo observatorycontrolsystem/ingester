@@ -34,7 +34,7 @@ class FitsDict(object):
                         'tags': {
                             'request_num': fits_dict.get('REQNUM'),
                             'PROPID': fits_dict.get('PROPID'),
-                            'filename': self.basename + self.extension
+                            'filename': '{}{}'.format(self.basename, self.extension)
                         }
                     })
                 return
