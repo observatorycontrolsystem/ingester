@@ -1,3 +1,7 @@
+1.1
+2016-08-16
+Stop ignoring en03 camera (nres, sqa)
+
 1.0
 2016-08-15
 Fix bug casusing FLOYDS data being uploaded incorrectly.
