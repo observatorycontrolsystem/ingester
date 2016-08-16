@@ -21,7 +21,10 @@ def get_fits_from_path(path):
 
 
 def get_md5(path):
-    return hashlib.md5(get_fits_from_path(path).read()).hexdigest()
+    try:
+        return hashlib.md5(open(path, 'rb').read()).hexdigest()
+    except FileNotFoundError as exc:
+        raise RetryError(exc)
 
 
 def get_basename_and_extension(path):

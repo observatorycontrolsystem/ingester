@@ -5,7 +5,7 @@ import logging
 from io import BytesIO
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
-from ingester.utils.fits import get_basename_and_extension, get_fits_from_path
+from ingester.utils.fits import get_basename_and_extension
 from ingester.exceptions import BackoffRetryError
 
 logger = logging.getLogger('ingester')
@@ -41,7 +41,7 @@ class S3Service(object):
         content_type = self.extension_to_content_type(extension)
         try:
             response = s3.Object(self.bucket, key).put(
-                Body=get_fits_from_path(path),
+                Body=open(path, 'rb'),
                 ContentDisposition=content_disposition,
                 ContentType=content_type
             )
