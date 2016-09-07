@@ -44,4 +44,4 @@ class ArchiveService(object):
                 'id': result.get('id')
             }
         })
-        return result.get('id')
+        return result

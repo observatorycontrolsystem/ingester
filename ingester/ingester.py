@@ -38,8 +38,9 @@ class Ingester(object):
         fits_dict['area'] = wcs_corners_from_dict(fits_dict)
         fits_dict['version_set'] = [version]
         fits_dict['basename'] = self.basename
-        frameid = self.archive.post_frame(fits_dict)
+        result = self.archive.post_frame(fits_dict)
 
         # Push header data to archived fits exchange
-        fits_dict['frameid'] = frameid
+        fits_dict['frameid'] = result.get('id')
+        fits_dict['filename'] = result.get('filename')
         self.post_proc.post_to_archived_queue(fits_dict)
