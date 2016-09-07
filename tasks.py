@@ -7,6 +7,7 @@ import requests
 
 from ingester.archive import ArchiveService
 from ingester.s3 import S3Service
+from ingester.postproc import PostProcService
 from ingester.ingester import Ingester
 from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 
@@ -29,7 +30,7 @@ def task_log(task):
 
 @app.task(bind=True, max_retries=3, default_retry_delay=3 * 60)
 @metric_timer('ingester', async=False)
-def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blacklist_headers):
+def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_headers, blacklist_headers):
     """
     Create a new instance of an Ingester and run it's
     ingest() method on a specific path
@@ -37,11 +38,12 @@ def do_ingest(self, path, bucket, api_root, auth_token, required_headers, blackl
     logger.info('Starting ingest', extra=task_log(self))
 
     # Service instantiation
-    archive_service = ArchiveService(api_root=api_root, auth_token=auth_token)
-    s3_service = S3Service(bucket)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
+    s3 = S3Service(bucket)
+    post_proc = PostProcService(broker_url)
 
     try:
-        ingester = Ingester(path, s3_service, archive_service, required_headers, blacklist_headers)
+        ingester = Ingester(path, s3, archive, post_proc, required_headers, blacklist_headers)
         ingester.ingest()
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
