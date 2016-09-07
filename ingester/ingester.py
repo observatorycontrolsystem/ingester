@@ -9,10 +9,11 @@ class Ingester(object):
     uploading the data to s3, and making a call to the archive api.
     """
 
-    def __init__(self, path, s3_service, archive_service, required_headers=None, blacklist_headers=None):
+    def __init__(self, path, s3, archive, post_proc, required_headers=None, blacklist_headers=None):
         self.path = path
-        self.s3_service = s3_service
-        self.archive_service = archive_service
+        self.s3 = s3
+        self.archive = archive
+        self.post_proc = post_proc
         self.required_headers = required_headers if required_headers else []
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
@@ -21,13 +22,13 @@ class Ingester(object):
 
         # Get the Md5 checksum of this file and check if it already exists in the archive
         md5 = get_md5(self.path)
-        self.archive_service.check_for_existing_version(md5)
+        self.archive.check_for_existing_version(md5)
 
         # Transform this fits file into a cleaned dictionary
         fits_dict = FitsDict(self.path, self.required_headers, self.blacklist_headers).as_dict()
 
         # Upload the file to s3 and get version information back
-        version = self.s3_service.upload_file(self.path)
+        version = self.s3.upload_file(self.path)
 
         # Make sure our md5 matches amazons
         if version['md5'] != md5:
@@ -37,4 +38,8 @@ class Ingester(object):
         fits_dict['area'] = wcs_corners_from_dict(fits_dict)
         fits_dict['version_set'] = [version]
         fits_dict['basename'] = self.basename
-        self.archive_service.post_frame(fits_dict)
+        frameid = self.archive.post_frame(fits_dict)
+
+        # Push header data to archived fits exchange
+        fits_dict['frameid'] = frameid
+        self.post_proc.post_to_archived_queue(fits_dict)

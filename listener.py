@@ -34,6 +34,7 @@ class Listener(ConsumerMixin):
                 bucket=settings.BUCKET,
                 api_root=settings.API_ROOT,
                 auth_token=settings.AUTH_TOKEN,
+                broker_url=settings.BROKER_URL,
                 required_headers=settings.REQUIRED_HEADERS,
                 blacklist_headers=settings.HEADER_BLACKLIST
             )

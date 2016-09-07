@@ -49,11 +49,13 @@ class TestIngester(unittest.TestCase):
         self.archive_mock = MagicMock()
         self.s3_mock = MagicMock()
         self.s3_mock.upload_file = MagicMock(return_value={'md5': 'fakemd5'})
+        self.post_proc_mock = MagicMock()
         self.ingesters = [
             Ingester(
                 path=path,
-                s3_service=self.s3_mock,
-                archive_service=self.archive_mock,
+                s3=self.s3_mock,
+                archive=self.archive_mock,
+                post_proc=self.post_proc_mock,
                 required_headers=settings.REQUIRED_HEADERS,
                 blacklist_headers=settings.HEADER_BLACKLIST,
                 )
@@ -63,8 +65,9 @@ class TestIngester(unittest.TestCase):
     def create_ingester_for_path(self, path=FITS_FILE):
         ingester = Ingester(
             path=path,
-            s3_service=self.s3_mock,
-            archive_service=self.archive_mock,
+            s3=self.s3_mock,
+            archive=self.archive_mock,
+            post_proc=self.post_proc_mock,
             blacklist_headers=settings.HEADER_BLACKLIST,
             required_headers=settings.REQUIRED_HEADERS
         )
@@ -75,6 +78,7 @@ class TestIngester(unittest.TestCase):
             ingester.ingest()
             self.assertTrue(self.s3_mock.upload_file.called)
             self.assertTrue(self.archive_mock.post_frame.called)
+            self.assertTrue(self.post_proc_mock.post_to_archived_queue.called)
 
     def test_missing_file(self):
         ingester = self.create_ingester_for_path('/path/doesnot/exist.fits.fz')
@@ -84,13 +88,8 @@ class TestIngester(unittest.TestCase):
         self.assertFalse(self.archive_mock.post_frame.called)
 
     def test_required(self):
-        ingester = Ingester(
-            path=FITS_FILE,
-            s3_service=self.s3_mock,
-            archive_service=self.archive_mock,
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=['fooheader']
-        )
+        ingester = self.ingesters[0]
+        ingester.required_headers = ['fooheader']
         with self.assertRaises(DoNotRetryError):
             ingester.ingest()
         self.assertFalse(self.s3_mock.upload_file.called)
@@ -105,13 +104,8 @@ class TestIngester(unittest.TestCase):
         self.assertIsNone(self.archive_mock.post_frame.call_args[0][0]['area'])
 
     def test_blacklist(self):
-        ingester = Ingester(
-            path=FITS_FILE,
-            s3_service=self.s3_mock,
-            archive_service=self.archive_mock,
-            blacklist_headers=['DAY-OBS', '', 'COMMENT', 'HISTORY'],
-            required_headers=settings.REQUIRED_HEADERS
-        )
+        ingester = self.ingesters[0]
+        ingester.blacklist_headers = ['DAY-OBS', '', 'COMMENT', 'HISTORY']
         ingester.ingest()
         self.assertNotIn('DAY-OBS', self.archive_mock.post_frame.call_args[0][0].keys())
 
