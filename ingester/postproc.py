@@ -2,7 +2,7 @@ from kombu.connection import Connection
 from kombu import Exchange, Queue
 
 processed_exchange = Exchange('archived_fits', type='fanout')
-producer_queue = Queue('ingested', processed_exchange, exclusive=True)
+producer_queue = Queue('', processed_exchange, exclusive=True)
 
 
 class PostProcService(object):
