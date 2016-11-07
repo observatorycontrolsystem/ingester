@@ -12,7 +12,7 @@ crawl_exchange = Exchange('fits_files', type='fanout')
 
 
 def filter_path(path):
-    if path and all([chars not in path for chars in settings.DISALLOWED_CHARS]):
+    if path and 'fits' in path and all([chars not in path for chars in settings.DISALLOWED_CHARS]):
         return True
     return False
 
