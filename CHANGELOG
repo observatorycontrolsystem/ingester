@@ -1,3 +1,7 @@
+1.7
+2016-12-15
+Seperate celery broker from main LCO rabbitmq
+
 1.6
 2016-11-16
 Ignore kb11 and kb15 context cameras
