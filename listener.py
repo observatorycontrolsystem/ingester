@@ -46,7 +46,7 @@ class Listener(ConsumerMixin):
 if __name__ == '__main__':
     logger.info('starting listener')
     listener = Listener(
-        settings.BROKER_URL
+        settings.FITS_BROKER
     )
 
     with Connection(listener.broker_url) as connection:

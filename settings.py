@@ -31,6 +31,7 @@ dictConfig(logConf)
 
 #  General settings
 BROKER_URL = os.getenv('BROKER_URL', 'memory://localhost')
+FITS_BROKER = os.getenv('FITS_BROKER', 'amqp://guest:guest@rabbitmq.lco.gtn')
 API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000/')
 AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 
@@ -58,7 +59,7 @@ CELERYBEAT_SCHEDULE = {
     'queue-length-every-minute': {
         'task': 'tasks.collect_queue_length_metric',
         'schedule': timedelta(minutes=1),
-        'args': ('http://cerberus.lco.gtn:15672/',),
+        'args': ('http://rabbitmq:15672/',),
         'options': {'queue': 'periodic'}
     },
     'total-holdings-every-5-minutes': {
