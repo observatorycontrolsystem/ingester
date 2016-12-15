@@ -59,7 +59,7 @@ CELERYBEAT_SCHEDULE = {
     'queue-length-every-minute': {
         'task': 'tasks.collect_queue_length_metric',
         'schedule': timedelta(minutes=1),
-        'args': ('http://rabbitmq:15672/',),
+        'args': ('http://ingesterrabbitmq:15672/',),
         'options': {'queue': 'periodic'}
     },
     'total-holdings-every-5-minutes': {
