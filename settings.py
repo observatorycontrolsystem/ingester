@@ -31,7 +31,7 @@ dictConfig(logConf)
 
 #  General settings
 BROKER_URL = os.getenv('BROKER_URL', 'memory://localhost')
-FITS_BROKER = os.getenv('FITS_BROKER', 'amqp://guest:guest@rabbitmq.lco.gtn')
+FITS_BROKER = os.getenv('FITS_BROKER', 'memory://localhost')
 API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000/')
 AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 
