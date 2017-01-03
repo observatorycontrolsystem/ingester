@@ -34,6 +34,8 @@ BROKER_URL = os.getenv('BROKER_URL', 'memory://localhost')
 FITS_BROKER = os.getenv('FITS_BROKER', 'memory://localhost')
 API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000/')
 AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
+TASK_TIME_LIMIT = 3600
+TASK_SOFT_TIME_LIMIT = 1200
 
 # Files we wish to ignore
 DISALLOWED_CHARS = ['-t00', '-x00', '-g00', '-l00', '-kb11', '-kb15']

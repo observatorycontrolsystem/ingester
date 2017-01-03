@@ -1,6 +1,7 @@
 from requests.auth import HTTPBasicAuth
 from opentsdb_python_metrics.metric_wrappers import metric_timer, send_tsdb_metric
 from celery import Celery
+from celery.exceptions import SoftTimeLimitExceeded
 import logging
 import os
 import requests
@@ -56,7 +57,7 @@ def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_hea
             raise self.retry(exc=exc, countdown=5 ** self.request.retries)
         else:
             raise exc
-    except RetryError as exc:
+    except (RetryError, SoftTimeLimitExceeded) as exc:
         if task_should_retry(self, exc):
             raise self.retry(exc=exc)
         else:

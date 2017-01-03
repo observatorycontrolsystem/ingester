@@ -1,6 +1,8 @@
 import unittest
 import settings
 from unittest.mock import patch
+from celery.exceptions import SoftTimeLimitExceeded
+
 from ingester.ingester import Ingester
 from tasks import do_ingest
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
@@ -33,4 +35,11 @@ class TestCelery(unittest.TestCase):
         result = do_ingest.delay(None, None, None, None, None, None, None)
         self.assertEqual(ingest_mock.call_count, 4)
         self.assertIs(result.result.__class__, Exception)
+        self.assertTrue(result.failed())
+
+    @patch.object(Ingester, 'ingest',  side_effect=SoftTimeLimitExceeded())
+    def test_task_softimelimit_exceeded(self, ingest_mock):
+        result = do_ingest.delay(None, None, None, None, None, None, None)
+        self.assertEqual(ingest_mock.call_count, 4)
+        self.assertIs(result.result.__class__, SoftTimeLimitExceeded)
         self.assertTrue(result.failed())
