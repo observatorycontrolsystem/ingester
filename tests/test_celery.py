@@ -10,7 +10,7 @@ from ingester.exceptions import DoNotRetryError, BackoffRetryError
 
 class TestCelery(unittest.TestCase):
     def setUp(self):
-        settings.CELERY_ALWAYS_EAGER = True
+        settings.task_always_eager = True
 
     @patch.object(Ingester, 'ingest', return_value=None)
     def test_task_success(self, ingest_mock):
