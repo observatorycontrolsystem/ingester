@@ -1,3 +1,7 @@
+1.10
+2016-01-10
+Set autoscale option for celery workers so that it doesn't use 16 processes on 16 core machines
+
 1.9
 2016-01-03
 Add soft and hard time limit to tasks
