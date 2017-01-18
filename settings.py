@@ -28,14 +28,16 @@ logConf = {
 }
 
 dictConfig(logConf)
+# Celery Settings
+task_soft_time_limit = 1200
+task_time_limit = 3600
+worker_prefetch_multiplier = 1
 
 #  General settings
-BROKER_URL = os.getenv('BROKER_URL', 'memory://localhost')
+broker_url = os.getenv('BROKER_URL', 'memory://localhost')
 FITS_BROKER = os.getenv('FITS_BROKER', 'memory://localhost')
 API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000/')
 AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
-TASK_TIME_LIMIT = 3600
-TASK_SOFT_TIME_LIMIT = 1200
 
 # Files we wish to ignore
 DISALLOWED_CHARS = ['-t00', '-x00', '-g00', '-l00', '-kb11', '-kb15']
@@ -49,15 +51,7 @@ REQUIRED_HEADERS = ('PROPID', 'DATE-OBS', 'INSTRUME', 'SITEID', 'TELID', 'OBSTYP
 #  AWS Credentials and defaults
 BUCKET = os.getenv('BUCKET', 'lcogtarchivetest')
 
-# Celery Settings
-CELERYD_PREFETCH_MULTIPLIER = 1
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TIMEZONE = 'UTC'
-CELERY_ENABLE_UTC = True
-WORKER_HIJACK_ROOT_LOGGER = False
-
-CELERYBEAT_SCHEDULE = {
+beat_schedule = {
     'queue-length-every-minute': {
         'task': 'tasks.collect_queue_length_metric',
         'schedule': timedelta(minutes=1),

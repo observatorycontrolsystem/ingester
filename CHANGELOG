@@ -1,3 +1,7 @@
+1.11
+2016-01-18
+Update settings for celery 4.0
+
 1.10
 2016-01-10
 Set autoscale option for celery workers so that it doesn't use 16 processes on 16 core machines
