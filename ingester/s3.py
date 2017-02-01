@@ -3,6 +3,7 @@ import requests
 import boto3
 import logging
 from io import BytesIO
+from opentsdb_python_metrics.metric_wrappers import metric_timer
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
 from ingester.utils.fits import get_basename_and_extension
@@ -33,6 +34,7 @@ class S3Service(object):
         if etag.startswith('"') and etag.endswith('"'):
             return etag[1:-1]
 
+    @metric_timer('ingester.upload_file', async=False)
     def upload_file(self, path):
         s3 = boto3.resource('s3')
         basename, extension = get_basename_and_extension(path)

@@ -1,5 +1,6 @@
 import requests
 import logging
+from opentsdb_python_metrics.metric_wrappers import metric_timer
 
 from ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, RetryError
 
@@ -31,6 +32,7 @@ class ArchiveService(object):
         except KeyError as exc:
             raise BackoffRetryError(exc)
 
+    @metric_timer('ingester.post_frame', async=False)
     def post_frame(self, fits_dict):
         response = requests.post(
             '{0}frames/'.format(self.api_root), json=fits_dict, headers=self.headers
