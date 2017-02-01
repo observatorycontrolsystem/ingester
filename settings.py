@@ -32,6 +32,7 @@ dictConfig(logConf)
 task_soft_time_limit = 1200
 task_time_limit = 3600
 worker_prefetch_multiplier = 1
+worker_max_tasks_per_child = 10
 
 #  General settings
 broker_url = os.getenv('BROKER_URL', 'memory://localhost')

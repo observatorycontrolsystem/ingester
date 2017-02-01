@@ -1,4 +1,5 @@
 from astropy import wcs
+from opentsdb_python_metrics.metric_wrappers import metric_timer
 import tarfile
 import hashlib
 import os
@@ -6,6 +7,7 @@ import os
 from ingester.exceptions import DoNotRetryError, RetryError
 
 
+@metric_timer('ingester.get_fits', async=False)
 def get_fits_from_path(path):
     protocal_preface = 's3://'
     try:
@@ -20,6 +22,7 @@ def get_fits_from_path(path):
         raise RetryError(exc)
 
 
+@metric_timer('ingester.get_md5', async=False)
 def get_md5(path):
     try:
         return hashlib.md5(open(path, 'rb').read()).hexdigest()
