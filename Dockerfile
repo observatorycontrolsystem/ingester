@@ -3,8 +3,10 @@ ENV VERSION 1
 ENV PYTHONBUFFERED 1
 ENV APPLICATION_ROOT /ingester
 
-RUN apt-get update
-RUN apt-get install -y supervisor
+RUN apt-get update \
+        && apt-get install -y supervisor \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt $APPLICATION_ROOT/
 RUN pip install -r $APPLICATION_ROOT/requirements.txt --trusted-host=buildsba.lco.gtn \
