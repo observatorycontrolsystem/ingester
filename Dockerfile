@@ -7,7 +7,8 @@ RUN apt-get update
 RUN apt-get install -y supervisor
 
 COPY requirements.txt $APPLICATION_ROOT/
-RUN pip install -r $APPLICATION_ROOT/requirements.txt --trusted-host=buildsba.lco.gtn
+RUN pip install -r $APPLICATION_ROOT/requirements.txt --trusted-host=buildsba.lco.gtn \
+    && rm -rf ~/.cache/pip ~/.pip
 
 COPY deploy/supervisor-app.conf /etc/supervisor/conf.d/
 
