@@ -2,6 +2,13 @@ FROM python:3.5
 ENV VERSION 1
 ENV PYTHONBUFFERED 1
 ENV APPLICATION_ROOT /ingester
+ENV C_FORCE_ROOT true
+
+EXPOSE 5555
+
+CMD ["supervisord", "-n"]
+
+RUN mkdir -p $APPLICATION_ROOT
 
 RUN apt-get update \
         && apt-get install -y supervisor \
@@ -14,11 +21,4 @@ RUN pip install -r $APPLICATION_ROOT/requirements.txt --trusted-host=buildsba.lc
 
 COPY deploy/supervisor-app.conf /etc/supervisor/conf.d/
 
-RUN mkdir -p $APPLICATION_ROOT
 ADD . $APPLICATION_ROOT
-
-ENV C_FORCE_ROOT true
-
-EXPOSE 5555
-
-CMD ["supervisord", "-n"]
