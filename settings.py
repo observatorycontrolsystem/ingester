@@ -41,7 +41,7 @@ API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000/')
 AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 
 # Files we wish to ignore
-DISALLOWED_CHARS = ['-t00', '-x00', '-g00', '-l00', '-kb11', '-kb15']
+DISALLOWED_CHARS = ['-t00', '-x00', '-g00', '-l00', '-kb11', '-kb15', 'tstnrs']
 
 # Fits headers we don't want to ingest
 HEADER_BLACKLIST = ('HISTORY', 'COMMENT', '')
