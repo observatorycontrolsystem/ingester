@@ -44,7 +44,7 @@ class Listener(ConsumerMixin):
 
 
 if __name__ == '__main__':
-    logger.info('starting listener')
+    logger.info('starting listener on ' + settings.FITS_BROKER)
     listener = Listener(
         settings.FITS_BROKER
     )
