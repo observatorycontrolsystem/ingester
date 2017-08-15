@@ -43,8 +43,8 @@ def get_basename_and_extension(path):
 
 def get_meta_file_from_targz(path):
     tf = tarfile.open(path, 'r')
-    for member in tf.getnames():
-        if 'e00' in member or 'e90' in member:
+    for member in tf.getmembers():
+        if any(x + '.fits' in member.name for x in ['e00', 'e90', 'e91']) and member.isfile():
             return tf.extractfile(member)
     raise DoNotRetryError('Spectral package missing meta fits!')
 

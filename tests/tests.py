@@ -30,6 +30,11 @@ SPECTRO_FILE = os.path.join(
     'KEY2014A-002_0000483537_ftn_20160119_57407.tar.gz'
 )
 
+NRES_FILE = os.path.join(
+    FITS_PATH,
+    'lscnrs01-fl09-20170716-0016-e91.tar.gz'
+)
+
 
 def mock_hashlib_md5(*args, **kwargs):
     class MockHash(object):
@@ -144,8 +149,15 @@ class TestIngester(unittest.TestCase):
         self.assertEqual(90, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
         self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
 
+    def test_nres_package(self):
+        ingester = self.create_ingester_for_path(NRES_FILE)
+        ingester.ingest()
+        self.assertEqual(91, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
+        self.assertEqual('TARGET', self.archive_mock.post_frame.call_args[0][0]['OBSTYPE'])
+        self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
+
     def test_spectrograph_missing_meta(self):
-        tarfile.TarFile.getnames = MagicMock(return_value=[''])
+        tarfile.TarFile.getmembers = MagicMock(return_value=[])
         ingester = self.create_ingester_for_path(SPECTRO_FILE)
         with self.assertRaises(DoNotRetryError):
             ingester.ingest()
