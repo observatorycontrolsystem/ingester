@@ -1,3 +1,7 @@
+1.19
+2017-08-17
+Add some handling for NRES data products
+
 1.18
 2017-07-26
 Upgrade astropy to 2.0 and celery to 4.1
