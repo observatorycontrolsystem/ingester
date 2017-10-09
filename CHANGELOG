@@ -1,3 +1,7 @@
+1.20
+2017-10-09
+Check for NAXIS1 & 2 before attempting to get area of the frame
+
 1.19
 2017-08-17
 Add some handling for NRES data products
