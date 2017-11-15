@@ -64,8 +64,8 @@ def wcs_corners_from_dict(fits_dict):
         dec = fits_dict['DEC']
         r = fits_dict['RADIUS']
 
-        radius_in_degrees = r/3600
-        ra_in_degrees = ra * 15
+        radius_in_degrees = r/3600.0
+        ra_in_degrees = ra * 15.0
 
         c1 = (ra_in_degrees - radius_in_degrees, dec + radius_in_degrees)
         c2 = (ra_in_degrees + radius_in_degrees, dec + radius_in_degrees)
