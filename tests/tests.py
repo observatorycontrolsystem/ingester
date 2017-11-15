@@ -32,7 +32,7 @@ SPECTRO_FILE = os.path.join(
 
 NRES_FILE = os.path.join(
     FITS_PATH,
-    'lscnrs01-fl09-20170716-0016-e91.tar.gz'
+    'lscnrs01-fl09-20171109-0049-e91.tar.gz'
 )
 
 
@@ -152,7 +152,8 @@ class TestIngester(unittest.TestCase):
     def test_nres_package(self):
         ingester = self.create_ingester_for_path(NRES_FILE)
         ingester.ingest()
-        self.assertEqual(90, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
+        self.assertEqual('Polygon', self.archive_mock.post_frame.call_args[0][0]['area']['type'])
+        self.assertEqual(91, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
         self.assertEqual('TARGET', self.archive_mock.post_frame.call_args[0][0]['OBSTYPE'])
         self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
 

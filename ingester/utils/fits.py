@@ -55,18 +55,35 @@ def wcs_corners_from_dict(fits_dict):
     Then assemble a Polygon following the GeoJSON spec: http://geojson.org/geojson-spec.html#id4
     Note there are 5 positions. The last is the same as the first. We are defining lines,
     and you must close the polygon.
+
+    If this is a spectrograph (NRES only at the moment) then construct it out of the ra/dec
+    and radius.
     """
-    if any([fits_dict.get(k) is None for k in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2', 'NAXIS1', 'NAXIS2']]) or \
+    if fits_dict.get('RADIUS'):
+        ra = fits_dict['RA']
+        dec = fits_dict['DEC']
+        r = fits_dict['RADIUS']
+
+        radius_in_degrees = r/3600
+        ra_in_degrees = ra * 15
+
+        c1 = (ra_in_degrees - radius_in_degrees, dec + radius_in_degrees)
+        c2 = (ra_in_degrees + radius_in_degrees, dec + radius_in_degrees)
+        c3 = (ra_in_degrees + radius_in_degrees, dec - radius_in_degrees)
+        c4 = (ra_in_degrees - radius_in_degrees, dec - radius_in_degrees)
+
+    elif any([fits_dict.get(k) is None for k in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2', 'NAXIS1', 'NAXIS2']]) or \
             fits_dict.get('NAXIS3') is not None:
         # This file doesn't have sufficient information to provide an area
         return None
 
-    # Find the RA and Dec coordinates of all 4 corners of the image
-    w = wcs.WCS(fits_dict)
-    c1 = w.all_pix2world(1, 1, 1)
-    c2 = w.all_pix2world(1, fits_dict['NAXIS2'], 1)
-    c3 = w.all_pix2world(fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1)
-    c4 = w.all_pix2world(fits_dict['NAXIS1'], 1, 1)
+    else:
+        # Find the RA and Dec coordinates of all 4 corners of the image
+        w = wcs.WCS(fits_dict)
+        c1 = w.all_pix2world(1, 1, 1)
+        c2 = w.all_pix2world(1, fits_dict['NAXIS2'], 1)
+        c3 = w.all_pix2world(fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1)
+        c4 = w.all_pix2world(fits_dict['NAXIS1'], 1, 1)
 
     return {
         'type': 'Polygon',
