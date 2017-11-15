@@ -1,3 +1,7 @@
+1.21
+2017-11-15
+Add support for area search on NRES CDP
+
 1.20
 2017-10-09
 Check for NAXIS1 & 2 before attempting to get area of the frame
