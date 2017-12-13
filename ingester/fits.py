@@ -13,7 +13,7 @@ logger = logging.getLogger('ingester')
 class FitsDict(object):
 
     CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
-    PUBLIC_PROPOSALS = ['EPO', 'calib', 'standard']
+    PUBLIC_PROPOSALS = ['EPO', 'calib', 'standard', 'pointing']
     INTEGER_TYPES = ['BLKUID', 'REQNUM']
 
     def __init__(self, path, required_headers, blacklist_headers):
