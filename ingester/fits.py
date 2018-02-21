@@ -23,7 +23,7 @@ class FitsDict(object):
         self.basename, self.extension = get_basename_and_extension(self.path)
 
     def get_hdu_with_required_headers(self):
-        hdulist = fits.open(get_fits_from_path(self.path), mode='denywrite')
+        hdulist = fits.open(get_fits_from_path(self.path), mode='readonly')
         for hdu in hdulist:
             fits_dict = dict(hdu.header)
             if any([k for k in self.required_headers if k not in fits_dict]):
