@@ -1,3 +1,6 @@
+1.24
+Upgrade python-dateutil to 2.7
+
 1.23
 2018-03-05
 Upgrade Boto3 to 1.6.3
