@@ -1,3 +1,6 @@
+1.25
+Upgrade boto3 to 1.7
+
 1.24
 Upgrade python-dateutil to 2.7
 
