@@ -62,8 +62,8 @@ class S3Service(object):
 
     def get_file(self, path):
         s3 = boto3.resource('s3')
-        protocal_preface = 's3://'
-        plist = path[len(protocal_preface):].split('/')
+        protocol_preface = 's3://'
+        plist = path[len(protocol_preface):].split('/')
         bucket = plist[0]
         key = '/'.join(plist[1:])
         o = s3.Object(key=key, bucket_name=bucket)

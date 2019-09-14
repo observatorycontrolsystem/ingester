@@ -9,11 +9,11 @@ from ingester.exceptions import DoNotRetryError, RetryError
 
 @metric_timer('ingester.get_fits', async=False)
 def get_fits_from_path(path):
-    protocal_preface = 's3://'
+    protocol_preface = 's3://'
     try:
         if 'tar.gz' in path:
             return get_meta_file_from_targz(path)
-        elif path.startswith(protocal_preface):
+        elif path.startswith(protocol_preface):
             from ingester.s3 import S3Service
             return S3Service('').get_file(path)
         else:
