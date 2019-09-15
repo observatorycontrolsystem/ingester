@@ -1,3 +1,7 @@
+1.27
+2019-09-14
+Automatically use STANDARD_IA storage class when appropriate
+
 1.26
 2019-08-06
 Update astropy to 2.3.X
