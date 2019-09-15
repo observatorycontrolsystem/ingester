@@ -78,7 +78,7 @@ class FitsDict(object):
                     any([prop in self.fits_dict['PROPID'] for prop in self.PUBLIC_PROPOSALS])):
                 self.fits_dict['L1PUBDAT'] = self.fits_dict['DATE-OBS']
             else:
-                # This should be proprietarty, set it to a year from DATE-OBS
+                # This should be proprietary, set it to a year from DATE-OBS
                 self.fits_dict['L1PUBDAT'] = (
                     parse(self.fits_dict['DATE-OBS']) + timedelta(days=365)
                 ).isoformat()
