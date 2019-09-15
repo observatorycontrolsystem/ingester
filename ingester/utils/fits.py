@@ -1,5 +1,8 @@
-from astropy import wcs
 from opentsdb_python_metrics.metric_wrappers import metric_timer
+from dateutil.relativedelta import relativedelta
+from dateutil.parser import parse
+from astropy import wcs
+import datetime
 import tarfile
 import hashlib
 import os
@@ -112,6 +115,20 @@ def wcs_corners_from_dict(fits_dict):
             ]
         ]
     }
+
+
+def get_storage_class(fits_dict):
+    # date of the observation, from the FITS headers
+    dateobs = parse(fits_dict['DATE-OBS'])
+
+    # if the observation was more than 6 months ago, this is someone
+    # uploading older data, and it can skip straight to STANDARD_IA
+    if dateobs < (datetime.datetime.utcnow() + relativedelta(months=-6)):
+        return 'STANDARD_IA'
+
+    # everything else goes into the STANDARD storage class, and will
+    # be switched to STANDARD_IA by S3 Lifecycle Rules
+    return 'STANDARD'
 
 
 def reduction_level(basename, extension):
