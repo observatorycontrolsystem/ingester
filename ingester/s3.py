@@ -35,7 +35,7 @@ class S3Service(object):
             return etag[1:-1]
 
     @metric_timer('ingester.upload_file', async=False)
-    def upload_file(self, path):
+    def upload_file(self, path, storage_class):
         s3 = boto3.resource('s3')
         basename, extension = get_basename_and_extension(path)
         key = self.basename_to_s3_key(basename)
@@ -45,7 +45,8 @@ class S3Service(object):
             response = s3.Object(self.bucket, key).put(
                 Body=open(path, 'rb'),
                 ContentDisposition=content_disposition,
-                ContentType=content_type
+                ContentType=content_type,
+                StorageClass=storage_class,
             )
         except (requests.exceptions.ConnectionError,
                 EndpointConnectionError, ConnectionClosedError) as exc:
@@ -56,6 +57,7 @@ class S3Service(object):
             'tags': {
                 'filename': '{}{}'.format(basename, extension),
                 'key': key,
+                'storage_class': storage_class,
             }
         })
         return {'key': key, 'md5':  s3_md5, 'extension': extension}

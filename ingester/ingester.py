@@ -1,6 +1,9 @@
 from ingester.fits import FitsDict
 from ingester.exceptions import BackoffRetryError
-from ingester.utils.fits import get_basename_and_extension, wcs_corners_from_dict, get_md5
+from ingester.utils.fits import get_basename_and_extension
+from ingester.utils.fits import wcs_corners_from_dict
+from ingester.utils.fits import get_storage_class
+from ingester.utils.fits import get_md5
 
 
 class Ingester(object):
@@ -27,8 +30,11 @@ class Ingester(object):
         # Transform this fits file into a cleaned dictionary
         fits_dict = FitsDict(self.path, self.required_headers, self.blacklist_headers).as_dict()
 
+        # Figure out the storage class to use based on the date of the observation
+        storage_class = get_storage_class(fits_dict)
+
         # Upload the file to s3 and get version information back
-        version = self.s3.upload_file(self.path)
+        version = self.s3.upload_file(self.path, storage_class)
 
         # Make sure our md5 matches amazons
         if version['md5'] != md5:
