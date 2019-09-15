@@ -1,3 +1,7 @@
+Jenkinsfile
+docker-compose.yml
+CHANGELOG
+README.md
 tests/
 scratch/
 .git/
