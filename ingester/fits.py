@@ -1,6 +1,7 @@
 import logging
-from astropy.io import fits
 from datetime import timedelta
+
+from astropy.io import fits
 from dateutil.parser import parse
 
 from ingester.exceptions import DoNotRetryError
