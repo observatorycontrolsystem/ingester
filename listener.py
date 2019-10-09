@@ -1,7 +1,7 @@
 #!/bin/env python
 import tasks
 import sys
-import settings
+from settings import settings
 import logging
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue, Exchange
