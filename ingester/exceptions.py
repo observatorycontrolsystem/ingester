@@ -33,3 +33,4 @@ class NonFatalDoNotRetryError(Exception):
     An exception has been raised, but everything
     should be OK anyway
     """
+    pass
