@@ -15,7 +15,7 @@ from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, 
 
 logger = logging.getLogger('ingester')
 app = Celery('tasks')
-app.config_from_object('settings')
+app.config_from_object('settings.settings')
 
 
 def task_log(task):
@@ -42,15 +42,15 @@ def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_hea
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     s3 = S3Service(bucket)
     post_proc = PostProcService(broker_url)
-
     try:
-        ingester = Ingester(path, s3, archive, post_proc, required_headers, blacklist_headers)
-        ingester.ingest()
+        ingester = Ingester(path, s3, archive, required_headers, blacklist_headers)
+        ingested_frame = ingester.ingest()
+        post_proc.post_to_archived_queue(ingested_frame)
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
         raise exc
     except NonFatalDoNotRetryError as exc:
-        logger.warn('Non-fatal Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
+        logger.warning('Non-fatal Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
         return
     except BackoffRetryError as exc:
         if task_should_retry(self, exc):
@@ -71,7 +71,7 @@ def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_hea
 
 def task_should_retry(task, exception):
     if task.request.retries < task.max_retries:
-        logger.warn(
+        logger.warning(
             'Exception occured: {0}. Will retry'.format(exception),
             extra=task_log(task)
         )

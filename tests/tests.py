@@ -1,14 +1,15 @@
 from unittest.mock import MagicMock
-import opentsdb_python_metrics.metric_wrappers
 import unittest
 import os
 import tarfile
-import dateutil
 import hashlib
 
+import opentsdb_python_metrics.metric_wrappers
+import dateutil
+
 from ingester.ingester import Ingester
-from ingester.exceptions import DoNotRetryError, RetryError
-import settings
+from ingester.exceptions import DoNotRetryError, RetryError, NonFatalDoNotRetryError
+from settings import settings
 
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 
@@ -52,18 +53,17 @@ class TestIngester(unittest.TestCase):
         hashlib.md5 = MagicMock(side_effect=mock_hashlib_md5)
         fits_files = [os.path.join(FITS_PATH, f) for f in os.listdir(FITS_PATH)]
         self.archive_mock = MagicMock()
+        self.archive_mock.version_exists.return_value = False
         self.s3_mock = MagicMock()
         self.s3_mock.upload_file = MagicMock(return_value={'md5': 'fakemd5'})
-        self.post_proc_mock = MagicMock()
         self.ingesters = [
             Ingester(
                 path=path,
                 s3=self.s3_mock,
                 archive=self.archive_mock,
-                post_proc=self.post_proc_mock,
                 required_headers=settings.REQUIRED_HEADERS,
                 blacklist_headers=settings.HEADER_BLACKLIST,
-                )
+            )
             for path in fits_files
         ]
 
@@ -72,7 +72,6 @@ class TestIngester(unittest.TestCase):
             path=path,
             s3=self.s3_mock,
             archive=self.archive_mock,
-            post_proc=self.post_proc_mock,
             blacklist_headers=settings.HEADER_BLACKLIST,
             required_headers=settings.REQUIRED_HEADERS
         )
@@ -83,7 +82,13 @@ class TestIngester(unittest.TestCase):
             ingester.ingest()
             self.assertTrue(self.s3_mock.upload_file.called)
             self.assertTrue(self.archive_mock.post_frame.called)
-            self.assertTrue(self.post_proc_mock.post_to_archived_queue.called)
+
+    def test_ingest_file_already_exists(self):
+        self.archive_mock.version_exists.return_value = True
+        with self.assertRaises(NonFatalDoNotRetryError):
+            self.ingesters[0].ingest()
+        self.assertFalse(self.s3_mock.upload_file.called)
+        self.assertFalse(self.archive_mock.post_frame.called)
 
     def test_missing_file(self):
         ingester = self.create_ingester_for_path('/path/doesnot/exist.fits.fz')

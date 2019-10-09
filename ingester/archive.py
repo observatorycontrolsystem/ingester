@@ -1,8 +1,9 @@
-import requests
 import logging
+
+import requests
 from opentsdb_python_metrics.metric_wrappers import metric_timer
 
-from ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, RetryError
+from ingester.exceptions import BackoffRetryError, RetryError
 
 logger = logging.getLogger('ingester')
 
@@ -21,16 +22,15 @@ class ArchiveService(object):
             raise RetryError(exc)
         return response.json()
 
-    def check_for_existing_version(self, md5):
+    def version_exists(self, md5):
         response = requests.get(
             '{0}versions/?md5={1}'.format(self.api_root, md5), headers=self.headers
         )
         result = self.handle_response(response)
         try:
-            if result['count'] > 0:
-                raise NonFatalDoNotRetryError('Version with this md5 already exists')
-        except KeyError as exc:
-            raise BackoffRetryError(exc)
+            return result['count'] > 0
+        except KeyError as e:
+            raise BackoffRetryError(e)
 
     @metric_timer('ingester.post_frame', async=False)
     def post_frame(self, fits_dict):

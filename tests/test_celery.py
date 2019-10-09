@@ -1,9 +1,11 @@
 import unittest
-import settings
 from unittest.mock import patch
+
 from celery.exceptions import SoftTimeLimitExceeded
 
+from settings import settings
 from ingester.ingester import Ingester
+from tasks import PostProcService
 from tasks import do_ingest
 from ingester.exceptions import DoNotRetryError, BackoffRetryError
 
@@ -11,11 +13,16 @@ from ingester.exceptions import DoNotRetryError, BackoffRetryError
 class TestCelery(unittest.TestCase):
     def setUp(self):
         settings.task_always_eager = True
+        postproc_patcher = patch.object(PostProcService, 'post_to_archived_queue')
+        self.postproc_mock = postproc_patcher.start()
+        self.addCleanup(postproc_patcher.stop)
 
-    @patch.object(Ingester, 'ingest', return_value=None)
+    @patch.object(Ingester, 'ingest')
     def test_task_success(self, ingest_mock):
+        ingest_mock.return_value = {}
         result = do_ingest.delay(None, None, None, None, None, None, None)
         self.assertTrue(result)
+        self.assertTrue(self.postproc_mock.called)
 
     @patch.object(Ingester, 'ingest', side_effect=DoNotRetryError('missing file'))
     def test_task_failure(self, ingest_mock):
