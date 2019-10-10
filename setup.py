@@ -1,7 +1,5 @@
 from setuptools import setup
 
-# TODO: Add license info
-
 # Read the contents of the README
 from os import path
 this_directory = path.abspath(path.dirname(__file__))
@@ -17,6 +15,9 @@ setup(
     url='https://github.com/LCOGT/ingester',
     packages=['ingester', 'settings', 'scripts'],
     python_requires='>=3.5',
+    classifiers=[
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
+    ],
     install_requires=[
         'astropy>=3.2,<3.3',
         'requests>=2.0,<3.0',
