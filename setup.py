@@ -23,7 +23,7 @@ setup(
         'boto3>=1.7,<1.8',
         'python-dateutil>=2.7,<2.8',
         'lcogt-logging',
-        'opentsdb_python_metrics'
+        'opentsdb_python_metrics>=0.1.8'
     ],
     entry_points={
         'console_scripts': [
