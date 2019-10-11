@@ -53,7 +53,7 @@ def upload_file_to_s3(path, **kwargs):
     """
     # TODO: Add transfer acceleration option.
     bucket = kwargs.get('bucket') or settings.BUCKET
-    storage_class = kwargs('storage_class') or 'STANDARD'
+    storage_class = kwargs.get('storage_class') or 'STANDARD'
     s3 = S3Service(bucket)
     # Returns the version, which holds in it the md5 that was uploaded
     return s3.upload_file(path, storage_class)
