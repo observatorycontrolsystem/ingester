@@ -60,13 +60,21 @@ Ingester Library API
 
 ---
 
-    
-
-
----
 
 For Developers
 ==============
+
+Running the Tests
+-------------
+The first thing you'll probably want to do after you clone the repo is run the tests:
+
+```
+$ cd ingester # the repo you just cloned
+$ /path/to/python -m venv venv
+$ source venv/bin/activate
+(venv) $ pip install -r requirements.txt
+(venv) $ tox
+````
 
 Setup
 -----
