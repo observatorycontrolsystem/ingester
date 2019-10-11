@@ -90,7 +90,7 @@ def collect_queue_length_metric(rabbit_api_root):
         '{0}api/queues/%2f/celery/'.format(rabbit_api_root),
         auth=HTTPBasicAuth('guest', 'guest')
     ).json()
-    send_tsdb_metric('ingester.queue_length', response['messages'], asynchronous=False)
+    send_tsdb_metric('ingester.queue_length', response['messages'])
 
 
 @app.task
@@ -100,4 +100,4 @@ def total_holdings(api_root, auth_token):
         '{0}frames/'.format(api_root),
         headers={'Authorization': 'Token {0}'.format(auth_token)}
     ).json()
-    send_tsdb_metric('archive.total_products', response['count'], asynchronous=False)
+    send_tsdb_metric('archive.total_products', response['count'])

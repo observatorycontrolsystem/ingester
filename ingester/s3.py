@@ -34,7 +34,7 @@ class S3Service(object):
         if etag.startswith('"') and etag.endswith('"'):
             return etag[1:-1]
 
-    @metric_timer('ingester.upload_file', asynchronous=False)
+    @metric_timer('ingester.upload_file')
     def upload_file(self, path, storage_class):
         s3 = boto3.resource('s3')
         basename, extension = get_basename_and_extension(path)
