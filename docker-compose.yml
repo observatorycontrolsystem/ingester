@@ -17,7 +17,7 @@ ingester:
                 AWS_SECRET_ACCESS_KEY: vIN9d1kNm+9Ny7dAe6au2Ua9cGoy76WZ63zpAH2K
                 AWS_DEFAULT_REGION: us-west-2
                 API_ROOT: http://cerberus.lco.gtn/
-                BOSUN_HOSTNAME: alerts.lco.gtn
+                OPENTSDB_PYTHON_METRICS_TEST_MODE: True
                 OPENTSDB_HOSTNANE: opentsdb.lco.gtn
                 AUTH_TOKEN: 48d03ec62ce69fef68bd545a751ccb1efef689a5
         volumes:
