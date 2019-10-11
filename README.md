@@ -11,6 +11,63 @@ Rabbitmq
 
 Archive API
 
+For Library Clients
+===================
+
+Ingester Library API
+--------------------
+<!-- TODO: convert this to use pydoc and the function docstrings --> 
+
+    frame_exists(path, **kwargs)
+    
+    Checks if the frame exists in the archive.
+
+---
+    validate_fits_and_create_archive_record(path, **kwargs)
+    
+    Validate the fits file and also create an archive record from it.
+    After this step the version would still be missing
+    Returns the constructed record
+
+---
+    upload_file_to_s3(path, **kwargs)
+    
+    Uploads a file to s3.
+
+---
+    ingest_archive_record(version, record, **kwargs)
+    
+    Ingest an archive record.
+
+---
+    upload_file_and_ingest_to_archive(path, **kwargs)
+     
+    Ingest and upload a file.
+    Includes safety checks and the option to record metrics for various steps.
+
+---
+    class Ingester(object):
+        def __init__(self, path, s3, archive, required_headers=None, blacklist_headers=None)
+
+    Ingest a single file into the archive.
+    A single instance of this class is responsible for parsing a fits file,
+    uploading the data to s3, and making a call to the archive api.
+    
+    For example,
+    
+    ingester = Ingester(...)
+    fits_dict = ingester.ingest()
+
+---
+
+    
+
+
+---
+
+For Developers
+==============
+
 Setup
 -----
 
