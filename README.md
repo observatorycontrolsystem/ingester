@@ -1,21 +1,40 @@
-Archive Ingester
-================
-
+# Archive Ingester
 This application watches a queue for filenames, uploads .fits files to s3,
 and posts to the archive API new data products.
 
-Requirements
-------------
+In addition to the application, this repository provides a client API.
 
-Rabbitmq
+## Requirements
 
-Archive API
+- Rabbitmq
+- Archive API
 
-For Library Clients
-===================
+## For Library Clients
 
-Ingester Library API
---------------------
+### Usage
+(This is a work-in-progress and assumes the ingester is released to PyPI)
+
+#### Set up your environment
+Add the `ingester` package to your python environment:
+
+`(venv) $ pip install ingester`
+ 
+**or** , add the `ingester` package to your `requirements.txt`. Then,
+
+`(venv) $ pip install -r requirements.txt`
+ 
+#### Sample Code
+<!-- TODO: Make this section an example of real, working code. -->
+
+```python
+import ingester
+
+# TODO: make this an example of real, working code
+ingester = ingester.Ingester()
+fits_dict = ingester.ingest()
+```
+
+### Ingester Library API
 <!-- TODO: convert this to use pydoc and the function docstrings --> 
 
     frame_exists(path, **kwargs)
@@ -61,11 +80,9 @@ Ingester Library API
 ---
 
 
-For Developers
-==============
+## For Developers
 
-Running the Tests
--------------
+### Running the Tests
 The first thing you'll probably want to do after you clone the repo is run the tests:
 
 ```
@@ -76,8 +93,8 @@ $ source venv/bin/activate
 (venv) $ tox
 ````
 
-Setup
------
+### Setup
+<!-- TODO: Explain this. (I'm not sure how to explain this section). -->
 
 You will need a rabbitmq server running. The environmental variable `BROKER_URL`
 should point to it. There are a few configuration options, see `settings.py`
@@ -91,8 +108,8 @@ should be set:
     BUCKET
 
 
-Running
--------
+### Running
+<!-- TODO: Explain this. (I'm not sure how to explain this section). -->
 
 `listener.py` Will listen on the configured queue for new messages. When once is recieved,
 it will launch an asynchronous celery task to ingest the file.
