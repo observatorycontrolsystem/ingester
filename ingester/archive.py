@@ -32,7 +32,7 @@ class ArchiveService(object):
         except KeyError as e:
             raise BackoffRetryError(e)
 
-    @metric_timer('ingester.post_frame', asynchronous=False)
+    @metric_timer('ingester.post_frame')
     def post_frame(self, fits_dict):
         response = requests.post(
             '{0}frames/'.format(self.api_root), json=fits_dict, headers=self.headers

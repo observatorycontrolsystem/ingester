@@ -10,7 +10,7 @@ import os
 from ingester.exceptions import DoNotRetryError, RetryError
 
 
-@metric_timer('ingester.get_fits', asynchronous=False)
+@metric_timer('ingester.get_fits')
 def get_fits_from_path(path):
     protocol_preface = 's3://'
     try:
@@ -25,7 +25,7 @@ def get_fits_from_path(path):
         raise RetryError(exc)
 
 
-@metric_timer('ingester.get_md5', asynchronous=False)
+@metric_timer('ingester.get_md5')
 def get_md5(path):
     try:
         return hashlib.md5(open(path, 'rb').read()).hexdigest()
