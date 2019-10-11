@@ -43,17 +43,17 @@ def validate_fits_and_create_archive_record(path, **kwargs):
     return json_record
 
 
-def upload_file_to_s3(path, storage_class, **kwargs):
+def upload_file_to_s3(path, **kwargs):
     """
     Uploads a file to s3.
 
     :param path: Path to file
-    :param storage_class: The S3 storage class to use
     :param kwargs: Other keyword arguments
-    :return: Version information for file that was uploaded
+    :return: Version information for the file that was uploaded
     """
     # TODO: Add transfer acceleration option.
     bucket = kwargs.get('bucket') or settings.BUCKET
+    storage_class = kwargs('storage_class') or 'STANDARD'
     s3 = S3Service(bucket)
     # Returns the version, which holds in it the md5 that was uploaded
     return s3.upload_file(path, storage_class)
