@@ -3,6 +3,7 @@ tags
 
 # virtualenv
 .venv
+venv
 
 # celerybeat stuff
 celerybeat.pid
@@ -10,8 +11,11 @@ celerybeat-schedule
 # Local congfig
 local_config.json
 
-# vim swap files
+# vim swap files and emacs drit, ide settings
 *.swp
+*~
+.idea
+
 # Scratch folder
 scratch/
 
