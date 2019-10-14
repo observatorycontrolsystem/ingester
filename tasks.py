@@ -30,7 +30,7 @@ def task_log(task):
 
 
 @app.task(bind=True, max_retries=3, default_retry_delay=3 * 60)
-@metric_timer('ingester', async=False)
+@metric_timer('ingester', asynchronous=False)
 def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_headers, blacklist_headers):
     """
     Create a new instance of an Ingester and run it's
@@ -90,14 +90,14 @@ def collect_queue_length_metric(rabbit_api_root):
         '{0}api/queues/%2f/celery/'.format(rabbit_api_root),
         auth=HTTPBasicAuth('guest', 'guest')
     ).json()
-    send_tsdb_metric('ingester.queue_length', response['messages'], async=False)
+    send_tsdb_metric('ingester.queue_length', response['messages'])
 
 
 @app.task
-@metric_timer('archive.response_time', async=False)
+@metric_timer('archive.response_time', asynchronous=False)
 def total_holdings(api_root, auth_token):
     response = requests.get(
         '{0}frames/'.format(api_root),
         headers={'Authorization': 'Token {0}'.format(auth_token)}
     ).json()
-    send_tsdb_metric('archive.total_products', response['count'], async=False)
+    send_tsdb_metric('archive.total_products', response['count'])
