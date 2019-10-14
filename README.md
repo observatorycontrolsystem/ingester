@@ -90,7 +90,7 @@ $ cd ingester # the repo you just cloned
 $ /path/to/python -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt
-(venv) $ tox
+(venv) $ pytest
 ````
 
 ### Setup
