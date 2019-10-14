@@ -51,9 +51,8 @@ def upload_file_to_s3(path, **kwargs):
     :param kwargs: Other keyword arguments
     :return: Version information for the file that was uploaded
     """
-    # TODO: Add transfer acceleration option.
     bucket = kwargs.get('bucket') or settings.BUCKET
-    storage_class = kwargs('storage_class') or 'STANDARD'
+    storage_class = kwargs.get('storage_class') or 'STANDARD'
     s3 = S3Service(bucket)
     # Returns the version, which holds in it the md5 that was uploaded
     return s3.upload_file(path, storage_class)
@@ -116,7 +115,6 @@ class Ingester(object):
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
     def ingest(self):
-        # TODO: Add transfer acceleration option
         self.basename, self.extension = get_basename_and_extension(self.path)
 
         # Get the Md5 checksum of this file and check if it already exists in the archive
