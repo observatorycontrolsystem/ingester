@@ -28,7 +28,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'frame_exists = scripts.frame_exists:main',
+            'ingest_frame = scripts.ingest_frame:main',
         ]
     }
 )
