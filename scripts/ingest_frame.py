@@ -3,6 +3,7 @@ import argparse
 import logging
 
 from ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
+from ingester.utils.fits import get_fits_from_path
 
 logger = logging.getLogger('ingester')
 
@@ -17,14 +18,14 @@ def main():
                                                                    returns a status code of 0 if found, 1 if not.')
     args = parser.parse_args()
 
+    fileobj = get_fits_from_path(args.path)
+
     if args.check_only:
-        with open(args.path, 'rb') as fileobj:
-            exists = frame_exists(fileobj, api_root=args.api_root, auth_token=args.auth_token)
+        exists = frame_exists(fileobj, api_root=args.api_root, auth_token=args.auth_token)
         logger.info(exists)
         return int(not exists)
 
-    with open(args.path, 'rb') as fileobj:
-        return upload_file_and_ingest_to_archive(fileobj=fileobj, **vars(args))
+    return upload_file_and_ingest_to_archive(fileobj=fileobj, **vars(args))
 
 
 if __name__ == '__main__':
