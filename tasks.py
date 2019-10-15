@@ -2,10 +2,12 @@ from requests.auth import HTTPBasicAuth
 from opentsdb_python_metrics.metric_wrappers import metric_timer, send_tsdb_metric
 from celery import Celery
 from celery.exceptions import SoftTimeLimitExceeded
+from logging.config import dictConfig
 import logging
 import os
 import requests
 
+from settings.settings import logConf
 from ingester.archive import ArchiveService
 from ingester.s3 import S3Service
 from ingester.postproc import PostProcService
@@ -13,9 +15,10 @@ from ingester.ingester import Ingester
 from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 
 
+dictConfig(logConf)
 logger = logging.getLogger('ingester')
 app = Celery('tasks')
-app.config_from_object('settings.settings')
+app.config_from_object('settings.settings.celery_config')
 
 
 def task_log(task):

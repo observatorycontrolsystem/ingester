@@ -1,9 +1,13 @@
 #!/bin/env python3
 import argparse
 import logging
+from logging.config import dictConfig
 
 from ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
+from settings.settings import logConf
 
+# Set up logging
+dictConfig(logConf)
 logger = logging.getLogger('ingester')
 
 
