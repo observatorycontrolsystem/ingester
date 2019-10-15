@@ -6,11 +6,11 @@ Upload .fits files to S3 and post new data products to the Archive API.
 Add the `ingester` package to your python environment:
 
 `(venv) $ pip install ingester`
- 
+
 ## Configuration
 
-AWS and Archive API credentials must be set in order to upload data. Archive API configuration as well as the 
-AWS Bucket can be either passed in as kwargs or set as environment variables. The rest of the configuration must be 
+AWS and Archive API credentials must be set in order to upload data. Archive API configuration as well as the
+AWS Bucket can be either passed in as kwargs or set as environment variables. The rest of the configuration must be
 set as environment variables.
 
 #### Environment Variables
@@ -28,30 +28,30 @@ set as environment variables.
 
 
 ## Ingester Library API
-<!-- TODO: convert this to use pydoc and the function docstrings --> 
+<!-- TODO: convert this to use pydoc and the function docstrings -->
 
     frame_exists(path, **kwargs)
-    
+
     Checks if the frame exists in the archive.
 
 ---
     validate_fits_and_create_archive_record(path, **kwargs)
-    
+
     Validate the fits file and also create an archive record from it.
 
 ---
     upload_file_to_s3(path, **kwargs)
-    
+
     Upload a file to S3.
 
 ---
     ingest_archive_record(version, record, **kwargs)
-    
+
     Ingest an archive record.
 
 ---
     upload_file_and_ingest_to_archive(path, **kwargs)
-     
+
     Ingest and upload a file.
 
 ---
@@ -90,8 +90,8 @@ ingester.upload_file_and_ingest_to_archive('tst1mXXX-ab12-20191013-0001-e00.fits
 ```
 
 #### Using the command line entry point
-A command line script for ingesting data, and optionally only checking if that data already exists 
-in the Archive API, is available for use as well. 
+A command line script for ingesting data, and optionally only checking if that data already exists
+in the Archive API, is available for use as well.
 
 ```commandline
 ingest_frame --help  # See available options
@@ -114,13 +114,13 @@ In addition to the library, the code provides an application that watches a queu
 files as they appear.
 
 #### Setup
-You will need a RabbitMQ server running with the environment variable `FITS_BROKER` pointing to it. The other 
+You will need a RabbitMQ server running with the environment variable `FITS_BROKER` pointing to it. The other
 environment variables in the Configuration section should be set as well.
 
 #### Running
 `listener.py` Will listen on the configured queue for new messages. When one is received,
 it will launch an asynchronous celery task to ingest the file.
 
-`runcrawler.sh` is a convenience script that can be used to launch celery locally for testing.
+`run_celery.sh` is a convenience script that can be used to launch celery locally for testing.
 
 A `Dockerfile` is available that can be used to run the application.
