@@ -18,7 +18,7 @@ ingester:
                 AWS_DEFAULT_REGION: us-west-2
                 API_ROOT: http://cerberus.lco.gtn/
                 OPENTSDB_PYTHON_METRICS_TEST_MODE: True
-                OPENTSDB_HOSTNANE: opentsdb.lco.gtn
+                OPENTSDB_HOSTNAME: opentsdb.lco.gtn
                 AUTH_TOKEN: 48d03ec62ce69fef68bd545a751ccb1efef689a5
         volumes:
                 - "/archive:/archive"
