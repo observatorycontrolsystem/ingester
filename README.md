@@ -114,8 +114,9 @@ In addition to the library, the code provides an application that watches a queu
 files as they appear.
 
 #### Setup
-You will need a RabbitMQ server running with the environment variable `FITS_BROKER` pointing to it. The other 
-environment variables in the Configuration section should be set as well.
+You will need a RabbitMQ server running with the environment variable `BROKER_URL` pointing to it. You will also
+need to set the `FITS_BROKER` environment variable to the RabbitMQ to which the app is watching for new filenames. 
+The other environment variables in the Configuration section should be set as well.
 
 #### Running
 `listener.py` Will listen on the configured queue for new messages. When one is received,
