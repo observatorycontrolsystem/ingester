@@ -144,4 +144,5 @@ class Ingester(object):
         # Add some useful information from the result
         fits_dict['frameid'] = result.get('id')
         fits_dict['filename'] = result.get('filename')
+        fits_dict['url'] = result.get('url')
         return fits_dict
