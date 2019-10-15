@@ -24,21 +24,26 @@ def main():
     parser.add_argument('--auth-token', help='API token')
     parser.add_argument('--bucket', help='S3 bucket name')
     parser.add_argument('--check-only', action='store_true', help='Only check if the frame exists in the archive. \
-                                                                   returns a status code of 0 if found, 1 if not.')
+                                                                   returns a status code of 0 if found, 1 if not \
+                                                                   (or an error occured)')
     args = parser.parse_args()
 
     fileobj = get_fits_from_path(args.path)
 
     if args.check_only:
-        exists = frame_exists(fileobj, api_root=args.api_root, auth_token=args.auth_token)
+        try:
+            exists = frame_exists(fileobj, api_root=args.api_root, auth_token=args.auth_token)
+        except Exception as e:
+            sys.stdout.write(str(e))
+            sys.exit(1)
         sys.stdout.write(str(exists))
         sys.exit(int(not exists))
 
     try:
         result = upload_file_and_ingest_to_archive(fileobj=fileobj, **vars(args))
-    except NonFatalDoNotRetryError:
-        sys.stdout.write('File already exists in archive.')
-        sys.exit(1)
+    except NonFatalDoNotRetryError as e:
+        sys.stdout.write(str(e))
+        sys.exit(0)
     except Exception as e:
         sys.stdout.write('Exception uploading file: ')
         sys.stdout.write(str(e))
