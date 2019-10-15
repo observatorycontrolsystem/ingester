@@ -43,9 +43,13 @@ def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_hea
     s3 = S3Service(bucket)
     post_proc = PostProcService(broker_url)
     try:
-        ingester = Ingester(path, s3, archive, required_headers, blacklist_headers)
-        ingested_frame = ingester.ingest()
-        post_proc.post_to_archived_queue(ingested_frame)
+        with open(path, 'rb') as fileobj:
+            ingester = Ingester(fileobj, s3, archive, required_headers, blacklist_headers)
+            ingested_frame = ingester.ingest()
+            post_proc.post_to_archived_queue(ingested_frame)
+    except IOError as exc:
+        logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
+        raise DoNotRetryError("missing file")
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
         raise exc

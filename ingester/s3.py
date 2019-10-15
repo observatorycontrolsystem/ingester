@@ -35,15 +35,15 @@ class S3Service(object):
             return etag[1:-1]
 
     @metric_timer('ingester.upload_file')
-    def upload_file(self, path, storage_class):
+    def upload_file(self, fileobj, storage_class):
         s3 = boto3.resource('s3')
-        basename, extension = get_basename_and_extension(path)
+        basename, extension = get_basename_and_extension(fileobj.name)
         key = self.basename_to_s3_key(basename)
         content_disposition = 'attachment; filename={0}{1}'.format(basename, extension)
         content_type = self.extension_to_content_type(extension)
         try:
             response = s3.Object(self.bucket, key).put(
-                Body=open(path, 'rb'),
+                Body=fileobj,
                 ContentDisposition=content_disposition,
                 ContentType=content_type,
                 StorageClass=storage_class,
@@ -60,7 +60,7 @@ class S3Service(object):
                 'storage_class': storage_class,
             }
         })
-        return {'key': key, 'md5':  s3_md5, 'extension': extension}
+        return {'key': key, 'md5': s3_md5, 'extension': extension}
 
     def get_file(self, path):
         s3 = boto3.resource('s3')

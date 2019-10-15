@@ -10,25 +10,13 @@ import os
 from ingester.exceptions import DoNotRetryError, RetryError
 
 
-@metric_timer('ingester.get_fits')
-def get_fits_from_path(path):
-    protocol_preface = 's3://'
-    try:
-        if 'tar.gz' in path:
-            return get_meta_file_from_targz(path)
-        elif path.startswith(protocol_preface):
-            from ingester.s3 import S3Service
-            return S3Service('').get_file(path)
-        else:
-            return open(path, 'rb')
-    except FileNotFoundError as exc:
-        raise RetryError(exc)
-
-
 @metric_timer('ingester.get_md5')
-def get_md5(path):
+def get_md5(fileobj):
     try:
-        return hashlib.md5(open(path, 'rb').read()).hexdigest()
+        fileobj.seek(0)
+        hashvalue = hashlib.md5(fileobj.read()).hexdigest()
+        fileobj.seek(0)
+        return hashvalue
     except FileNotFoundError as exc:
         raise RetryError(exc)
 
@@ -42,14 +30,6 @@ def get_basename_and_extension(path):
         basename = filename
         extension = ''
     return basename, extension
-
-
-def get_meta_file_from_targz(path):
-    tf = tarfile.open(path, 'r')
-    for member in tf.getmembers():
-        if any(x + '.fits' in member.name for x in ['e00', 'e90', 'e91']) and member.isfile():
-            return tf.extractfile(member)
-    raise DoNotRetryError('Spectral package missing meta fits!')
 
 
 def wcs_corners_from_dict(fits_dict):
