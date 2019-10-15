@@ -12,7 +12,7 @@ from ingester.exceptions import DoNotRetryError, BackoffRetryError
 
 class TestCelery(unittest.TestCase):
     def setUp(self):
-        settings.task_always_eager = True
+        settings.celery_config['task_always_eager'] = True
         postproc_patcher = patch.object(PostProcService, 'post_to_archived_queue')
         self.postproc_mock = postproc_patcher.start()
         self.addCleanup(postproc_patcher.stop)
