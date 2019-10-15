@@ -18,11 +18,13 @@ def main():
     args = parser.parse_args()
 
     if args.check_only:
-        exists = frame_exists(args.path, api_root=args.api_root, auth_token=args.auth_token)
+        with open(args.path, 'rb') as fileobj:
+            exists = frame_exists(fileobj, api_root=args.api_root, auth_token=args.auth_token)
         logger.info(exists)
         return int(not exists)
 
-    return upload_file_and_ingest_to_archive(**vars(args))
+    with open(args.path, 'rb') as fileobj:
+        return upload_file_and_ingest_to_archive(fileobj=fileobj, **vars(args))
 
 
 if __name__ == '__main__':

@@ -47,7 +47,8 @@ class TestS3(unittest.TestCase):
 
     @patch('boto3.resource', side_effect=mocked_s3_object)
     def test_upload_file(self, s3_mock):
-        self.s3.upload_file(FITS_FILE, '')
+        with open(FITS_FILE, 'rb') as fileobj:
+            self.s3.upload_file(fileobj, '')
         self.assertTrue(s3_mock.called)
 
     @patch('boto3.resource', side_effect=mocked_s3_object)
