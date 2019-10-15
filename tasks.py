@@ -47,9 +47,6 @@ def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_hea
             ingester = Ingester(fileobj, s3, archive, required_headers, blacklist_headers)
             ingested_frame = ingester.ingest()
             post_proc.post_to_archived_queue(ingested_frame)
-    except IOError as exc:
-        logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
-        raise DoNotRetryError("missing file")
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
         raise exc
@@ -61,7 +58,7 @@ def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_hea
             raise self.retry(exc=exc, countdown=5 ** self.request.retries)
         else:
             raise exc
-    except (RetryError, SoftTimeLimitExceeded) as exc:
+    except (IOError, RetryError, SoftTimeLimitExceeded) as exc:
         if task_should_retry(self, exc):
             raise self.retry(exc=exc)
         else:
