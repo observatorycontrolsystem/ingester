@@ -1,40 +1,33 @@
 # Archive Ingester
-This application watches a queue for filenames, uploads .fits files to s3,
-and posts to the archive API new data products.
 
-In addition to the application, this repository provides a client API.
+Upload .fits files to S3 and post new data products to the Archive API.
 
-## Requirements
-
-- Rabbitmq
-- Archive API
-
-## For Library Clients
-
-### Usage
-(This is a work-in-progress and assumes the ingester is released to PyPI)
-
-#### Set up your environment
+## Installation
 Add the `ingester` package to your python environment:
 
 `(venv) $ pip install ingester`
  
-**or** , add the `ingester` package to your `requirements.txt`. Then,
+## Configuration
 
-`(venv) $ pip install -r requirements.txt`
- 
-#### Sample Code
-<!-- TODO: Make this section an example of real, working code. -->
+AWS and Archive API credentials must be set in order to upload data. Archive API configuration as well as the 
+AWS Bucket can be either passed in as kwargs or set as environment variables. The rest of the configuration must be 
+set as environment variables.
 
-```python
-import ingester
+#### Environment Variables
+| | Variable | Description | Default
+| --- | --- | --- | ---
+| Archive API | `API_ROOT` | Archive API URL | `"http://localhost:8000/"`
+| | `AUTH_TOKEN` | Archive API Authentication Token | `""`
+| AWS | `BUCKET` | AWS S3 Bucket Name | `ingestertest`
+| | `AWS_ACCESS_KEY_ID` | AWS Access Key | `""`
+| | `AWS_SECRET_ACCESS_KEY` | AWS Secret Access Key | `""`
+| | `AWS_DEFAULT_REGION` | AWS S3 Default Region | `""`
+| Metrics | `OPENTSDB_HOSTNAME` | OpenTSDB Host to send metrics to | `""`
+| | `OPENTSDB_PYTHON_METRICS_TEST_MODE` | Set to any value to turn off metrics collection | `False`
 
-# TODO: make this an example of real, working code
-ingester = ingester.Ingester()
-fits_dict = ingester.ingest()
-```
 
-### Ingester Library API
+
+## Ingester Library API
 <!-- TODO: convert this to use pydoc and the function docstrings --> 
 
     frame_exists(fileobj, **kwargs)
@@ -45,13 +38,11 @@ fits_dict = ingester.ingest()
     validate_fits_and_create_archive_record(fileobj, **kwargs)
     
     Validate the fits file and also create an archive record from it.
-    After this step the version would still be missing
-    Returns the constructed record
 
 ---
     upload_file_to_s3(fileobj, **kwargs)
     
-    Uploads a file to s3.
+    Upload a file to S3.
 
 ---
     ingest_archive_record(version, record, **kwargs)
@@ -62,29 +53,54 @@ fits_dict = ingester.ingest()
     upload_file_and_ingest_to_archive(fileobj, **kwargs)
      
     Ingest and upload a file.
-    Includes safety checks and the option to record metrics for various steps.
-
----
-    class Ingester(object):
-        def __init__(self, fileobj, s3, archive, required_headers=None, blacklist_headers=None)
-
-    Ingest a single file into the archive.
-    A single instance of this class is responsible for parsing a fits file,
-    uploading the data to s3, and making a call to the archive api.
-    
-    For example,
-    
-    ingester = Ingester(...)
-    fits_dict = ingester.ingest()
 
 ---
 
+#### Exceptions
+
+Exceptions raised by the ingester code are described in the `ingester.exceptions` module.
+
+## Examples
+
+#### Ingest a file step-by-step
+
+```python
+from ingester import ingester
+
+ingester.frame_exists('tst1mXXX-ab12-20191013-0001-e00.fits.fz')
+>>> False
+
+record = ingester.validate_fits_and_create_archive_record('tst1mXXX-ab12-20191013-0001-e00.fits.fz')
+>>> {'basename': 'tst1mXXX-ab12-20191013-0001-e00', 'FILTER': 'rp', 'DATE-OBS': '2019-10-13T10:13:00', ... }
+
+s3_version = ingester.upload_file_to_s3('tst1mXXX-ab12-20191013-0001-e00.fits.fz')
+>>> {'key': '792FE6EFFE6FAD7E', 'md5': 'ECD9B357D67117BE8BF38D6F4B4A6', 'extension': '.fits.fz'}
+
+ingested_record = ingester.ingest_archive_record(s3_version, record)
+>>> {'basename': 'tst1mXXX-ab12-20191013-0001-e00', 'version_set': [{'key': '792FE6EFFE6FAD7E', 'md5': 'ECD9B357D67117BE8BF38D6F4B4A6', 'extension': '.fits.fz'}], 'frameid': 400321, ... }
+```
+
+#### Ingest a file, do all steps at once!
+
+```python
+from ingester import ingester
+
+ingester.upload_file_and_ingest_to_archive('tst1mXXX-ab12-20191013-0001-e00.fits.fz')
+>>> {'basename': 'tst1mXXX-ab12-20191013-0001-e00', 'version_set': [{'key': '792FE6EFFE6FAD7E', 'md5': 'ECD9B357D67117BE8BF38D6F4B4A6', 'extension': '.fits.fz'}], 'frameid': 400321, ... }
+```
+
+#### Using the command line entry point
+A command line script for ingesting data, and optionally only checking if that data already exists 
+in the Archive API, is available for use as well. 
+
+```commandline
+ingest_frame --help  # See available options
+```
 
 ## For Developers
 
-### Running the Tests
+#### Running the Tests
 The first thing you'll probably want to do after you clone the repo is run the tests:
-
 ```
 $ cd ingester # the repo you just cloned
 $ /path/to/python -m venv venv
@@ -93,26 +109,18 @@ $ source venv/bin/activate
 (venv) $ pytest
 ````
 
-### Setup
-<!-- TODO: Explain this. (I'm not sure how to explain this section). -->
+## Ingester Application
+In addition to the library, the code provides an application that watches a queue for filenames and ingests
+files as they appear.
 
-You will need a rabbitmq server running. The environmental variable `BROKER_URL`
-should point to it. There are a few configuration options, see `settings.py`
+#### Setup
+You will need a RabbitMQ server running with the environment variable `FITS_BROKER` pointing to it. The other 
+environment variables in the Configuration section should be set as well.
 
-You will also need Amazon S3 credentials. The following environmental variables
-should be set:
-
-    AWS_ACCESS_KEY
-    AWS_SCRET_ACCESS_KEY
-    AWS_DEFAULT_REGION
-    BUCKET
-
-
-### Running
-<!-- TODO: Explain this. (I'm not sure how to explain this section). -->
-
-`listener.py` Will listen on the configured queue for new messages. When once is recieved,
+#### Running
+`listener.py` Will listen on the configured queue for new messages. When one is received,
 it will launch an asynchronous celery task to ingest the file.
 
-`runcrawler.sh` is a convience script that can be used to launch celery locally for testing.
+`runcrawler.sh` is a convenience script that can be used to launch celery locally for testing.
 
+A `Dockerfile` is available that can be used to run the application.
