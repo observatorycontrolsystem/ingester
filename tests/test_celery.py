@@ -18,35 +18,40 @@ class TestCelery(unittest.TestCase):
         self.addCleanup(postproc_patcher.stop)
 
     @patch.object(Ingester, 'ingest')
-    def test_task_success(self, ingest_mock):
+    @patch('tasks.get_fits_from_path')
+    def test_task_success(self, ingest_mock, get_fits_mock):
         ingest_mock.return_value = {}
-        result = do_ingest.delay(None, None, None, None, None, None, None)
+        result = do_ingest.delay('', None, None, None, None, None, None)
         self.assertTrue(result)
         self.assertTrue(self.postproc_mock.called)
 
     @patch.object(Ingester, 'ingest', side_effect=DoNotRetryError('missing file'))
-    def test_task_failure(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None, None, None)
+    @patch('tasks.get_fits_from_path')
+    def test_task_failure(self, ingest_mock, get_fits_mock):
+        result = do_ingest.delay('', None, None, None, None, None, None)
         self.assertIs(result.result.__class__, DoNotRetryError)
         self.assertTrue(result.failed())
 
-    @patch.object(Ingester, 'ingest',  side_effect=BackoffRetryError('Timeout'))
-    def test_task_retry(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None, None, None)
+    @patch.object(Ingester, 'ingest', side_effect=BackoffRetryError('Timeout'))
+    @patch('tasks.get_fits_from_path')
+    def test_task_retry(self, ingest_mock, get_fits_mock):
+        result = do_ingest.delay('', None, None, None, None, None, None)
         self.assertEqual(ingest_mock.call_count, 4)
         self.assertIs(result.result.__class__, BackoffRetryError)
         self.assertTrue(result.failed())
 
-    @patch.object(Ingester, 'ingest',  side_effect=Exception('An unexpected exception'))
-    def test_task_unexpected_exception(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None, None, None)
+    @patch.object(Ingester, 'ingest', side_effect=Exception('An unexpected exception'))
+    @patch('tasks.get_fits_from_path')
+    def test_task_unexpected_exception(self, ingest_mock, get_fits_mock):
+        result = do_ingest.delay('', None, None, None, None, None, None)
         self.assertEqual(ingest_mock.call_count, 4)
         self.assertIs(result.result.__class__, Exception)
         self.assertTrue(result.failed())
 
-    @patch.object(Ingester, 'ingest',  side_effect=SoftTimeLimitExceeded())
-    def test_task_softimelimit_exceeded(self, ingest_mock):
-        result = do_ingest.delay(None, None, None, None, None, None, None)
+    @patch.object(Ingester, 'ingest', side_effect=SoftTimeLimitExceeded())
+    @patch('tasks.get_fits_from_path')
+    def test_task_softimelimit_exceeded(self, ingest_mock, get_fits_mock):
+        result = do_ingest.delay('', None, None, None, None, None, None)
         self.assertEqual(ingest_mock.call_count, 4)
         self.assertIs(result.result.__class__, SoftTimeLimitExceeded)
         self.assertTrue(result.failed())
