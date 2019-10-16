@@ -7,7 +7,7 @@ import logging
 import os
 import requests
 
-from settings.settings import logConf
+from settings.log_config import logConf
 from ingester.archive import ArchiveService
 from ingester.utils.fits import get_fits_from_path
 from ingester.s3 import S3Service
@@ -19,7 +19,7 @@ from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, 
 dictConfig(logConf)
 logger = logging.getLogger('ingester')
 app = Celery('tasks')
-app.config_from_object('settings.settings.celery_config')
+app.config_from_object('settings.celery_config.celery_config')
 
 
 def task_log(task):

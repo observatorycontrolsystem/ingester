@@ -7,14 +7,12 @@ from dateutil.parser import parse
 from ingester.exceptions import DoNotRetryError
 from ingester.utils.fits import reduction_level, related_for_catalog
 from ingester.utils.fits import get_basename_and_extension
+from settings import settings
 
 logger = logging.getLogger('ingester')
 
 
 class FitsDict(object):
-
-    CALIBRATION_TYPES = ['BIAS', 'DARK', 'SKYFLAT', 'EXPERIMENTAL']
-    PUBLIC_PROPOSALS = ['EPO', 'calib', 'standard', 'pointing']
     INTEGER_TYPES = ['BLKUID', 'REQNUM']
 
     def __init__(self, fileobj, required_headers, blacklist_headers):
@@ -75,8 +73,8 @@ class FitsDict(object):
     def set_public_date(self):
         if not self.fits_dict.get('L1PUBDAT'):
             # Check if the frame doesnt specify a public date.
-            if (self.fits_dict['OBSTYPE'] in self.CALIBRATION_TYPES or
-                    any([prop in self.fits_dict['PROPID'] for prop in self.PUBLIC_PROPOSALS])):
+            if (self.fits_dict['OBSTYPE'] in settings.CALIBRATION_TYPES or
+                    any([prop in self.fits_dict['PROPID'] for prop in settings.PUBLIC_PROPOSALS])):
                 self.fits_dict['L1PUBDAT'] = self.fits_dict['DATE-OBS']
             else:
                 # This should be proprietary, set it to a year from DATE-OBS
