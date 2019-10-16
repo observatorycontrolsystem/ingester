@@ -30,7 +30,7 @@ set as environment variables.
 ## Ingester Library API
 <!-- TODO: convert this to use pydoc and the function docstrings -->
 
-    frame_exists(path, **kwargs)
+    frame_exists(fileobj, **kwargs)
 
     Checks if the frame exists in the archive.
 
@@ -50,7 +50,7 @@ set as environment variables.
     Ingest an archive record.
 
 ---
-    upload_file_and_ingest_to_archive(path, **kwargs)
+    upload_file_and_ingest_to_archive(fileobj, **kwargs)
 
     Ingest and upload a file.
 
