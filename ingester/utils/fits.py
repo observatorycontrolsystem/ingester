@@ -26,9 +26,12 @@ def get_fits_from_path(path):
 
 
 @metric_timer('ingester.get_md5')
-def get_md5(path):
+def get_md5(fileobj):
     try:
-        return hashlib.md5(open(path, 'rb').read()).hexdigest()
+        fileobj.seek(0)
+        hashvalue = hashlib.md5(fileobj.read()).hexdigest()
+        fileobj.seek(0)
+        return hashvalue
     except FileNotFoundError as exc:
         raise RetryError(exc)
 

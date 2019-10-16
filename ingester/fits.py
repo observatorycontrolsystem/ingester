@@ -6,7 +6,7 @@ from dateutil.parser import parse
 
 from ingester.exceptions import DoNotRetryError
 from ingester.utils.fits import reduction_level, related_for_catalog
-from ingester.utils.fits import get_basename_and_extension, get_fits_from_path
+from ingester.utils.fits import get_basename_and_extension
 
 logger = logging.getLogger('ingester')
 
@@ -17,14 +17,14 @@ class FitsDict(object):
     PUBLIC_PROPOSALS = ['EPO', 'calib', 'standard', 'pointing']
     INTEGER_TYPES = ['BLKUID', 'REQNUM']
 
-    def __init__(self, path, required_headers, blacklist_headers):
+    def __init__(self, fileobj, required_headers, blacklist_headers):
         self.required_headers = required_headers
         self.blacklist_headers = blacklist_headers
-        self.path = path
-        self.basename, self.extension = get_basename_and_extension(self.path)
+        self.fileobj = fileobj
+        self.basename, self.extension = get_basename_and_extension(self.fileobj.name)
 
     def get_hdu_with_required_headers(self):
-        hdulist = fits.open(get_fits_from_path(self.path), mode='readonly')
+        hdulist = fits.open(self.fileobj, mode='readonly')
         for hdu in hdulist:
             fits_dict = dict(hdu.header)
             if any([k for k in self.required_headers if k not in fits_dict]):

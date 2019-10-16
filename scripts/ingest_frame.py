@@ -6,6 +6,7 @@ from logging.config import dictConfig
 
 from settings.settings import logConf
 from ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
+from ingester.utils.fits import get_fits_from_path
 from ingester.exceptions import NonFatalDoNotRetryError
 
 # Set up logging
@@ -31,9 +32,11 @@ def main():
                                                                    (or an error occured)')
     args = parser.parse_args()
 
+    fileobj = get_fits_from_path(args.path)
+
     if args.check_only:
         try:
-            exists = frame_exists(args.path, api_root=args.api_root, auth_token=args.auth_token)
+            exists = frame_exists(fileobj, api_root=args.api_root, auth_token=args.auth_token)
         except Exception as e:
             sys.stdout.write(str(e))
             sys.exit(1)
@@ -41,7 +44,7 @@ def main():
         sys.exit(int(not exists))
 
     try:
-        result = upload_file_and_ingest_to_archive(**vars(args))
+        result = upload_file_and_ingest_to_archive(fileobj=fileobj, **vars(args))
     except NonFatalDoNotRetryError as e:
         sys.stdout.write(str(e))
         sys.exit(0)
