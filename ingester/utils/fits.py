@@ -10,6 +10,7 @@ import os
 from ingester.exceptions import DoNotRetryError, RetryError
 
 
+@metric_timer('ingester.get_fits')
 def get_fits_from_path(path):
     protocol_preface = 's3://'
     try:
