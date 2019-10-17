@@ -14,7 +14,7 @@ from ingester.exceptions import BackoffRetryError
 logger = logging.getLogger('ingester')
 
 
-class S3Service(object, SendMetricMixin):
+class S3Service(SendMetricMixin):
     def __init__(self, bucket):
         self.bucket = bucket
 

@@ -9,7 +9,7 @@ from ingester.exceptions import BackoffRetryError, RetryError
 logger = logging.getLogger('ingester')
 
 
-class ArchiveService(object, SendMetricMixin):
+class ArchiveService(SendMetricMixin):
     def __init__(self, *args, **kwargs):
         self.api_root = kwargs.get('api_root')
         self.headers = {'Authorization': 'Token {}'.format(kwargs.get('auth_token'))}
@@ -48,6 +48,6 @@ class ArchiveService(object, SendMetricMixin):
             }
         })
         # Record metric for the ingest lag (time between date of image vs date ingested)
-        ingest_lag = datetime.utcnow() - parse(self.fits_dict['DATE-OBS'])
+        ingest_lag = datetime.utcnow() - parse(fits_dict['DATE-OBS'])
         self.send_metric('ingester.ingest_lag', ingest_lag.total_seconds())
         return result
