@@ -8,6 +8,7 @@ import opentsdb_python_metrics.metric_wrappers
 import dateutil
 
 from ingester.ingester import Ingester
+from ingester.utils.fits import get_fits_from_path
 from ingester.exceptions import DoNotRetryError, RetryError, NonFatalDoNotRetryError
 from settings import settings
 
@@ -51,18 +52,20 @@ def mock_hashlib_md5(*args, **kwargs):
 class TestIngester(unittest.TestCase):
     def setUp(self):
         hashlib.md5 = MagicMock(side_effect=mock_hashlib_md5)
-        self.fits_files = [open(os.path.join(FITS_PATH, f), 'rb') for f in os.listdir(FITS_PATH)]
+        self.fits_files = [get_fits_from_path(os.path.join(FITS_PATH, f)) for f in os.listdir(FITS_PATH)]
         self.archive_mock = MagicMock()
         self.archive_mock.version_exists.return_value = False
         self.s3_mock = MagicMock()
         self.s3_mock.upload_file = MagicMock(return_value={'md5': 'fakemd5'})
+        bad_headers = settings.HEADER_BLACKLIST
+        bad_headers.append('')
         self.ingesters = [
             Ingester(
                 fileobj=fileobj,
                 s3=self.s3_mock,
                 archive=self.archive_mock,
                 required_headers=settings.REQUIRED_HEADERS,
-                blacklist_headers=settings.HEADER_BLACKLIST,
+                blacklist_headers=bad_headers,
             )
             for fileobj in self.fits_files
         ]
@@ -150,27 +153,30 @@ class TestIngester(unittest.TestCase):
             )
 
     def test_spectograph(self):
-        with open(SPECTRO_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(fileobj)
-            ingester.ingest()
-            self.assertEqual(90, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
-            self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
+        fileobj = get_fits_from_path(SPECTRO_FILE)
+        ingester = self.create_ingester_for_file(fileobj)
+        ingester.ingest()
+        self.assertEqual(90, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
+        self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
+        fileobj.close()
 
     def test_nres_package(self):
-        with open(NRES_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(fileobj)
-            ingester.ingest()
-            self.assertEqual('Polygon', self.archive_mock.post_frame.call_args[0][0]['area']['type'])
-            self.assertEqual(91, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
-            self.assertEqual('TARGET', self.archive_mock.post_frame.call_args[0][0]['OBSTYPE'])
-            self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
+        fileobj = get_fits_from_path(NRES_FILE)
+        ingester = self.create_ingester_for_file(fileobj)
+        ingester.ingest()
+        self.assertEqual('Polygon', self.archive_mock.post_frame.call_args[0][0]['area']['type'])
+        self.assertEqual(91, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
+        self.assertEqual('TARGET', self.archive_mock.post_frame.call_args[0][0]['OBSTYPE'])
+        self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
+        fileobj.close()
 
     def test_spectrograph_missing_meta(self):
         tarfile.TarFile.getmembers = MagicMock(return_value=[])
-        with open(SPECTRO_FILE, 'rb') as fileobj:
+        with self.assertRaises(DoNotRetryError):
+            fileobj = get_fits_from_path(SPECTRO_FILE)
             ingester = self.create_ingester_for_file(fileobj)
-            with self.assertRaises(DoNotRetryError):
-                ingester.ingest()
+            ingester.ingest()
+            fileobj.close()
 
     def test_empty_string_for_na(self):
         with open(os.path.join(FITS_PATH, 'coj1m011-fl08-20151216-0049-b00.fits'), 'rb') as fileobj:

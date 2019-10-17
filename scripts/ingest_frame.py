@@ -32,7 +32,11 @@ def main():
                                                                    (or an error occured)')
     args = parser.parse_args()
 
-    fileobj = get_fits_from_path(args.path)
+    try:
+        fileobj = get_fits_from_path(args.path)
+    except Exception as e:
+        sys.stdout.write(str(e))
+        sys.exit(1)
 
     if args.check_only:
         try:
