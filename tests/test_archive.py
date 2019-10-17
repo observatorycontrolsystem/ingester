@@ -1,5 +1,6 @@
 from unittest.mock import patch
 import unittest
+from datetime import datetime
 from requests.exceptions import ConnectionError, HTTPError
 
 from ingester.archive import ArchiveService
@@ -38,7 +39,7 @@ def mocked_requests_get(*args, **kwargs):
 class TestArchiveService(unittest.TestCase):
     def test_archive_post(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://fake/', auth_token='')
-        archive_service.post_frame({})
+        archive_service.post_frame({'DATE-OBS': datetime.utcnow().isoformat()})
         self.assertTrue(post_mock.called)
         self.assertEqual(post_mock.call_args[0][0], 'http://fake/frames/')
 
