@@ -8,21 +8,21 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ingester',
-    version='0.0.5',
+    version='0.0.9',
     description='Ingest frames into the LCO Archive',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/LCOGT/ingester',
-    packages=['ingester', 'settings', 'scripts'],
+    packages=['ingester', 'ingester.utils', 'settings', 'scripts'],
     python_requires='>=3.5',
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
     ],
     install_requires=[
-        'astropy>=3.2,<3.3',
-        'requests>=2.0,<3.0',
-        'boto3>=1.7,<1.8',
-        'python-dateutil>=2.7,<2.8',
+        'astropy',
+        'requests',
+        'boto3',
+        'python-dateutil',
         'lcogt-logging',
         'opentsdb-python-metrics>=0.1.8'
     ],
