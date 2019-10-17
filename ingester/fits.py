@@ -22,7 +22,11 @@ class FitsDict(object):
         self.basename, self.extension = get_basename_and_extension(self.fileobj.name)
 
     def get_hdu_with_required_headers(self):
+        # Reset the fileobj position to make sure astropy reads in the whole thing
+        self.fileobj.seek(0)
         hdulist = fits.open(self.fileobj, mode='readonly')
+        # Reset the fileobj position because astropy reads the fileobj but does not reset the position
+        self.fileobj.seek(0)
         for hdu in hdulist:
             fits_dict = dict(hdu.header)
             if any([k for k in self.required_headers if k not in fits_dict]):
