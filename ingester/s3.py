@@ -44,6 +44,8 @@ class S3Service(object, SendMetricMixin):
         key = self.basename_to_s3_key(basename)
         content_disposition = 'attachment; filename={0}{1}'.format(basename, extension)
         content_type = self.extension_to_content_type(extension)
+        # Make sure to read in the whole file!
+        fileobj.seek(0)
         try:
             response = s3.Object(self.bucket, key).put(
                 Body=fileobj,
@@ -54,6 +56,8 @@ class S3Service(object, SendMetricMixin):
         except (requests.exceptions.ConnectionError,
                 EndpointConnectionError, ConnectionClosedError) as exc:
             raise BackoffRetryError(exc)
+        # Reset the fileobj position because boto reads the fileobj but does not reset the position
+        fileobj.seek(0)
         s3_md5 = self.strip_quotes_from_etag(response['ETag'])
         key = response['VersionId']
         logger.info('Ingester uploaded file to s3', extra={
