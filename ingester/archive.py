@@ -1,14 +1,15 @@
 import logging
-
+from datetime import datetime
+from dateutil.parser import parse
 import requests
-from opentsdb_python_metrics.metric_wrappers import metric_timer
+from opentsdb_python_metrics.metric_wrappers import metric_timer, SendMetricMixin
 
 from ingester.exceptions import BackoffRetryError, RetryError
 
 logger = logging.getLogger('ingester')
 
 
-class ArchiveService(object):
+class ArchiveService(object, SendMetricMixin):
     def __init__(self, *args, **kwargs):
         self.api_root = kwargs.get('api_root')
         self.headers = {'Authorization': 'Token {}'.format(kwargs.get('auth_token'))}
@@ -46,4 +47,7 @@ class ArchiveService(object):
                 'id': result.get('id')
             }
         })
+        # Record metric for the ingest lag (time between date of image vs date ingested)
+        ingest_lag = datetime.utcnow() - parse(self.fits_dict['DATE-OBS'])
+        self.send_metric('ingester.ingest_lag', ingest_lag.total_seconds())
         return result

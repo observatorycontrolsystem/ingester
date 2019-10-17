@@ -2,8 +2,10 @@ import hashlib
 import requests
 import boto3
 import logging
+import os
 from io import BytesIO
-from opentsdb_python_metrics.metric_wrappers import metric_timer
+from datetime import datetime
+from opentsdb_python_metrics.metric_wrappers import metric_timer, SendMetricMixin
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
 from ingester.utils.fits import get_basename_and_extension
@@ -12,7 +14,7 @@ from ingester.exceptions import BackoffRetryError
 logger = logging.getLogger('ingester')
 
 
-class S3Service(object):
+class S3Service(object, SendMetricMixin):
     def __init__(self, bucket):
         self.bucket = bucket
 
@@ -36,6 +38,7 @@ class S3Service(object):
 
     @metric_timer('ingester.upload_file')
     def upload_file(self, fileobj, storage_class):
+        start_time = datetime.utcnow()
         s3 = boto3.resource('s3')
         basename, extension = get_basename_and_extension(fileobj.name)
         key = self.basename_to_s3_key(basename)
@@ -60,6 +63,12 @@ class S3Service(object):
                 'storage_class': storage_class,
             }
         })
+        # Record metric for the bytes transfered / time to upload
+        upload_time = datetime.utcnow() - start_time
+        fileobj.seek(0, os.SEEK_END)
+        bytes_per_second = fileobj.tell() / upload_time.total_seconds()
+        fileobj.seek(0)
+        self.send_metric('ingester.s3_upload_bytes_per_second', bytes_per_second) 
         return {'key': key, 'md5': s3_md5, 'extension': extension}
 
     def get_file(self, path):
