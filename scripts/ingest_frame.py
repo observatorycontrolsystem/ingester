@@ -4,7 +4,7 @@ import argparse
 import logging
 from logging.config import dictConfig
 
-from settings.settings import logConf
+from settings.log_config import logConf
 from ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
 from ingester.utils.fits import get_fits_from_path
 from ingester.exceptions import NonFatalDoNotRetryError

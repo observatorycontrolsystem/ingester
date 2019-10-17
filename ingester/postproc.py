@@ -1,7 +1,9 @@
 from kombu.connection import Connection
 from kombu import Exchange, Queue
 
-processed_exchange = Exchange('archived_fits', type='fanout')
+from settings import settings
+
+processed_exchange = Exchange(settings.PROCESSED_EXCHANGE_NAME, type='fanout')
 producer_queue = Queue('', processed_exchange, exclusive=True)
 
 
