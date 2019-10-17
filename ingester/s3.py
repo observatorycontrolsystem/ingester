@@ -56,8 +56,6 @@ class S3Service(object, SendMetricMixin):
         except (requests.exceptions.ConnectionError,
                 EndpointConnectionError, ConnectionClosedError) as exc:
             raise BackoffRetryError(exc)
-        # Reset the fileobj position because boto reads the fileobj but does not reset the position
-        fileobj.seek(0)
         s3_md5 = self.strip_quotes_from_etag(response['ETag'])
         key = response['VersionId']
         logger.info('Ingester uploaded file to s3', extra={
@@ -71,6 +69,7 @@ class S3Service(object, SendMetricMixin):
         upload_time = datetime.utcnow() - start_time
         fileobj.seek(0, os.SEEK_END)
         bytes_per_second = fileobj.tell() / upload_time.total_seconds()
+        # Reset the fileobj position because boto reads the fileobj but does not reset the position
         fileobj.seek(0)
         self.send_metric('ingester.s3_upload_bytes_per_second', bytes_per_second) 
         return {'key': key, 'md5': s3_md5, 'extension': extension}
