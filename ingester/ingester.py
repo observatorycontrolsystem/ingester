@@ -13,8 +13,8 @@ def frame_exists(fileobj, **kwargs):
     """
     Checks if the frame exists in the archive.
 
-    :param fileobj: file-like object
-    :return:
+    :param fileobj: File-like object
+    :return: Boolean indicating whether the frame exists
     """
     api_root = kwargs.get('api_root') or settings.API_ROOT
     auth_token = kwargs.get('auth_token') or settings.AUTH_TOKEN
@@ -27,12 +27,8 @@ def validate_fits_and_create_archive_record(fileobj, **kwargs):
     """
     Validate the fits file and also create an archive record from it.
 
-    After this step the version would still be missing
-
-    Returns the constructed record
-
-    :param fileobj: file-like object
-    :return:
+    :param fileobj: File-like object
+    :return: Constructed archive record
     """
     required_headers = kwargs.get('required_headers') or settings.REQUIRED_HEADERS
     blacklist_headers = kwargs.get('blacklist_headers') or settings.HEADER_BLACKLIST
@@ -47,7 +43,7 @@ def upload_file_to_s3(fileobj, **kwargs):
     """
     Uploads a file to s3.
 
-    :param fileobj: file-like object
+    :param fileobj: File-like object
     :param kwargs: Other keyword arguments
     :return: Version information for the file that was uploaded
     """
@@ -83,9 +79,7 @@ def upload_file_and_ingest_to_archive(fileobj, **kwargs):
     """
     Ingest and upload a file.
 
-    Includes safety checks and the option to record metrics for various steps.
-
-    :param fileobj: file-like object
+    :param fileobj: File-like object
     :param kwargs: Other keyword arguments
     :return: Information about the uploaded file and record
     """
