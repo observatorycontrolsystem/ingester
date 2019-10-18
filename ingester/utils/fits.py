@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from opentsdb_python_metrics.metric_wrappers import metric_timer
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
@@ -8,6 +9,20 @@ import hashlib
 import os
 
 from ingester.exceptions import DoNotRetryError, RetryError
+
+
+@contextmanager
+def reset_file(fileobj):
+    """
+    Use as a context manager to ensure that a file-like object is reset to the
+    initial position before and after a `with` block. This is useful if you need
+    the entire file to be read, but the reader does not reset it.
+    """
+    fileobj.seek(0)
+    try:
+        yield
+    finally:
+        fileobj.seek(0)
 
 
 @metric_timer('ingester.get_fits')
@@ -28,10 +43,8 @@ def get_fits_from_path(path):
 @metric_timer('ingester.get_md5')
 def get_md5(fileobj):
     try:
-        fileobj.seek(0)
-        hashvalue = hashlib.md5(fileobj.read()).hexdigest()
-        fileobj.seek(0)
-        return hashvalue
+        with reset_file(fileobj):
+            return hashlib.md5(fileobj.read()).hexdigest()
     except FileNotFoundError as exc:
         raise RetryError(exc)
 
