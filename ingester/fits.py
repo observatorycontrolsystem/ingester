@@ -6,7 +6,7 @@ from dateutil.parser import parse
 
 from ingester.exceptions import DoNotRetryError
 from ingester.utils.fits import reduction_level, related_for_catalog
-from ingester.utils.fits import get_basename_and_extension
+from ingester.utils.fits import get_basename_and_extension, reset_file
 from settings import settings
 
 logger = logging.getLogger('ingester')
@@ -22,26 +22,24 @@ class FitsDict(object):
         self.basename, self.extension = get_basename_and_extension(self.fileobj.name)
 
     def get_hdu_with_required_headers(self):
-        # Reset the fileobj position to make sure astropy reads in the whole thing
-        self.fileobj.seek(0)
-        hdulist = fits.open(self.fileobj, mode='readonly')
-        # Reset the fileobj position because astropy reads the fileobj but does not reset the position
-        self.fileobj.seek(0)
-        for hdu in hdulist:
-            fits_dict = dict(hdu.header)
-            if any([k for k in self.required_headers if k not in fits_dict]):
-                pass
-            else:
-                self.fits_dict = fits_dict
-                logger.info('Ingester extracted fits headers', extra={
-                        'tags': {
-                            'request_num': fits_dict.get('REQNUM'),
-                            'PROPID': fits_dict.get('PROPID'),
-                            'filename': '{}{}'.format(self.basename, self.extension)
-                        }
-                    })
-                return
-        raise DoNotRetryError('Could no find required headers!')   # No headers met requirement
+        # astropy reads the fileobj but does not reset the position
+        with reset_file(self.fileobj):
+            hdulist = fits.open(self.fileobj, mode='readonly')
+            for hdu in hdulist:
+                fits_dict = dict(hdu.header)
+                if any([k for k in self.required_headers if k not in fits_dict]):
+                    pass
+                else:
+                    self.fits_dict = fits_dict
+                    logger.info('Ingester extracted fits headers', extra={
+                            'tags': {
+                                'request_num': fits_dict.get('REQNUM'),
+                                'PROPID': fits_dict.get('PROPID'),
+                                'filename': '{}{}'.format(self.basename, self.extension)
+                            }
+                        })
+                    return
+            raise DoNotRetryError('Could no find required headers!')   # No headers met requirement
 
     def remove_blacklist_headers(self):
         for header in self.blacklist_headers:
