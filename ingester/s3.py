@@ -8,7 +8,7 @@ from datetime import datetime
 from opentsdb_python_metrics.metric_wrappers import metric_timer, SendMetricMixin
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
-from ingester.utils.fits import get_basename_and_extension
+from ingester.utils.fits import get_basename_and_extension, reset_file
 from ingester.exceptions import BackoffRetryError
 
 logger = logging.getLogger('ingester')
@@ -44,15 +44,15 @@ class S3Service(SendMetricMixin):
         key = self.basename_to_s3_key(basename)
         content_disposition = 'attachment; filename={0}{1}'.format(basename, extension)
         content_type = self.extension_to_content_type(extension)
-        # Make sure to read in the whole file!
-        fileobj.seek(0)
         try:
-            response = s3.Object(self.bucket, key).put(
-                Body=fileobj,
-                ContentDisposition=content_disposition,
-                ContentType=content_type,
-                StorageClass=storage_class,
-            )
+            # boto reads the fileobj but does not reset the position
+            with reset_file(fileobj):
+                response = s3.Object(self.bucket, key).put(
+                    Body=fileobj,
+                    ContentDisposition=content_disposition,
+                    ContentType=content_type,
+                    StorageClass=storage_class,
+                )
         except (requests.exceptions.ConnectionError,
                 EndpointConnectionError, ConnectionClosedError) as exc:
             raise BackoffRetryError(exc)
@@ -69,7 +69,6 @@ class S3Service(SendMetricMixin):
         upload_time = datetime.utcnow() - start_time
         fileobj.seek(0, os.SEEK_END)
         bytes_per_second = fileobj.tell() / upload_time.total_seconds()
-        # Reset the fileobj position because boto reads the fileobj but does not reset the position
         fileobj.seek(0)
         self.send_metric('ingester.s3_upload_bytes_per_second', bytes_per_second) 
         return {'key': key, 'md5': s3_md5, 'extension': extension}
