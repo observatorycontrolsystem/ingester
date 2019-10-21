@@ -3,7 +3,7 @@ from opentsdb_python_metrics.metric_wrappers import metric_timer
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 from astropy import wcs
-import datetime
+from datetime import datetime, timedelta
 import tarfile
 import hashlib
 import os
@@ -66,6 +66,22 @@ def get_meta_file_from_targz(path):
         if any(x + '.fits' in member.name for x in ['e00', 'e90', 'e91']) and member.isfile():
             return tf.extractfile(member)
     raise DoNotRetryError('Spectral package missing meta fits!')
+
+
+def obs_end_time_from_dict(fits_dict):
+    dateobs = parse(fits_dict['DATE-OBS'])
+    if fits_dict.get('UTSTOP'):
+        # UTSTOP is just a time - we need the date as well to be sure when this is
+        utstop_time = parse(fits_dict['UTSTOP'])
+        utstop_date = dateobs.date()
+        if abs(dateobs.hour - utstop_time.hour) > 12:
+            # There was a date rollover during this observation, so set the date for utstop
+            utstop_date += timedelta(days=1)
+
+        return datetime.combine(utstop_date, utstop_time.time())
+    elif fits_dict.get('EXPTIME'):
+        return dateobs + timedelta(seconds=fits_dict['EXPTIME'])
+    return dateobs
 
 
 def wcs_corners_from_dict(fits_dict):
@@ -139,7 +155,7 @@ def get_storage_class(fits_dict):
 
     # if the observation was more than 6 months ago, this is someone
     # uploading older data, and it can skip straight to STANDARD_IA
-    if dateobs < (datetime.datetime.utcnow() + relativedelta(months=-6)):
+    if dateobs < (datetime.utcnow() + relativedelta(months=-6)):
         return 'STANDARD_IA'
 
     # everything else goes into the STANDARD storage class, and will
