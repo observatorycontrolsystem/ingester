@@ -48,9 +48,10 @@ def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_hea
     post_proc = PostProcService(broker_url)
     try:
         fileobj = get_fits_from_path(path)
-        ingester = Ingester(fileobj, s3, archive, required_headers, blacklist_headers)
+        ingester = Ingester(fileobj, fileobj.name, s3, archive, required_headers, blacklist_headers)
         ingested_frame = ingester.ingest()
         post_proc.post_to_archived_queue(ingested_frame)
+        fileobj.close()
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
         raise exc

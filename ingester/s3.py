@@ -37,10 +37,10 @@ class S3Service(SendMetricMixin):
             return etag[1:-1]
 
     @metric_timer('ingester.upload_file')
-    def upload_file(self, fileobj, storage_class):
+    def upload_file(self, fileobj, path, storage_class):
         start_time = datetime.utcnow()
         s3 = boto3.resource('s3')
-        basename, extension = get_basename_and_extension(fileobj.name)
+        basename, extension = get_basename_and_extension(path)
         key = self.basename_to_s3_key(basename)
         content_disposition = 'attachment; filename={0}{1}'.format(basename, extension)
         content_type = self.extension_to_content_type(extension)
