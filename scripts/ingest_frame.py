@@ -40,7 +40,8 @@ def main():
 
     if args.check_only:
         try:
-            exists = frame_exists(fileobj, api_root=args.api_root, auth_token=args.auth_token)
+            check_args = {k: v for k, v in vars(args).items() if k in ['api_root', 'auth_token'] and v is not None}
+            exists = frame_exists(fileobj, **check_args)
         except Exception as e:
             sys.stdout.write(str(e))
             sys.exit(1)
@@ -48,7 +49,10 @@ def main():
         sys.exit(int(not exists))
 
     try:
-        result = upload_file_and_ingest_to_archive(fileobj=fileobj, path=fileobj.name, **vars(args))
+        ingest_args = {
+            k: v for k, v in vars(args).items() if k in ['api_root', 'auth_token', 'bucket'] and v is not None
+        }
+        result = upload_file_and_ingest_to_archive(fileobj=fileobj, path=fileobj.name, **ingest_args)
     except NonFatalDoNotRetryError as e:
         sys.stdout.write(str(e))
         sys.exit(0)
