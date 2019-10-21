@@ -58,7 +58,6 @@ class TestIngester(unittest.TestCase):
         self.s3_mock = MagicMock()
         self.s3_mock.upload_file = MagicMock(return_value={'md5': 'fakemd5'})
         bad_headers = settings.HEADER_BLACKLIST
-        bad_headers.append('')
         self.ingesters = [
             Ingester(
                 fileobj=fileobj,
