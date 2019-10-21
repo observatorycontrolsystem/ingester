@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 import unittest
 import os
+import io
 import tarfile
 import hashlib
 
@@ -74,10 +75,10 @@ class TestIngester(unittest.TestCase):
         for fileobj in self.fits_files:
             fileobj.close()
 
-    def create_ingester_for_file(self, fileobj):
+    def create_ingester_for_file(self, fileobj, path):
         ingester = Ingester(
             fileobj=fileobj,
-            path=fileobj.name,
+            path=path,
             s3=self.s3_mock,
             archive=self.archive_mock,
             blacklist_headers=settings.HEADER_BLACKLIST,
@@ -90,6 +91,15 @@ class TestIngester(unittest.TestCase):
             ingester.ingest()
             self.assertTrue(self.s3_mock.upload_file.called)
             self.assertTrue(self.archive_mock.post_frame.called)
+
+    def test_ingest_bytesio_file(self):
+        with io.BytesIO() as buf:
+            with open(FITS_FILE, 'rb') as fileobj:
+                buf.write(fileobj.read())
+                ingester = self.create_ingester_for_file(buf, 'fake_path.fits')
+                ingester.ingest()
+                self.assertTrue(self.s3_mock.upload_file.called)
+                self.assertTrue(self.archive_mock.post_frame.called)
 
     def test_ingest_file_already_exists(self):
         self.archive_mock.version_exists.return_value = True
@@ -108,11 +118,11 @@ class TestIngester(unittest.TestCase):
 
     def test_get_area(self):
         with open(FITS_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(fileobj)
+            ingester = self.create_ingester_for_file(fileobj, fileobj.name)
             ingester.ingest()
             self.assertEqual('Polygon', self.archive_mock.post_frame.call_args[0][0]['area']['type'])
         with open(CAT_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(fileobj)
+            ingester = self.create_ingester_for_file(fileobj, fileobj.name)
             ingester.ingest()
             self.assertIsNone(self.archive_mock.post_frame.call_args[0][0]['area'])
 
@@ -129,7 +139,7 @@ class TestIngester(unittest.TestCase):
 
     def test_related(self):
         with open(FITS_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(fileobj)
+            ingester = self.create_ingester_for_file(fileobj, fileobj.name)
             ingester.ingest()
             self.assertEqual(
                 'bias_kb05_20150219_bin2x2',
@@ -146,7 +156,7 @@ class TestIngester(unittest.TestCase):
 
     def test_catalog_related(self):
         with open(CAT_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(fileobj)
+            ingester = self.create_ingester_for_file(fileobj, fileobj.name)
             ingester.ingest()
             self.assertEqual(
                 'cpt1m010-kb70-20151219-0073-e10',
@@ -155,7 +165,7 @@ class TestIngester(unittest.TestCase):
 
     def test_spectograph(self):
         fileobj = get_fits_from_path(SPECTRO_FILE)
-        ingester = self.create_ingester_for_file(fileobj)
+        ingester = self.create_ingester_for_file(fileobj, fileobj.name)
         ingester.ingest()
         self.assertEqual(90, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
         self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
@@ -163,7 +173,7 @@ class TestIngester(unittest.TestCase):
 
     def test_nres_package(self):
         fileobj = get_fits_from_path(NRES_FILE)
-        ingester = self.create_ingester_for_file(fileobj)
+        ingester = self.create_ingester_for_file(fileobj, fileobj.name)
         ingester.ingest()
         self.assertEqual('Polygon', self.archive_mock.post_frame.call_args[0][0]['area']['type'])
         self.assertEqual(91, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
@@ -175,13 +185,13 @@ class TestIngester(unittest.TestCase):
         tarfile.TarFile.getmembers = MagicMock(return_value=[])
         with self.assertRaises(DoNotRetryError):
             fileobj = get_fits_from_path(SPECTRO_FILE)
-            ingester = self.create_ingester_for_file(fileobj)
+            ingester = self.create_ingester_for_file(fileobj, fileobj.name)
             ingester.ingest()
             fileobj.close()
 
     def test_empty_string_for_na(self):
         with open(os.path.join(FITS_PATH, 'coj1m011-fl08-20151216-0049-b00.fits'), 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(fileobj)
+            ingester = self.create_ingester_for_file(fileobj, fileobj.name)
             ingester.ingest()
             self.assertFalse(self.archive_mock.post_frame.call_args[0][0]['OBJECT'])
             self.assertTrue(self.archive_mock.post_frame.call_args[0][0]['DATE-OBS'])
