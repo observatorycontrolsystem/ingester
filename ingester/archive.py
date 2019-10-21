@@ -10,9 +10,9 @@ logger = logging.getLogger('ingester')
 
 
 class ArchiveService(SendMetricMixin):
-    def __init__(self, *args, **kwargs):
-        self.api_root = kwargs.get('api_root')
-        self.headers = {'Authorization': 'Token {}'.format(kwargs.get('auth_token'))}
+    def __init__(self, api_root, auth_token):
+        self.api_root = api_root
+        self.headers = {'Authorization': 'Token {}'.format(auth_token)}
 
     def handle_response(self, response):
         try:
