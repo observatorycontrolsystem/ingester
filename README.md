@@ -10,7 +10,7 @@ Add the `ingester` package to your python environment:
 ## Configuration
 
 AWS and Archive API credentials must be set in order to upload data. Archive API configuration as well as the
-AWS Bucket can be either passed in as kwargs or set as environment variables. The rest of the configuration must be
+AWS Bucket can be either passed explicitly or set as environment variables. The rest of the configuration must be
 set as environment variables.
 
 #### Environment Variables
@@ -30,27 +30,27 @@ set as environment variables.
 ## Ingester Library API
 <!-- TODO: convert this to use pydoc and the function docstrings -->
 
-    frame_exists(fileobj, **kwargs)
+    frame_exists(fileobj, [api_root, auth_token])
 
     Checks if the frame exists in the archive.
 
 ---
-    validate_fits_and_create_archive_record(fileobj, path, **kwargs)
+    validate_fits_and_create_archive_record(fileobj, path, [required_headers, blacklist_headers])
 
     Validate the fits file and also create an archive record from it.
 
 ---
-    upload_file_to_s3(fileobj, path, **kwargs)
+    upload_file_to_s3(fileobj, path, [bucket, storage_class])
 
     Upload a file to S3.
 
 ---
-    ingest_archive_record(version, record, **kwargs)
+    ingest_archive_record(version, record, [api_root, auth_token])
 
     Ingest an archive record.
 
 ---
-    upload_file_and_ingest_to_archive(fileobj, path, **kwargs)
+    upload_file_and_ingest_to_archive(fileobj, path, [required_headers, blacklist_headers, api_root, auth_token, bucket])
 
     Ingest and upload a file.
 

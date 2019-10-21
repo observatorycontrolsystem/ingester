@@ -9,29 +9,27 @@ from ingester.s3 import S3Service
 from settings import settings
 
 
-def frame_exists(fileobj, **kwargs):
+def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
     """
     Checks if the frame exists in the archive.
 
     :param fileobj: File-like object
     :return: Boolean indicating whether the frame exists
     """
-    api_root = kwargs.get('api_root') or settings.API_ROOT
-    auth_token = kwargs.get('auth_token') or settings.AUTH_TOKEN
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     md5 = get_md5(fileobj)
     return archive.version_exists(md5)
 
 
-def validate_fits_and_create_archive_record(fileobj, path, **kwargs):
+def validate_fits_and_create_archive_record(fileobj, path, required_headers=settings.REQUIRED_HEADERS,
+                                            blacklist_headers=settings.HEADER_BLACKLIST):
     """
     Validate the fits file and also create an archive record from it.
 
     :param fileobj: File-like object
+    :param path: file path/name for this object
     :return: Constructed archive record
     """
-    required_headers = kwargs.get('required_headers') or settings.REQUIRED_HEADERS
-    blacklist_headers = kwargs.get('blacklist_headers') or settings.HEADER_BLACKLIST
     json_record = FitsDict(fileobj, path, required_headers, blacklist_headers).as_dict()
     basename, _ = get_basename_and_extension(path)
     json_record['area'] = wcs_corners_from_dict(json_record)
@@ -39,32 +37,27 @@ def validate_fits_and_create_archive_record(fileobj, path, **kwargs):
     return json_record
 
 
-def upload_file_to_s3(fileobj, path, **kwargs):
+def upload_file_to_s3(fileobj, path, bucket=settings.BUCKET, storage_class='STANDARD'):
     """
     Uploads a file to s3.
 
     :param fileobj: File-like object
-    :param kwargs: Other keyword arguments
+    :param path: file path/name for this object
     :return: Version information for the file that was uploaded
     """
-    bucket = kwargs.get('bucket') or settings.BUCKET
-    storage_class = kwargs.get('storage_class') or 'STANDARD'
     s3 = S3Service(bucket)
     # Returns the version, which holds in it the md5 that was uploaded
     return s3.upload_file(fileobj, path, storage_class)
 
 
-def ingest_archive_record(version, record, **kwargs):
+def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
     """
     Ingest an archive record.
 
     :param version: Result of the upload to s3
     :param record: Archive record to ingest
-    :param kwargs: Other keyword arguments
     :return: The archive record that was ingested
     """
-    api_root = kwargs.get('api_root') or settings.API_ROOT
-    auth_token = kwargs.get('auth_token') or settings.AUTH_TOKEN
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     # Construct final archive payload and post to archive
     record['version_set'] = [version]
@@ -75,19 +68,17 @@ def ingest_archive_record(version, record, **kwargs):
     return record
 
 
-def upload_file_and_ingest_to_archive(fileobj, path, **kwargs):
+def upload_file_and_ingest_to_archive(fileobj, path, required_headers=settings.REQUIRED_HEADERS,
+                                      blacklist_headers=settings.HEADER_BLACKLIST,
+                                      api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
+                                      bucket=settings.BUCKET):
     """
     Ingest and upload a file.
 
     :param fileobj: File-like object
-    :param kwargs: Other keyword arguments
+    :param path: file path/name for this object
     :return: Information about the uploaded file and record
     """
-    required_headers = kwargs.get('required_headers') or settings.REQUIRED_HEADERS
-    blacklist_headers = kwargs.get('blacklist_headers') or settings.HEADER_BLACKLIST
-    api_root = kwargs.get('api_root') or settings.API_ROOT
-    auth_token = kwargs.get('auth_token') or settings.AUTH_TOKEN
-    bucket = kwargs.get('bucket') or settings.BUCKET
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     s3 = S3Service(bucket)
     ingester = Ingester(fileobj, path, s3, archive, required_headers, blacklist_headers)
