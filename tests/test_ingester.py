@@ -62,6 +62,7 @@ class TestIngester(unittest.TestCase):
         self.ingesters = [
             Ingester(
                 fileobj=fileobj,
+                path=fileobj.name,
                 s3=self.s3_mock,
                 archive=self.archive_mock,
                 required_headers=settings.REQUIRED_HEADERS,
@@ -77,6 +78,7 @@ class TestIngester(unittest.TestCase):
     def create_ingester_for_file(self, fileobj):
         ingester = Ingester(
             fileobj=fileobj,
+            path=fileobj.name,
             s3=self.s3_mock,
             archive=self.archive_mock,
             blacklist_headers=settings.HEADER_BLACKLIST,

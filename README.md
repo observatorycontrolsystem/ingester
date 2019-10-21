@@ -35,12 +35,12 @@ set as environment variables.
     Checks if the frame exists in the archive.
 
 ---
-    validate_fits_and_create_archive_record(path, **kwargs)
+    validate_fits_and_create_archive_record(fileobj, path, **kwargs)
 
     Validate the fits file and also create an archive record from it.
 
 ---
-    upload_file_to_s3(path, **kwargs)
+    upload_file_to_s3(fileobj, path, **kwargs)
 
     Upload a file to S3.
 
@@ -50,7 +50,7 @@ set as environment variables.
     Ingest an archive record.
 
 ---
-    upload_file_and_ingest_to_archive(fileobj, **kwargs)
+    upload_file_and_ingest_to_archive(fileobj, path, **kwargs)
 
     Ingest and upload a file.
 
@@ -73,10 +73,10 @@ with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
     ingester.frame_exists(fileobj)
     >>> False
 
-    record = ingester.validate_fits_and_create_archive_record(fileobj)
+    record = ingester.validate_fits_and_create_archive_record(fileobj, fileobj.name)
     >>> {'basename': 'tst1mXXX-ab12-20191013-0001-e00', 'FILTER': 'rp', 'DATE-OBS': '2019-10-13T10:13:00', ... }
 
-    s3_version = ingester.upload_file_to_s3(fileobj)
+    s3_version = ingester.upload_file_to_s3(fileobj, fileobj.name)
     >>> {'key': '792FE6EFFE6FAD7E', 'md5': 'ECD9B357D67117BE8BF38D6F4B4A6', 'extension': '.fits.fz'}
 
     ingested_record = ingester.ingest_archive_record(s3_version, record)
@@ -89,7 +89,7 @@ with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
 from ingester import ingester
 
 with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
-    ingester.upload_file_and_ingest_to_archive(fileobj)
+    ingester.upload_file_and_ingest_to_archive(fileobj, fileobj.name)
     >>> {'basename': 'tst1mXXX-ab12-20191013-0001-e00', 'version_set': [{'key': '792FE6EFFE6FAD7E', 'md5': 'ECD9B357D67117BE8BF38D6F4B4A6', 'extension': '.fits.fz'}], 'frameid': 400321, ... }
 ```
 

@@ -15,11 +15,11 @@ logger = logging.getLogger('ingester')
 class FitsDict(object):
     INTEGER_TYPES = ['BLKUID', 'REQNUM']
 
-    def __init__(self, fileobj, required_headers, blacklist_headers):
+    def __init__(self, fileobj, path, required_headers, blacklist_headers):
         self.required_headers = required_headers
         self.blacklist_headers = blacklist_headers
         self.fileobj = fileobj
-        self.basename, self.extension = get_basename_and_extension(self.fileobj.name)
+        self.basename, self.extension = get_basename_and_extension(path)
 
     def get_hdu_with_required_headers(self):
         # astropy reads the fileobj but does not reset the position

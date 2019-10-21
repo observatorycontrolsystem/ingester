@@ -48,7 +48,7 @@ def main():
         sys.exit(int(not exists))
 
     try:
-        result = upload_file_and_ingest_to_archive(fileobj=fileobj, **vars(args))
+        result = upload_file_and_ingest_to_archive(fileobj=fileobj, path=fileobj.name, **vars(args))
     except NonFatalDoNotRetryError as e:
         sys.stdout.write(str(e))
         sys.exit(0)
