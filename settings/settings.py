@@ -12,7 +12,7 @@ BUCKET = os.getenv('BUCKET', 'ingestertest')
 IGNORED_CHARS = os.getenv('IGNORED_CHARS', "-t00,-x00,-g00,-l00,-kb11,-kb15,tstnrs").strip(',').replace(' ','').split(',')
 
 # Fits headers we don't want to ingest
-HEADER_BLACKLIST = os.getenv('HEADER_BLACKLIST', "HISTORY,,COMMENT").strip(',').replace(' ','').split(',')
+HEADER_BLACKLIST = os.getenv('HEADER_BLACKLIST', "HISTORY,COMMENT").strip(',').replace(' ','').split(',')
 
 # Fits headers that must be present
 REQUIRED_HEADERS = os.getenv('REQUIRED_HEADERS', "PROPID,DATE-OBS,INSTRUME,SITEID,TELID,OBSTYPE,BLKUID").strip(',').replace(' ','').split(',')
