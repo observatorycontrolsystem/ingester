@@ -17,7 +17,10 @@ class FitsDict(object):
 
     def __init__(self, fileobj, path, required_headers, blacklist_headers):
         self.required_headers = required_headers
-        self.blacklist_headers = blacklist_headers
+        self.blacklist_headers = list(blacklist_headers)
+        # Make sure to blacklist empty headers, since we never want them and they cause problems.
+        if '' not in self.blacklist_headers:
+            self.blacklist_headers.append('')
         self.fileobj = fileobj
         self.basename, self.extension = get_basename_and_extension(path)
 
