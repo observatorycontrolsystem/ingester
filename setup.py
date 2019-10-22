@@ -26,6 +26,12 @@ setup(
         'lcogt-logging',
         'opentsdb-python-metrics>=0.1.8'
     ],
+    tests_require=[
+        'pytest',
+        # celery is not required by the library, but there are tests that test the ingester application
+        # which require it.
+        'celery>=4.1,<4.2',
+    ],
     entry_points={
         'console_scripts': [
             'lco_ingest_frame = lco_ingester.scripts.ingest_frame:main',
