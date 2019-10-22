@@ -1,5 +1,5 @@
 import unittest
-from ingester.utils.fits import get_basename_and_extension, reduction_level
+from lco_ingester.utils.fits import get_basename_and_extension, reduction_level
 
 
 class TestFitsUtils(unittest.TestCase):

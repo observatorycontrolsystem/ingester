@@ -1,14 +1,15 @@
 from contextlib import contextmanager
-from opentsdb_python_metrics.metric_wrappers import metric_timer
-from dateutil.relativedelta import relativedelta
-from dateutil.parser import parse
-from astropy import wcs
 from datetime import datetime, timedelta
 import tarfile
 import hashlib
 import os
 
-from ingester.exceptions import DoNotRetryError, RetryError
+from opentsdb_python_metrics.metric_wrappers import metric_timer
+from dateutil.relativedelta import relativedelta
+from dateutil.parser import parse
+from astropy import wcs
+
+from lco_ingester.exceptions import DoNotRetryError, RetryError
 
 
 @contextmanager
@@ -32,7 +33,7 @@ def get_fits_from_path(path):
         if 'tar.gz' in path:
             return get_meta_file_from_targz(path)
         elif path.startswith(protocol_preface):
-            from ingester.s3 import S3Service
+            from lco_ingester.s3 import S3Service
             return S3Service('').get_file(path)
         else:
             return open(path, 'rb')

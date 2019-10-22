@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock
 import os
 
-from ingester.fits import FitsDict
+from lco_ingester.fits import FitsDict
 
 
 class TestFits(unittest.TestCase):

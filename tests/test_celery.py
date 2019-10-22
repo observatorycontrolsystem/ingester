@@ -3,11 +3,11 @@ from unittest.mock import patch, MagicMock
 
 from celery.exceptions import SoftTimeLimitExceeded
 
-from settings import celery_config
-from ingester.ingester import Ingester
+from lco_ingester.settings import celery_config
+from lco_ingester.ingester import Ingester
 from tasks import PostProcService
 from tasks import do_ingest
-from ingester.exceptions import DoNotRetryError, BackoffRetryError
+from lco_ingester.exceptions import DoNotRetryError, BackoffRetryError
 
 
 class TestCelery(unittest.TestCase):

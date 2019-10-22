@@ -4,14 +4,14 @@ import argparse
 import logging
 from logging.config import dictConfig
 
-from settings.log_config import logConf
-from ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
-from ingester.utils.fits import get_fits_from_path
-from ingester.exceptions import NonFatalDoNotRetryError
+from lco_ingester.settings.log_config import logConf
+from lco_ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
+from lco_ingester.utils.fits import get_fits_from_path
+from lco_ingester.exceptions import NonFatalDoNotRetryError
 
 # Set up logging
 dictConfig(logConf)
-logger = logging.getLogger('ingester')
+logger = logging.getLogger('lco_ingester')
 logger.setLevel(logging.CRITICAL)  # silence logging for command line tool
 
 description = (

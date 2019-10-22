@@ -1,12 +1,14 @@
 #!/bin/env python
-import tasks
 import sys
-from settings import settings
 import logging
+
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue, Exchange
 
-logger = logging.getLogger('ingester')
+import tasks
+from lco_ingester.settings import settings
+
+logger = logging.getLogger('lco_ingester')
 
 crawl_exchange = Exchange(settings.CRAWLER_EXCHANGE_NAME, type='fanout')
 
