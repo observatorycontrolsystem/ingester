@@ -4,12 +4,12 @@ from datetime import timedelta
 from astropy.io import fits
 from dateutil.parser import parse
 
-from ingester.exceptions import DoNotRetryError
-from ingester.utils.fits import reduction_level, related_for_catalog
-from ingester.utils.fits import get_basename_and_extension, reset_file
-from settings import settings
+from lco_ingester.exceptions import DoNotRetryError
+from lco_ingester.utils.fits import reduction_level, related_for_catalog
+from lco_ingester.utils.fits import get_basename_and_extension, reset_file
+from lco_ingester.settings import settings
 
-logger = logging.getLogger('ingester')
+logger = logging.getLogger('lco_ingester')
 
 
 class FitsDict(object):

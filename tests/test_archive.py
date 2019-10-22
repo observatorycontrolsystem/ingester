@@ -3,8 +3,8 @@ import unittest
 from datetime import datetime
 from requests.exceptions import ConnectionError, HTTPError
 
-from ingester.archive import ArchiveService
-from ingester.exceptions import NonFatalDoNotRetryError, RetryError, BackoffRetryError
+from lco_ingester.archive import ArchiveService
+from lco_ingester.exceptions import NonFatalDoNotRetryError, RetryError, BackoffRetryError
 
 
 def mocked_requests_get(*args, **kwargs):

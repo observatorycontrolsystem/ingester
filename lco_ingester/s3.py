@@ -1,17 +1,18 @@
-import hashlib
-import requests
-import boto3
-import logging
 import os
+import hashlib
+import logging
 from io import BytesIO
 from datetime import datetime
+
 from opentsdb_python_metrics.metric_wrappers import metric_timer, SendMetricMixin
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
+import requests
+import boto3
 
-from ingester.utils.fits import get_basename_and_extension, reset_file
-from ingester.exceptions import BackoffRetryError
+from lco_ingester.utils.fits import get_basename_and_extension, reset_file
+from lco_ingester.exceptions import BackoffRetryError
 
-logger = logging.getLogger('ingester')
+logger = logging.getLogger('lco_ingester')
 
 
 class S3Service(SendMetricMixin):
@@ -70,7 +71,7 @@ class S3Service(SendMetricMixin):
         fileobj.seek(0, os.SEEK_END)
         bytes_per_second = fileobj.tell() / upload_time.total_seconds()
         fileobj.seek(0)
-        self.send_metric('ingester.s3_upload_bytes_per_second', bytes_per_second) 
+        self.send_metric('lco_ingester.s3_upload_bytes_per_second', bytes_per_second)
         return {'key': key, 'md5': s3_md5, 'extension': extension}
 
     def get_file(self, path):

@@ -3,9 +3,9 @@
 Upload .fits files to S3 and post new data products to the Archive API.
 
 ## Installation
-Add the `ingester` package to your python environment:
+Add the `lco_ingester` package to your python environment:
 
-`(venv) $ pip install ingester`
+`(venv) $ pip install lco_ingester`
 
 ## Configuration
 
@@ -58,7 +58,7 @@ set as environment variables.
 
 #### Exceptions
 
-Exceptions raised by the ingester code are described in the `ingester.exceptions` module.
+Exceptions raised by the ingester code are described in the `lco_ingester.exceptions` module.
 
 ## Examples
 Triple arrows (>>>) are used to show the output of a function.
@@ -66,7 +66,7 @@ Triple arrows (>>>) are used to show the output of a function.
 #### Ingest a file step-by-step
 
 ```python
-from ingester import ingester
+from lco_ingester import ingester
 
 with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
 
@@ -86,7 +86,7 @@ with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
 #### Ingest a file, do all steps at once!
 
 ```python
-from ingester import ingester
+from lco_ingester import ingester
 
 with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
     ingester.upload_file_and_ingest_to_archive(fileobj, fileobj.name)
@@ -98,7 +98,7 @@ A command line script for ingesting data, and optionally only checking if that d
 in the Archive API, is available for use as well.
 
 ```commandline
-ingest_frame --help  # See available options
+lco_ingest_frame --help  # See available options
 ```
 
 ## For Developers

@@ -1,25 +1,26 @@
+from logging.config import dictConfig
+import logging
+import os
+
 from requests.auth import HTTPBasicAuth
 from opentsdb_python_metrics.metric_wrappers import metric_timer, send_tsdb_metric
 from celery import Celery
 from celery.exceptions import SoftTimeLimitExceeded
-from logging.config import dictConfig
-import logging
-import os
 import requests
 
-from settings.log_config import logConf
-from ingester.archive import ArchiveService
-from ingester.utils.fits import get_fits_from_path
-from ingester.s3 import S3Service
-from ingester.postproc import PostProcService
-from ingester.ingester import Ingester
-from ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
+from lco_ingester.settings.log_config import logConf
+from lco_ingester.archive import ArchiveService
+from lco_ingester.utils.fits import get_fits_from_path
+from lco_ingester.s3 import S3Service
+from lco_ingester.postproc import PostProcService
+from lco_ingester.ingester import Ingester
+from lco_ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 
 
 dictConfig(logConf)
-logger = logging.getLogger('ingester')
+logger = logging.getLogger('lco_ingester')
 app = Celery('tasks')
-app.config_from_object('settings.celery_config.celery_config')
+app.config_from_object('lco_ingester.settings.celery_config.celery_config')
 
 
 def task_log(task):

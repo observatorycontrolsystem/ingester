@@ -1,12 +1,12 @@
-from ingester.fits import FitsDict
-from ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError
-from ingester.utils.fits import get_basename_and_extension
-from ingester.utils.fits import wcs_corners_from_dict
-from ingester.utils.fits import get_storage_class
-from ingester.utils.fits import get_md5
-from ingester.archive import ArchiveService
-from ingester.s3 import S3Service
-from settings import settings
+from lco_ingester.fits import FitsDict
+from lco_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError
+from lco_ingester.utils.fits import get_basename_and_extension
+from lco_ingester.utils.fits import wcs_corners_from_dict
+from lco_ingester.utils.fits import get_storage_class
+from lco_ingester.utils.fits import get_md5
+from lco_ingester.archive import ArchiveService
+from lco_ingester.s3 import S3Service
+from lco_ingester.settings import settings
 
 
 def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
@@ -29,7 +29,7 @@ def validate_fits_and_create_archive_record(fileobj, path, required_headers=sett
     Validate the fits file and also create an archive record from it.
 
     :param fileobj: File-like object
-    :param path: file path/name for this object
+    :param path: File path/name for this object
     :param required_headers: FITS headers that must be present
     :param blacklist_headers: FITS headers that should not be ingested
     :return: Constructed archive record
@@ -46,7 +46,7 @@ def upload_file_to_s3(fileobj, path, bucket=settings.BUCKET, storage_class='STAN
     Uploads a file to s3.
 
     :param fileobj: File-like object
-    :param path: file path/name for this object
+    :param path: File path/name for this object
     :param bucket: S3 bucket name
     :param storage_class: S3 storage class
     :return: Version information for the file that was uploaded
@@ -84,7 +84,7 @@ def upload_file_and_ingest_to_archive(fileobj, path, required_headers=settings.R
     Ingest and upload a file.
 
     :param fileobj: File-like object
-    :param path: file path/name for this object
+    :param path: File path/name for this object
     :param api_root: Archive API root url
     :param auth_token: Archive API authentication token
     :param bucket: S3 bucket name

@@ -1,7 +1,7 @@
 from kombu.connection import Connection
 from kombu import Exchange, Queue
 
-from settings import settings
+from lco_ingester.settings import settings
 
 processed_exchange = Exchange(settings.PROCESSED_EXCHANGE_NAME, type='fanout')
 producer_queue = Queue('', processed_exchange, exclusive=True)
