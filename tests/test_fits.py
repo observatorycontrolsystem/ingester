@@ -3,15 +3,16 @@ from unittest.mock import MagicMock
 import os
 
 from lco_ingester.fits import FitsDict
+from lco_ingester.utils.fits import File
 
 
 class TestFits(unittest.TestCase):
     def setUp(self):
-        self.fileobj = MagicMock()
+        self.fileobj = MagicMock(spec=True)
         self.fileobj.name = ''
 
     def test_null_values(self):
-        fd = FitsDict(self.fileobj, '', [], [])
+        fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {
             'OBJECT': 'UNKNOWN',
             'PROPID': 'N/A',
@@ -27,7 +28,7 @@ class TestFits(unittest.TestCase):
         self.assertIsNone(fd.fits_dict['REQNUM'])
 
     def test_remove_blacklist(self):
-        fd = FitsDict(self.fileobj, '', [], ['FOO'])
+        fd = FitsDict(File(self.fileobj), [], ['FOO'])
         fd.fits_dict = {
             'FOO': 'BAR',
             'BAZ': 'BAM'
@@ -37,27 +38,28 @@ class TestFits(unittest.TestCase):
         self.assertIn('BAZ', fd.fits_dict.keys())
 
     def test_rlevel_present(self):
-        fd = FitsDict(self.fileobj, '', [], [])
+        fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {'RLEVEL': 91}
         fd.check_rlevel()
         self.assertEqual(91, fd.fits_dict['RLEVEL'])
 
     def test_rlevel_missing(self):
-        fd = FitsDict(self.fileobj, '', [], [])
+        self.fileobj.name = 'something-e11.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {}
         fd.basename = 'something-e11'
         fd.check_rlevel()
         self.assertEqual(11, fd.fits_dict['RLEVEL'])
 
     def test_catalog_file(self):
-        fd = FitsDict(self.fileobj, '', [], [])
+        self.fileobj.name = 'something-e90_cat.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {}
-        fd.basename = 'something-e90_cat'
         fd.check_catalog()
         self.assertEqual('something-e90', fd.fits_dict['L1IDCAT'])
 
     def test_public_date_public_file(self):
-        fd = FitsDict(self.fileobj, '', [], [])
+        fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {
             'PROPID': 'EPOTHING',
             'DATE-OBS': '2016-04-01T00:00:00+00:00',
@@ -67,7 +69,7 @@ class TestFits(unittest.TestCase):
         self.assertEqual(fd.fits_dict['L1PUBDAT'], fd.fits_dict['DATE-OBS'])
 
     def test_public_date_private_file(self):
-        fd = FitsDict(self.fileobj, '', [], [])
+        fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {
             'PROPID': 'LCO2015',
             'DATE-OBS': '2016-04-01T00:00:00+00:00',
@@ -77,7 +79,7 @@ class TestFits(unittest.TestCase):
         self.assertEqual(fd.fits_dict['L1PUBDAT'], '2017-04-01T00:00:00+00:00')
 
     def test_public_date_exists(self):
-        fd = FitsDict(self.fileobj, '', [], [])
+        fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {
             'PROPID': 'LCO2015',
             'DATE-OBS': '2099-04-01T00:00:00+00:00',
@@ -88,7 +90,7 @@ class TestFits(unittest.TestCase):
         self.assertEqual(fd.fits_dict['L1PUBDAT'], '2099-04-01T00:00:00+00:00')
 
     def test_normalize_related(self):
-        fd = FitsDict(self.fileobj, '', [], [])
+        fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {
             'L1IDBIAS': 'bias_kb78_20151110_bin2x2',
             'L1IDFLAT': 'flat_kb78_20151106_SKYFLAT_bin2x2_V',
