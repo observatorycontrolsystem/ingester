@@ -6,7 +6,7 @@ from dateutil.parser import parse
 
 from lco_ingester.exceptions import DoNotRetryError
 from lco_ingester.utils.fits import reduction_level, related_for_catalog
-from lco_ingester.utils.fits import get_basename_and_extension, reset_file
+from lco_ingester.utils.fits import File
 from lco_ingester.settings import settings
 
 logger = logging.getLogger('lco_ingester')
@@ -15,19 +15,17 @@ logger = logging.getLogger('lco_ingester')
 class FitsDict(object):
     INTEGER_TYPES = ['BLKUID', 'REQNUM']
 
-    def __init__(self, fileobj, path, required_headers, blacklist_headers):
+    def __init__(self, file, required_headers, blacklist_headers):
+        self.file = file
         self.required_headers = required_headers
         self.blacklist_headers = list(blacklist_headers)
         # Make sure to blacklist empty headers, since we never want them and they cause problems.
         if '' not in self.blacklist_headers:
             self.blacklist_headers.append('')
-        self.fileobj = fileobj
-        self.basename, self.extension = get_basename_and_extension(path)
 
     def get_hdu_with_required_headers(self):
-        # astropy reads the fileobj but does not reset the position
-        with reset_file(self.fileobj):
-            hdulist = fits.open(self.fileobj, mode='readonly')
+        with self.file.get_fits() as fits_file:
+            hdulist = fits.open(fits_file, mode='readonly')
             for hdu in hdulist:
                 fits_dict = dict(hdu.header)
                 if any([k for k in self.required_headers if k not in fits_dict]):
@@ -35,14 +33,14 @@ class FitsDict(object):
                 else:
                     self.fits_dict = fits_dict
                     logger.info('Ingester extracted fits headers', extra={
-                            'tags': {
-                                'request_num': fits_dict.get('REQNUM'),
-                                'PROPID': fits_dict.get('PROPID'),
-                                'filename': '{}{}'.format(self.basename, self.extension)
-                            }
-                        })
+                        'tags': {
+                            'request_num': fits_dict.get('REQNUM'),
+                            'PROPID': fits_dict.get('PROPID'),
+                            'filename': '{}{}'.format(self.file.basename, self.file.extension)
+                        }
+                    })
                     return
-            raise DoNotRetryError('Could no find required headers!')   # No headers met requirement
+            raise DoNotRetryError('Could not find required headers!')  # No headers met requirement
 
     def remove_blacklist_headers(self):
         for header in self.blacklist_headers:
@@ -63,14 +61,14 @@ class FitsDict(object):
     def check_rlevel(self):
         if not self.fits_dict.get('RLEVEL'):
             # Check if the frame contains its reduction level, if not deduce it
-            rlevel = reduction_level(self.basename, self.extension)
+            rlevel = reduction_level(self.file.basename, self.file.extension)
             self.fits_dict['RLEVEL'] = rlevel
 
     def check_catalog(self):
-        if '_cat' in self.basename:
+        if '_cat' in self.file.basename:
             if not self.fits_dict.get('L1IDCAT'):
                 # Check if the catalog file contains it's target frame, if not deduce it
-                l1idcat = related_for_catalog(self.basename)
+                l1idcat = related_for_catalog(self.file.basename)
                 self.fits_dict['L1IDCAT'] = l1idcat
             # set obstype to CATALOG even though it's set to EXPOSE by the pipeline
             self.fits_dict['OBSTYPE'] = 'CATALOG'
@@ -107,7 +105,7 @@ class FitsDict(object):
             filename = self.fits_dict.get(key)
             if filename and filename != 'N/A':
                 # The key has a value that isn't NA, we have a related frame
-                basename, extension = get_basename_and_extension(filename)
+                basename, extension = File.get_basename_and_extension(filename)
                 if extension:
                     # This value has an extention, so remove it.
                     self.fits_dict[key] = basename

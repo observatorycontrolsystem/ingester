@@ -1,17 +1,17 @@
 import unittest
-from lco_ingester.utils.fits import get_basename_and_extension, reduction_level
+from lco_ingester.utils.fits import File, reduction_level
 
 
 class TestFitsUtils(unittest.TestCase):
 
     def test_get_basename_and_extension(self):
         path = '/archive/coj/kb84/20160325/raw/coj0m405-kb84-20160325-0095-e00.fits'
-        basename, extension = get_basename_and_extension(path)
+        basename, extension = File.get_basename_and_extension(path)
         self.assertEqual(basename, 'coj0m405-kb84-20160325-0095-e00')
         self.assertEqual(extension, '.fits')
 
         path = '/archive/coj/kb84/20160325/raw/coj0m405-kb84-20160325-0095-e00.fits.fz'
-        basename, extension = get_basename_and_extension(path)
+        basename, extension = File.get_basename_and_extension(path)
         self.assertEqual(basename, 'coj0m405-kb84-20160325-0095-e00')
         self.assertEqual(extension, '.fits.fz')
 

@@ -1,5 +1,5 @@
-from contextlib import contextmanager
 from datetime import datetime, timedelta
+from contextlib import contextmanager
 import tarfile
 import hashlib
 import os
@@ -9,64 +9,89 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 from astropy import wcs
 
-from lco_ingester.exceptions import DoNotRetryError, RetryError
+from lco_ingester.exceptions import DoNotRetryError
 
 
-@contextmanager
-def reset_file(fileobj):
+class File:
     """
-    Use as a context manager to ensure that a file-like object is reset to the
-    initial position before and after a `with` block. This is useful if you need
-    the entire file to be read, but the reader does not reset it.
+    Wrapper class to help pass around file objects.
+
+    The user of this class is expected to close the file object that is passed in.
     """
-    fileobj.seek(0)
-    try:
-        yield
-    finally:
-        fileobj.seek(0)
+    def __init__(self, fileobj, path=None):
+        self.fileobj = fileobj
+        self.path = path
+        self.basename, self.extension = self.get_basename_and_extension(self.filename)
 
+    def get_from_start(self):
+        self.fileobj.seek(0)
+        return self.fileobj
 
-@metric_timer('ingester.get_fits')
-def get_fits_from_path(path):
-    protocol_preface = 's3://'
-    try:
-        if 'tar.gz' in path:
-            return get_meta_file_from_targz(path)
-        elif path.startswith(protocol_preface):
-            from lco_ingester.s3 import S3Service
-            return S3Service('').get_file(path)
-        else:
-            return open(path, 'rb')
-    except FileNotFoundError as exc:
-        raise RetryError(exc)
+    @contextmanager
+    def get_fits(self):
+        """
+        Return the fits file associated with this file. Generally this just the fileobj itself,
+        but certain spectral data must have their fits files extracted. Use this as a context
+        manager.
+        """
+        fits_file, tar_file = None, None
+        try:
+            if 'tar.gz' in self.filename:
+                tar_file = tarfile.open(fileobj=self.get_from_start(), mode='r')
+                fits_file = self._get_meta_file_from_targz(tar_file)
+            else:
+                fits_file = self.get_from_start()
 
+            yield fits_file
 
-@metric_timer('ingester.get_md5')
-def get_md5(fileobj):
-    try:
-        with reset_file(fileobj):
-            return hashlib.md5(fileobj.read()).hexdigest()
-    except FileNotFoundError as exc:
-        raise RetryError(exc)
+        finally:
+            if tar_file and fits_file:
+                # The fits file object came from the tar file extraction, and must be closed
+                fits_file.close()
+            if tar_file:
+                tar_file.close()
 
+    @staticmethod
+    def _get_meta_file_from_targz(tarfileobj):
+        for member in tarfileobj.getmembers():
+            if any(x + '.fits' in member.name for x in ['e00', 'e90', 'e91']) and member.isfile():
+                return tarfileobj.extractfile(member)
+        raise DoNotRetryError('Spectral package missing meta fits!')
 
-def get_basename_and_extension(path):
-    filename = os.path.basename(path)
-    if filename.find('.') > 0:
-        basename = filename[:filename.index('.')]
-        extension = filename[filename.index('.'):]
-    else:
-        basename = filename
-        extension = ''
-    return basename, extension
+    @metric_timer('ingester.get_md5')
+    def get_md5(self):
+        return hashlib.md5(self.get_from_start().read()).hexdigest()
 
+    @property
+    def filename(self):
+        # The filename, can be a full path or at least the basename plus the extension
+        filename = None
+        if self.path is not None:
+            filename = self.path
+        elif hasattr(self.fileobj, 'name'):
+            filename = self.fileobj.name
+        elif hasattr(self.fileobj, 'filename'):
+            filename = self.fileobj.filename
+        return filename
 
-def get_meta_file_from_targz(path):
-    tf = tarfile.open(path, 'r')
-    for member in tf.getmembers():
-        if any(x + '.fits' in member.name for x in ['e00', 'e90', 'e91']) and member.isfile():
-            return tf.extractfile(member)
-    raise DoNotRetryError('Spectral package missing meta fits!')
+    @staticmethod
+    def get_basename_and_extension(path):
+        basename, extension = None, None
+        if path is not None:
+            filename = os.path.basename(path)
+            if filename.find('.') > 0:
+                basename = filename[:filename.index('.')]
+                extension = filename[filename.index('.'):]
+            else:
+                basename = filename
+                extension = ''
+        return basename, extension
+
+    def __len__(self):
+        self.fileobj.seek(0, os.SEEK_END)
+        length = self.fileobj.tell()
+        self.fileobj.seek(0)
+        return length
 
 
 def obs_end_time_from_dict(fits_dict):
