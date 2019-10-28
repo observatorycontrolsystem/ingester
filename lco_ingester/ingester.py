@@ -1,5 +1,5 @@
 from lco_ingester.fits import FitsDict
-from lco_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, DoNotRetryError
+from lco_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError
 from lco_ingester.utils.fits import wcs_corners_from_dict
 from lco_ingester.utils.fits import get_storage_class
 from lco_ingester.utils.fits import File
@@ -34,10 +34,7 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
     :return: Constructed archive record
     """
     file = File(fileobj, path)
-
-    if file.filename is None:
-        raise DoNotRetryError('Unable to get filename from file object, must specify a path')
-
+    file.validate()
     json_record = FitsDict(file, required_headers, blacklist_headers).as_dict()
     json_record['area'] = wcs_corners_from_dict(json_record)
     json_record['basename'] = file.basename
@@ -55,10 +52,7 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET, storage_class=
     :return: Version information for the file that was uploaded
     """
     file = File(fileobj, path)
-
-    if file.filename is None:
-        raise DoNotRetryError('Unable to get filename from file object, must specify a path')
-
+    file.validate()
     s3 = S3Service(bucket)
     # Returns the version, which holds in it the md5 that was uploaded
     return s3.upload_file(file, storage_class)
@@ -102,10 +96,6 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
     :return: Information about the uploaded file and record
     """
     file = File(fileobj, path)
-
-    if file.filename is None:
-        raise DoNotRetryError('Unable to get filename from file object, must specify a path')
-
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     s3 = S3Service(bucket)
     ingester = Ingester(file, s3, archive, required_headers, blacklist_headers)
@@ -127,6 +117,9 @@ class Ingester(object):
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
     def ingest(self):
+        # Make sure this file has a filename
+        self.file.validate()
+
         # Get the Md5 checksum of this file and check if it already exists in the archive
         md5 = self.file.get_md5()
         if self.archive.version_exists(md5):

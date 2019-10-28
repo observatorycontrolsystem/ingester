@@ -100,6 +100,18 @@ class TestIngester(unittest.TestCase):
                 self.assertTrue(self.s3_mock.upload_file.called)
                 self.assertTrue(self.archive_mock.post_frame.called)
 
+    def test_ingest_bytesio_file_with_no_path(self):
+        # BytesIO objects have no name attr, and must specify a path
+        with io.BytesIO() as buf:
+            with open(FITS_FILE, 'rb') as fileobj:
+                buf.write(fileobj.read())
+                file = File(buf)
+                ingester = self.create_ingester_for_file(file)
+                with self.assertRaises(DoNotRetryError):
+                    ingester.ingest()
+        self.assertFalse(self.s3_mock.upload_file.called)
+        self.assertFalse(self.archive_mock.post_frame.called)
+
     def test_ingest_file_already_exists(self):
         self.archive_mock.version_exists.return_value = True
         with self.assertRaises(NonFatalDoNotRetryError):

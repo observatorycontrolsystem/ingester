@@ -47,7 +47,6 @@ class TestFits(unittest.TestCase):
         self.fileobj.name = 'something-e11.fits.fz'
         fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {}
-        fd.basename = 'something-e11'
         fd.check_rlevel()
         self.assertEqual(11, fd.fits_dict['RLEVEL'])
 
