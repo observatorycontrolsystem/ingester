@@ -93,6 +93,10 @@ class File:
         self.fileobj.seek(0)
         return length
 
+    def validate(self):
+        if self.filename is None:
+            raise DoNotRetryError('Unable to get filename from file object, must specify a path')
+
 
 def obs_end_time_from_dict(fits_dict):
     dateobs = parse(fits_dict['DATE-OBS'])
