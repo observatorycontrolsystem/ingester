@@ -111,15 +111,14 @@ class Ingester(object):
     """
     def __init__(self, file, s3, archive, required_headers=None, blacklist_headers=None):
         self.file = file
+        # Make sure this file has a filename
+        self.file.validate()
         self.s3 = s3
         self.archive = archive
         self.required_headers = required_headers if required_headers else []
         self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
     def ingest(self):
-        # Make sure this file has a filename
-        self.file.validate()
-
         # Get the Md5 checksum of this file and check if it already exists in the archive
         md5 = self.file.get_md5()
         if self.archive.version_exists(md5):
