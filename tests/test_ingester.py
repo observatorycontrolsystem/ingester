@@ -106,8 +106,8 @@ class TestIngester(unittest.TestCase):
             with open(FITS_FILE, 'rb') as fileobj:
                 buf.write(fileobj.read())
                 file = File(buf)
-                ingester = self.create_ingester_for_file(file)
                 with self.assertRaises(DoNotRetryError):
+                    ingester = self.create_ingester_for_file(file)
                     ingester.ingest()
         self.assertFalse(self.s3_mock.upload_file.called)
         self.assertFalse(self.archive_mock.post_frame.called)
