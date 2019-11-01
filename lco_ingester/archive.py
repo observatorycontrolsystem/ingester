@@ -50,5 +50,5 @@ class ArchiveService(SendMetricMixin):
         })
         # Record metric for the ingest lag (time between date of image vs date ingested)
         ingest_lag = datetime.utcnow() - obs_end_time_from_dict(fits_dict)
-        self.send_metric('lco_ingester.ingest_lag', ingest_lag.total_seconds())
+        self.send_metric('ingester.ingest_lag', ingest_lag.total_seconds())
         return result
