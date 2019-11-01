@@ -51,7 +51,7 @@ class TestFitsUtils(unittest.TestCase):
         bstring = b'1234567890'
         md5bstring = hashlib.md5(bstring).hexdigest()
         with io.BytesIO(b'1234567890') as fileobj:
-            file = File(fileobj)
+            file = File(fileobj, run_validate=False)
             md51 = file.get_md5()
             file.fileobj.read()
             md52 = file.get_md5()

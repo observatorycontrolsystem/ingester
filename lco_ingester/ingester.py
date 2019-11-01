@@ -18,7 +18,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
     :return: Boolean indicating whether the frame exists
     """
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
-    md5 = File(fileobj).get_md5()
+    md5 = File(fileobj, run_validate=False).get_md5()
     return archive.version_exists(md5)
 
 
@@ -34,7 +34,6 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
     :return: Constructed archive record
     """
     file = File(fileobj, path)
-    file.validate()
     json_record = FitsDict(file, required_headers, blacklist_headers).as_dict()
     json_record['area'] = wcs_corners_from_dict(json_record)
     json_record['basename'] = file.basename
@@ -52,7 +51,6 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET, storage_class=
     :return: Version information for the file that was uploaded
     """
     file = File(fileobj, path)
-    file.validate()
     s3 = S3Service(bucket)
     # Returns the version, which holds in it the md5 that was uploaded
     return s3.upload_file(file, storage_class)
@@ -111,8 +109,6 @@ class Ingester(object):
     """
     def __init__(self, file, s3, archive, required_headers=None, blacklist_headers=None):
         self.file = file
-        # Make sure this file has a filename
-        self.file.validate()
         self.s3 = s3
         self.archive = archive
         self.required_headers = required_headers if required_headers else []

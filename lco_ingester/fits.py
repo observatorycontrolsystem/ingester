@@ -1,3 +1,4 @@
+import io
 import logging
 from datetime import timedelta
 
@@ -25,22 +26,22 @@ class FitsDict(object):
 
     def get_hdu_with_required_headers(self):
         with self.file.get_fits() as fits_file:
-            hdulist = fits.open(fits_file, mode='readonly')
-            for hdu in hdulist:
-                fits_dict = dict(hdu.header)
-                if any([k for k in self.required_headers if k not in fits_dict]):
-                    pass
-                else:
-                    self.fits_dict = fits_dict
-                    logger.info('Ingester extracted fits headers', extra={
-                        'tags': {
-                            'request_num': fits_dict.get('REQNUM'),
-                            'PROPID': fits_dict.get('PROPID'),
-                            'filename': '{}{}'.format(self.file.basename, self.file.extension)
-                        }
-                    })
-                    return
-            raise DoNotRetryError('Could not find required headers!')  # No headers met requirement
+            with fits.open(io.BytesIO(fits_file.read()), mode='readonly') as hdulist:
+                for hdu in hdulist:
+                    fits_dict = dict(hdu.header)
+                    if any([k for k in self.required_headers if k not in fits_dict]):
+                        pass
+                    else:
+                        self.fits_dict = fits_dict
+                        logger.info('Ingester extracted fits headers', extra={
+                            'tags': {
+                                'request_num': fits_dict.get('REQNUM'),
+                                'PROPID': fits_dict.get('PROPID'),
+                                'filename': '{}{}'.format(self.file.basename, self.file.extension)
+                            }
+                        })
+                        return
+                raise DoNotRetryError('Could not find required headers!')  # No headers met requirement
 
     def remove_blacklist_headers(self):
         for header in self.blacklist_headers:
