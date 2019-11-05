@@ -32,5 +32,5 @@ Running
 `listener.py` Will listen on the configured queue for new messages. When once is recieved,
 it will launch an asynchronous celery task to ingest the file.
 
-`runcrawler.sh` is a convience script that can be used to launch celery locally for testing.
+`run_celery.sh` is a convience script that can be used to launch celery locally for testing.
 
