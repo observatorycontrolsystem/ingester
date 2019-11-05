@@ -1,18 +1,20 @@
 #!/bin/env python
-import tasks
 import sys
-import settings
 import logging
+
 from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue, Exchange
 
-logger = logging.getLogger('ingester')
+import tasks
+from lco_ingester.settings import settings
 
-crawl_exchange = Exchange('fits_files', type='fanout')
+logger = logging.getLogger('lco_ingester')
+
+crawl_exchange = Exchange(settings.CRAWLER_EXCHANGE_NAME, type='fanout')
 
 
 def filter_path(path):
-    if path and all([chars not in path for chars in settings.DISALLOWED_CHARS]):
+    if path and all([chars not in path for chars in settings.IGNORED_CHARS]):
         return True
     return False
 

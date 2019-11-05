@@ -2,7 +2,8 @@ import os
 from unittest.mock import patch
 import unittest
 
-from ingester.s3 import S3Service
+from lco_ingester.s3 import S3Service
+from lco_ingester.utils.fits import File
 
 FITS_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -24,7 +25,7 @@ def mocked_s3_object(*args, **kwargs):
                 return {'ETag': '"fakemd5"', 'VersionId': 'fakeversion'}
 
             def get(self, *args, **kwargs):
-                return {'Body': open(FITS_FILE, 'rb')}
+                return {'Body': open(FITS_FILE, 'rb'), 'ContentDisposition': 'attachment: filename=thing.fits.fz'}
 
     return MockS3Object()
 
@@ -47,10 +48,12 @@ class TestS3(unittest.TestCase):
 
     @patch('boto3.resource', side_effect=mocked_s3_object)
     def test_upload_file(self, s3_mock):
-        self.s3.upload_file(FITS_FILE)
+        with open(FITS_FILE, 'rb') as fileobj:
+            self.s3.upload_file(File(fileobj), '', )
         self.assertTrue(s3_mock.called)
 
     @patch('boto3.resource', side_effect=mocked_s3_object)
     def test_get_file(self, s3_mock):
-        self.s3.get_file('s3://somebucket/thing')
+        fileobj = self.s3.get_file('s3://somebucket/thing')
         self.assertTrue(s3_mock.called)
+        self.assertEqual(fileobj.name, 'thing.fits.fz')

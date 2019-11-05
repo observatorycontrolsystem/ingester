@@ -1,9 +1,10 @@
 from unittest.mock import patch
 import unittest
+from datetime import datetime
 from requests.exceptions import ConnectionError, HTTPError
 
-from ingester.archive import ArchiveService
-from ingester.exceptions import NonFatalDoNotRetryError, RetryError, BackoffRetryError
+from lco_ingester.archive import ArchiveService
+from lco_ingester.exceptions import NonFatalDoNotRetryError, RetryError, BackoffRetryError
 
 
 def mocked_requests_get(*args, **kwargs):
@@ -38,29 +39,28 @@ def mocked_requests_get(*args, **kwargs):
 class TestArchiveService(unittest.TestCase):
     def test_archive_post(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://fake/', auth_token='')
-        archive_service.post_frame({})
+        archive_service.post_frame({'DATE-OBS': datetime.utcnow().isoformat()})
         self.assertTrue(post_mock.called)
         self.assertEqual(post_mock.call_args[0][0], 'http://fake/frames/')
 
     def test_existing_md5(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://return1/', auth_token='')
-        with self.assertRaises(NonFatalDoNotRetryError):
-            archive_service.check_for_existing_version('')
+        self.assertTrue(archive_service.version_exists(''))
         self.assertFalse(post_mock.called)
 
     def test_non_existing_md5(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://fake/', auth_token='')
-        archive_service.check_for_existing_version('')
+        self.assertFalse(archive_service.version_exists(''))
         self.assertTrue(get_mock.called)
 
     def test_bad_response(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://return404/', auth_token='')
         with self.assertRaises(RetryError):
-            archive_service.check_for_existing_version('')
+            archive_service.version_exists('')
         self.assertFalse(post_mock.called)
 
     def test_bad_connection(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://badconnection/', auth_token='')
         with self.assertRaises(BackoffRetryError):
-            archive_service.check_for_existing_version('')
+            archive_service.version_exists('')
         self.assertFalse(post_mock.called)
