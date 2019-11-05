@@ -1,5 +1,5 @@
 # Archive Ingester
-![https://api.travis-ci.org/LCOGT/ingester.svg?branch=master](https://api.travis-ci.org/LCOGT/ingester.svg?branch=master)
+![https://api.travis-ci.com/LCOGT/ingester.svg?branch=master](https://api.travis-ci.com/LCOGT/ingester.svg?branch=master)
 
 Upload .fits files to S3 and post new data products to the Archive API.
 
