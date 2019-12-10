@@ -41,7 +41,7 @@ set as environment variables.
     Validate the fits file and also create an archive record from it.
 
 ---
-    upload_file_to_s3(fileobj, [path, bucket, storage_class])
+    upload_file_to_s3(fileobj, [path, bucket])
 
     Upload a file to S3.
 

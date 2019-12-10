@@ -1,7 +1,6 @@
 from lco_ingester.fits import FitsDict
 from lco_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError
 from lco_ingester.utils.fits import wcs_corners_from_dict
-from lco_ingester.utils.fits import get_storage_class
 from lco_ingester.utils.fits import File
 from lco_ingester.archive import ArchiveService
 from lco_ingester.s3 import S3Service
@@ -40,7 +39,7 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
     return json_record
 
 
-def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET, storage_class='STANDARD'):
+def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
     """
     Uploads a file to s3.
 
@@ -52,8 +51,12 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET, storage_class=
     """
     file = File(fileobj, path)
     s3 = S3Service(bucket)
+
+    # Transform this fits file into a cleaned dictionary
+    fits_dict = FitsDict(file, settings.REQUIRED_HEADERS, settings.HEADER_BLACKLIST).as_dict()
+
     # Returns the version, which holds in it the md5 that was uploaded
-    return s3.upload_file(file, storage_class)
+    return s3.upload_file(file, fits_dict)
 
 
 def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
@@ -123,11 +126,8 @@ class Ingester(object):
         # Transform this fits file into a cleaned dictionary
         fits_dict = FitsDict(self.file, self.required_headers, self.blacklist_headers).as_dict()
 
-        # Figure out the storage class to use based on the date of the observation
-        storage_class = get_storage_class(fits_dict)
-
         # Upload the file to s3 and get version information back
-        version = self.s3.upload_file(self.file, storage_class)
+        version = self.s3.upload_file(self.file, fits_dict)
 
         # Make sure our md5 matches amazons
         if version['md5'] != md5:
