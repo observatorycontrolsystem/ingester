@@ -76,6 +76,7 @@ class S3Service(SendMetricMixin):
         upload_time = datetime.utcnow() - start_time
         bytes_per_second = len(file) / upload_time.total_seconds()
         self.send_metric('ingester.s3_upload_bytes_per_second', bytes_per_second)
+        # TODO: Remove 'migrated': True from the return dict when the s3 migration is complete
         return {'key': key, 'md5': s3_md5, 'extension': file.extension, 'migrated': True}
 
     @staticmethod
