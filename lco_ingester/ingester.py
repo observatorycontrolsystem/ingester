@@ -46,7 +46,6 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
     :param fileobj: File-like object
     :param path: File path/name for this object
     :param bucket: S3 bucket name
-    :param storage_class: S3 storage class
     :return: Version information for the file that was uploaded
     """
     file = File(fileobj, path)
