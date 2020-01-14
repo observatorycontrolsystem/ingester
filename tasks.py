@@ -12,7 +12,6 @@ from lco_ingester.settings.log_config import logConf
 from lco_ingester.archive import ArchiveService
 from lco_ingester.utils.fits import File
 from lco_ingester.s3 import S3Service
-from lco_ingester.postproc import PostProcService
 from lco_ingester.ingester import Ingester
 from lco_ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 
@@ -44,15 +43,13 @@ def do_ingest(self, path, bucket, api_root, auth_token, broker_url, required_hea
     logger.info('Starting ingest', extra=task_log(self))
 
     # Service instantiation
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
     s3 = S3Service(bucket)
-    post_proc = PostProcService(broker_url)
     try:
         with open(path, 'rb') as fileobj:
             file = File(fileobj, path)
             ingester = Ingester(file, s3, archive, required_headers, blacklist_headers)
-            ingested_frame = ingester.ingest()
-            post_proc.post_to_archived_queue(ingested_frame)
+            ingester.ingest()
     except DoNotRetryError as exc:
         logger.fatal('Exception occured: {0}. Aborting.'.format(exc), extra=task_log(self))
         raise exc

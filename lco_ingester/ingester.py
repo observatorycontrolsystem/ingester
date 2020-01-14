@@ -58,7 +58,8 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
     return s3.upload_file(file, fits_dict)
 
 
-def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
+def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
+                          broker_url=settings.FITS_BROKER):
     """
     Ingest an archive record.
 
@@ -66,23 +67,19 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
     :param record: Archive record to ingest
     :param api_root: Archive API root url
     :param auth_token: Archive API authentication token
+    :param broker_url: FITS exchange broker
     :return: The archive record that was ingested
     """
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
     # Construct final archive payload and post to archive
     record['version_set'] = [version]
-    result = archive.post_frame(record)
-    # Add some useful information from the result
-    record['frameid'] = result.get('id')
-    record['filename'] = result.get('filename')
-    record['url'] = result.get('url')
-    return record
+    return archive.post_frame(record, broker_url)
 
 
 def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
                                       blacklist_headers=settings.HEADER_BLACKLIST,
                                       api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
-                                      bucket=settings.BUCKET):
+                                      bucket=settings.BUCKET, broker_url=settings.FITS_BROKER):
     """
     Ingest and upload a file.
 
@@ -93,10 +90,11 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
     :param bucket: S3 bucket name
     :param required_headers: FITS headers that must be present
     :param blacklist_headers: FITS headers that should not be ingested
+    :param broker_url: FITS exchange broker
     :return: Information about the uploaded file and record
     """
     file = File(fileobj, path)
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
     s3 = S3Service(bucket)
     ingester = Ingester(file, s3, archive, required_headers, blacklist_headers)
     return ingester.ingest()
@@ -136,10 +134,4 @@ class Ingester(object):
         fits_dict['area'] = wcs_corners_from_dict(fits_dict)
         fits_dict['version_set'] = [version]
         fits_dict['basename'] = self.file.basename
-        result = self.archive.post_frame(fits_dict)
-
-        # Add some useful information from the result
-        fits_dict['frameid'] = result.get('id')
-        fits_dict['filename'] = result.get('filename')
-        fits_dict['url'] = result.get('url')
-        return fits_dict
+        return self.archive.post_frame(fits_dict)

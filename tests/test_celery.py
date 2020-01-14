@@ -5,7 +5,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 
 from lco_ingester.settings import celery_config
 from lco_ingester.ingester import Ingester
-from tasks import PostProcService
+from lco_ingester.archive import PostProcService
 from tasks import do_ingest
 from lco_ingester.exceptions import DoNotRetryError, BackoffRetryError
 
