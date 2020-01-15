@@ -5,7 +5,6 @@ import hashlib
 import os
 
 from opentsdb_python_metrics.metric_wrappers import metric_timer
-from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 from astropy import wcs
 
@@ -185,9 +184,9 @@ def get_storage_class(fits_dict):
     # date of the observation, from the FITS headers
     dateobs = parse(fits_dict['DATE-OBS'])
 
-    # if the observation was more than 6 months ago, this is someone
+    # if the observation was more than 60 days ago, this is someone
     # uploading older data, and it can skip straight to STANDARD_IA
-    if dateobs < (datetime.utcnow() + relativedelta(months=-6)):
+    if dateobs < (datetime.utcnow() - timedelta(days=60)):
         return 'STANDARD_IA'
 
     # everything else goes into the STANDARD storage class, and will

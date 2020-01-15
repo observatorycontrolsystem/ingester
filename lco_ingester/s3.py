@@ -3,8 +3,10 @@ import logging
 from io import BytesIO
 from datetime import datetime
 
+from lco_ingester.utils.fits import get_storage_class
 from opentsdb_python_metrics.metric_wrappers import metric_timer, SendMetricMixin
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
+
 import requests
 import boto3
 
@@ -17,8 +19,16 @@ class S3Service(SendMetricMixin):
     def __init__(self, bucket):
         self.bucket = bucket
 
-    def basename_to_s3_key(self, basename):
-        return '/'.join((hashlib.sha1(basename.encode('utf-8')).hexdigest()[0:4], basename))
+    def file_to_s3_key(self, file, fits_dict):
+        site = fits_dict.get('SITEID')
+        instrument = fits_dict.get('INSTRUME')
+        date_obs = fits_dict.get('DATE-OBS')
+        if site.lower() == 'sor':
+            # SOR files don't have the day_obs in their filename, so use the DATE_OBS field:
+            day_obs = date_obs.split('T')[0].replace('-', '')
+        else:
+            day_obs = file.basename.split('-')[2]
+        return '/'.join((site, instrument, day_obs, file.basename)) + file.extension
 
     def extension_to_content_type(self, extension):
         content_types = {
@@ -36,10 +46,11 @@ class S3Service(SendMetricMixin):
             return etag[1:-1]
 
     @metric_timer('ingester.upload_file')
-    def upload_file(self, file, storage_class):
+    def upload_file(self, file, fits_dict):
+        storage_class = get_storage_class(fits_dict)
         start_time = datetime.utcnow()
         s3 = boto3.resource('s3')
-        key = self.basename_to_s3_key(file.basename)
+        key = self.file_to_s3_key(file, fits_dict)
         content_disposition = 'attachment; filename={0}{1}'.format(file.basename, file.extension)
         content_type = self.extension_to_content_type(file.extension)
         try:
@@ -65,7 +76,8 @@ class S3Service(SendMetricMixin):
         upload_time = datetime.utcnow() - start_time
         bytes_per_second = len(file) / upload_time.total_seconds()
         self.send_metric('ingester.s3_upload_bytes_per_second', bytes_per_second)
-        return {'key': key, 'md5': s3_md5, 'extension': file.extension}
+        # TODO: Remove 'migrated': True from the return dict when the s3 migration is complete
+        return {'key': key, 'md5': s3_md5, 'extension': file.extension, 'migrated': True}
 
     @staticmethod
     def get_file(path):
