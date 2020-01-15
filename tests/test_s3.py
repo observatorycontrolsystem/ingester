@@ -38,7 +38,7 @@ class TestS3(unittest.TestCase):
         fits_dict = {'SITEID': 'tst', 'INSTRUME': 'inst01', 'DATE-OBS': '2019-10-11T00:11:22.123'}
         self.assertEqual(
             'tst/inst01/20191011/somefilename-inst01-20191011-0011.fits.fz',
-            self.s3.basename_to_s3_key('somefilename-inst01-20191011-0011.fits.fz', fits_dict)
+            self.s3.file_to_s3_key('somefilename-inst01-20191011-0011.fits.fz', fits_dict)
         )
 
     def test_extension_to_content_type(self):

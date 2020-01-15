@@ -19,7 +19,7 @@ class S3Service(SendMetricMixin):
     def __init__(self, bucket):
         self.bucket = bucket
 
-    def basename_to_s3_key(self, basename, fits_dict):
+    def file_to_s3_key(self, file, fits_dict):
         site = fits_dict.get('SITEID')
         instrument = fits_dict.get('INSTRUME')
         date_obs = fits_dict.get('DATE-OBS')
@@ -27,8 +27,8 @@ class S3Service(SendMetricMixin):
             # SOR files don't have the day_obs in their filename, so use the DATE_OBS field:
             day_obs = date_obs.split('T')[0].replace('-', '')
         else:
-            day_obs = basename.split('-')[2]
-        return '/'.join((site, instrument, day_obs, basename))
+            day_obs = file.basename.split('-')[2]
+        return '/'.join((site, instrument, day_obs, file.basename)) + file.extension
 
     def extension_to_content_type(self, extension):
         content_types = {
@@ -50,7 +50,7 @@ class S3Service(SendMetricMixin):
         storage_class = get_storage_class(fits_dict)
         start_time = datetime.utcnow()
         s3 = boto3.resource('s3')
-        key = self.basename_to_s3_key(file.basename, fits_dict)
+        key = self.file_to_s3_key(file, fits_dict)
         content_disposition = 'attachment; filename={0}{1}'.format(file.basename, file.extension)
         content_type = self.extension_to_content_type(file.extension)
         try:
