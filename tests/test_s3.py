@@ -35,11 +35,12 @@ class TestS3(unittest.TestCase):
         self.s3 = S3Service('')
 
     def test_basename_to_hash(self):
-        fits_dict = {'SITEID': 'tst', 'INSTRUME': 'inst01', 'DATE-OBS': '2019-10-11T00:11:22.123'}
-        self.assertEqual(
-            'tst/inst01/20191011/somefilename-inst01-20191011-0011.fits.fz',
-            self.s3.file_to_s3_key('somefilename-inst01-20191011-0011.fits.fz', fits_dict)
-        )
+        fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261'}
+        with open(FITS_FILE, 'rb') as fileobj:
+            self.assertEqual(
+                'coj/kb05/20150219/coj1m011-kb05-20150219-0125-e90.fits.fz',
+                self.s3.file_to_s3_key(File(fileobj), fits_dict)
+            )
 
     def test_extension_to_content_type(self):
         self.assertEqual('image/fits', self.s3.extension_to_content_type('.fits'))
