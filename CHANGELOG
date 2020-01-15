@@ -1,3 +1,10 @@
+2.1.0
+2020-01-15
+Update s3 keys to use daydir structure
+Add migrated=True flag to post to the archive
+Use STANDARD_IA storage class when uploading files older than 60 days, decreased from 6 months
+Post to fits exchange after a post to the archive
+
 2.0.0
 2019-11-05
 Refactor so that ingester code can be used as a library
