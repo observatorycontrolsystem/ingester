@@ -7,7 +7,7 @@ from lco_ingester.s3 import S3Service
 from lco_ingester.settings import settings
 
 
-def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
+def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN, broker_url=settings.FITS_BROKER):
     """
     Checks if the frame exists in the archive.
 
@@ -16,7 +16,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
     :param auth_token: Archive API authentication token
     :return: Boolean indicating whether the frame exists
     """
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
     md5 = File(fileobj, run_validate=False).get_md5()
     return archive.version_exists(md5)
 
