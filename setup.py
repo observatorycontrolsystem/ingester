@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='lco-ingester',
-    version='2.1.5',
+    version='2.1.6',
     description='Ingest frames into the LCO Archive',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -24,6 +24,7 @@ setup(
         'boto3',
         'python-dateutil',
         'lcogt-logging',
+        'kombu',
         'opentsdb-python-metrics>=0.1.8'
     ],
     tests_require=[
