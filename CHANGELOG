@@ -1,3 +1,7 @@
+2.1.4
+2020-01-15
+Fix the frame_exists method
+
 2.1.2
 2020-01-15
 Attempt to fix travis token
