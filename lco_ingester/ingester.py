@@ -73,7 +73,7 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
     archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
     # Construct final archive payload and post to archive
     record['version_set'] = [version]
-    return archive.post_frame(record, broker_url)
+    return archive.post_frame(record)
 
 
 def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
