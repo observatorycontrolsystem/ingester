@@ -80,6 +80,12 @@ class FitsDict(object):
             if (self.fits_dict['OBSTYPE'] in settings.CALIBRATION_TYPES or
                     any([prop in self.fits_dict['PROPID'] for prop in settings.PUBLIC_PROPOSALS])):
                 self.fits_dict['L1PUBDAT'] = self.fits_dict['DATE-OBS']
+            elif (any([prop in self.fits_dict['PROPID'] for prop in settings.PRIVATE_PROPOSALS]) or
+                    any([chars in self.file.basename for chars in settings.PRIVATE_FILE_TYPES])):
+                # This should be private, set it to 999 years from DATE-OBS
+                self.fits_dict['L1PUBDAT'] = (
+                    parse(self.fits_dict['DATE-OBS']) + timedelta(days=365 * 999)
+                ).isoformat()
             else:
                 # This should be proprietary, set it to a year from DATE-OBS
                 self.fits_dict['L1PUBDAT'] = (

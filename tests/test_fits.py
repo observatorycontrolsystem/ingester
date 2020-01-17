@@ -77,6 +77,38 @@ class TestFits(unittest.TestCase):
         fd.set_public_date()
         self.assertEqual(fd.fits_dict['L1PUBDAT'], '2017-04-01T00:00:00+00:00')
 
+    def test_public_date_private_t00(self):
+        self.fileobj.name = 'whatever-t00'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {
+            'PROPID': 'LCO2015',
+            'DATE-OBS': '2016-04-01T00:00:00+00:00',
+            'OBSTYPE': 'EXPOSE'
+        }
+        fd.set_public_date()
+        self.assertEqual(fd.fits_dict['L1PUBDAT'], '3014-08-03T00:00:00+00:00')
+
+    def test_public_date_private_x00(self):
+        self.fileobj.name = 'whatever-x00'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {
+            'PROPID': 'LCO2015',
+            'DATE-OBS': '2016-04-01T00:00:00+00:00',
+            'OBSTYPE': 'EXPOSE'
+        }
+        fd.set_public_date()
+        self.assertEqual(fd.fits_dict['L1PUBDAT'], '3014-08-03T00:00:00+00:00')
+
+    def test_public_date_private_LCOEngineering(self):
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {
+            'PROPID': 'LCOEngineering',
+            'DATE-OBS': '2016-04-01T00:00:00+00:00',
+            'OBSTYPE': 'EXPOSE'
+        }
+        fd.set_public_date()
+        self.assertEqual(fd.fits_dict['L1PUBDAT'], '3014-08-03T00:00:00+00:00')
+
     def test_public_date_exists(self):
         fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {

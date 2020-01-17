@@ -14,7 +14,7 @@ AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 BUCKET = os.getenv('BUCKET', 'ingestertest')
 
 # Files we wish to ignore
-IGNORED_CHARS = get_tuple_from_environment('IGNORED_CHARS', '-t00,-x00,-g00,-l00,-kb11,-kb15,tstnrs')
+IGNORED_CHARS = get_tuple_from_environment('IGNORED_CHARS', '-l00,tstnrs')
 
 # Fits headers we don't want to ingest
 HEADER_BLACKLIST = get_tuple_from_environment('HEADER_BLACKLIST', 'HISTORY,COMMENT')
@@ -27,6 +27,12 @@ CALIBRATION_TYPES = get_tuple_from_environment('CALIBRATION_TYPES', 'BIAS,DARK,S
 
 # Proposals including these strings will be considered public data
 PUBLIC_PROPOSALS = get_tuple_from_environment('PUBLIC_PROPOSALS', 'EPO,calib,standard,pointing')
+
+# Proposals including these strings will be considered private data (L1PUBDATE far out)
+PRIVATE_PROPOSALS = get_tuple_from_environment('PRIVATE_PROPOSALS', 'LCOEngineering')
+
+# File types which are private (L1PUBDATE far out)
+PRIVATE_FILE_TYPES = get_tuple_from_environment('PRIVATE_FILE_TYPES', '-t00,-x00')
 
 # Crawler RabbitMQ Exchange Name
 CRAWLER_EXCHANGE_NAME = os.getenv('CRAWLER_EXCHANGE_NAME', 'fits_files')
