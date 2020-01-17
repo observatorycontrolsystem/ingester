@@ -1,3 +1,7 @@
+2.1.7
+2020-01-17
+Set some engineering/satellite data to never go public
+
 2.1.6
 2020-01-16
 Fix the frame_exists method
