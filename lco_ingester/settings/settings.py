@@ -14,7 +14,7 @@ AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 BUCKET = os.getenv('BUCKET', 'ingestertest')
 
 # Files we wish to ignore
-IGNORED_CHARS = get_tuple_from_environment('IGNORED_CHARS', '-l00,-kb11,-kb15,tstnrs')
+IGNORED_CHARS = get_tuple_from_environment('IGNORED_CHARS', '-l00,tstnrs')
 
 # Fits headers we don't want to ingest
 HEADER_BLACKLIST = get_tuple_from_environment('HEADER_BLACKLIST', 'HISTORY,COMMENT')
