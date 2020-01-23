@@ -23,11 +23,17 @@ class S3Service(SendMetricMixin):
         site = fits_dict.get('SITEID')
         instrument = fits_dict.get('INSTRUME')
         day_obs = fits_dict.get('DAY-OBS')
+        data_type = 'raw' if fits_dict.get('RLEVEL', 0) == 0 else 'processed'
         if not day_obs:
             # SOR files don't have the day_obs in their filename or header, so use the DATE_OBS field:
             date_obs = fits_dict.get('DATE-OBS')
             day_obs = date_obs.split('T')[0].replace('-', '')
-        return '/'.join((site, instrument, day_obs, file.basename)) + file.extension
+        if 'bpm' in file.basename or fits_dict.get('OBSTYPE') == 'BPM' or fits_dict.get('EXTNAME') == 'BPM':
+            # Files with bpm in the name, or BPM OBSTYPE or EXTNAME headers are placed in the root instrument dir
+            return '/'.join((site, instrument, file.basename)) + file.extension
+        else:
+            # All other files go in instrument/daydir/datatype/ dir
+            return '/'.join((site, instrument, day_obs, data_type, file.basename)) + file.extension
 
     def extension_to_content_type(self, extension):
         content_types = {
