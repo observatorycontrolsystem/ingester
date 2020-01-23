@@ -39,3 +39,6 @@ CRAWLER_EXCHANGE_NAME = os.getenv('CRAWLER_EXCHANGE_NAME', 'fits_files')
 
 # Processed files RabbitMQ Exchange Name
 PROCESSED_EXCHANGE_NAME = os.getenv('PROCESSED_EXCHANGE_NAME', 'archived_fits')
+
+# Optionally submit files to fits queue
+POSTPROCESS_FILES = os.getenv('POSTPROCESS_FILES', True)
