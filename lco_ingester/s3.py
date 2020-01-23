@@ -22,12 +22,11 @@ class S3Service(SendMetricMixin):
     def file_to_s3_key(self, file, fits_dict):
         site = fits_dict.get('SITEID')
         instrument = fits_dict.get('INSTRUME')
-        date_obs = fits_dict.get('DATE-OBS')
-        if site.lower() == 'sor':
-            # SOR files don't have the day_obs in their filename, so use the DATE_OBS field:
+        day_obs = fits_dict.get('DAY-OBS')
+        if not day_obs:
+            # SOR files don't have the day_obs in their filename or header, so use the DATE_OBS field:
+            date_obs = fits_dict.get('DATE-OBS')
             day_obs = date_obs.split('T')[0].replace('-', '')
-        else:
-            day_obs = file.basename.split('-')[2]
         return '/'.join((site, instrument, day_obs, file.basename)) + file.extension
 
     def extension_to_content_type(self, extension):
