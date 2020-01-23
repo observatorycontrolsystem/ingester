@@ -29,8 +29,8 @@ class S3Service(SendMetricMixin):
             date_obs = fits_dict.get('DATE-OBS')
             day_obs = date_obs.split('T')[0].replace('-', '')
         if 'bpm' in file.basename or fits_dict.get('OBSTYPE') == 'BPM' or fits_dict.get('EXTNAME') == 'BPM':
-            # Files with bpm in the name, or BPM OBSTYPE or EXTNAME headers are placed in the root instrument dir
-            return '/'.join((site, instrument, file.basename)) + file.extension
+            # Files with bpm in the name, or BPM OBSTYPE or EXTNAME headers are placed in the instrument/bpm/ dir
+            return '/'.join((site, instrument, 'bpm', file.basename)) + file.extension
         else:
             # All other files go in instrument/daydir/datatype/ dir
             return '/'.join((site, instrument, day_obs, data_type, file.basename)) + file.extension

@@ -46,7 +46,7 @@ class TestS3(unittest.TestCase):
         fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'BPM'}
         with open(FITS_FILE, 'rb') as fileobj:
             self.assertEqual(
-                'coj/kb05/coj1m011-kb05-20150219-0125-e90.fits.fz',
+                'coj/kb05/bpm/coj1m011-kb05-20150219-0125-e90.fits.fz',
                 self.s3.file_to_s3_key(File(fileobj), fits_dict)
             )
 
@@ -54,7 +54,7 @@ class TestS3(unittest.TestCase):
         fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'EXPOSE'}
         with open(FITS_FILE, 'rb') as fileobj:
             self.assertEqual(
-                'coj/kb05/coj1m011-kb05-20150219-0125-bpm.fits.fz',
+                'coj/kb05/bpm/coj1m011-kb05-20150219-0125-bpm.fits.fz',
                 self.s3.file_to_s3_key(File(fileobj, path='coj1m011-kb05-20150219-0125-bpm.fits.fz'), fits_dict)
             )
 
