@@ -1,4 +1,4 @@
-2.1.8
+2.1.9
 2020-01-23
 Optional POSTPROCESS_FILES env var to control submitting to queues
 Update the directory structure for s3 files
