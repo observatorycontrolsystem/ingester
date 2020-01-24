@@ -20,6 +20,7 @@ class S3Service(SendMetricMixin):
         self.bucket = bucket
 
     def is_bpm_file(filename, fits_dict):
+        ''' Checks if file is a bad pixel mask using several rules for various naming schemes '''
         if fits_dict.get('OBSTYPE') == 'BPM' or fits_dict.get('EXTNAME') == 'BPM':
             return True
         filename = filename.replace('_', '-')
@@ -28,6 +29,7 @@ class S3Service(SendMetricMixin):
         return False
 
     def file_to_s3_key(self, file, fits_dict):
+        ''' Creates s3 path name based on the filename and certain fits headers '''
         site = fits_dict.get('SITEID')
         instrument = fits_dict.get('INSTRUME')
         day_obs = fits_dict.get('DAY-OBS')
