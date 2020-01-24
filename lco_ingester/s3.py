@@ -19,15 +19,31 @@ class S3Service(SendMetricMixin):
     def __init__(self, bucket):
         self.bucket = bucket
 
+    def is_bpm_file(filename, fits_dict):
+        ''' Checks if file is a bad pixel mask using several rules for various naming schemes '''
+        if fits_dict.get('OBSTYPE') == 'BPM' or fits_dict.get('EXTNAME') == 'BPM':
+            return True
+        filename = filename.replace('_', '-')
+        if filename.startswith('bpm-') or '-bpm-' in filename or filename.endswith('-bpm'):
+            return True
+        return False
+
     def file_to_s3_key(self, file, fits_dict):
+        ''' Creates s3 path name based on the filename and certain fits headers '''
         site = fits_dict.get('SITEID')
         instrument = fits_dict.get('INSTRUME')
         day_obs = fits_dict.get('DAY-OBS')
+        data_type = 'raw' if fits_dict.get('RLEVEL', 0) == 0 else 'processed'
         if not day_obs:
             # SOR files don't have the day_obs in their filename or header, so use the DATE_OBS field:
             date_obs = fits_dict.get('DATE-OBS')
             day_obs = date_obs.split('T')[0].replace('-', '')
-        return '/'.join((site, instrument, day_obs, file.basename)) + file.extension
+        if self.is_bpm_file(file.basename, fits_dict):
+            # Files with bpm in the name, or BPM OBSTYPE or EXTNAME headers are placed in the instrument/bpm/ dir
+            return '/'.join((site, instrument, 'bpm', file.basename)) + file.extension
+        else:
+            # All other files go in instrument/daydir/datatype/ dir
+            return '/'.join((site, instrument, day_obs, data_type, file.basename)) + file.extension
 
     def extension_to_content_type(self, extension):
         content_types = {

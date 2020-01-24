@@ -35,10 +35,34 @@ class TestS3(unittest.TestCase):
         self.s3 = S3Service('')
 
     def test_basename_to_hash(self):
-        fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261'}
+        fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'EXPOSE'}
         with open(FITS_FILE, 'rb') as fileobj:
             self.assertEqual(
-                'coj/kb05/20150219/coj1m011-kb05-20150219-0125-e90.fits.fz',
+                'coj/kb05/20150219/raw/coj1m011-kb05-20150219-0125-e90.fits.fz',
+                self.s3.file_to_s3_key(File(fileobj), fits_dict)
+            )
+
+    def test_bpm_obstype_basename_to_hash(self):
+        fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'BPM'}
+        with open(FITS_FILE, 'rb') as fileobj:
+            self.assertEqual(
+                'coj/kb05/bpm/coj1m011-kb05-20150219-0125-e90.fits.fz',
+                self.s3.file_to_s3_key(File(fileobj), fits_dict)
+            )
+
+    def test_bpm_filename_basename_to_hash(self):
+        fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'EXPOSE'}
+        with open(FITS_FILE, 'rb') as fileobj:
+            self.assertEqual(
+                'coj/kb05/bpm/coj1m011-kb05-20150219-0125-bpm.fits.fz',
+                self.s3.file_to_s3_key(File(fileobj, path='coj1m011-kb05-20150219-0125-bpm.fits.fz'), fits_dict)
+            )
+
+    def test_processed_basename_to_hash(self):
+        fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'EXPOSE', 'RLEVEL': 91}
+        with open(FITS_FILE, 'rb') as fileobj:
+            self.assertEqual(
+                'coj/kb05/20150219/processed/coj1m011-kb05-20150219-0125-e90.fits.fz',
                 self.s3.file_to_s3_key(File(fileobj), fits_dict)
             )
 
