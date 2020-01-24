@@ -19,6 +19,7 @@ class S3Service(SendMetricMixin):
     def __init__(self, bucket):
         self.bucket = bucket
 
+    @staticmethod
     def is_bpm_file(filename, fits_dict):
         ''' Checks if file is a bad pixel mask using several rules for various naming schemes '''
         if fits_dict.get('OBSTYPE') == 'BPM' or fits_dict.get('EXTNAME') == 'BPM':
