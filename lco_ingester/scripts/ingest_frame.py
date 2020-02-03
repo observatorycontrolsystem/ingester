@@ -3,6 +3,7 @@ import sys
 import argparse
 
 from lco_ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
+from lco_ingester.settings import settings
 from lco_ingester.exceptions import NonFatalDoNotRetryError
 
 description = (
@@ -18,10 +19,14 @@ def main():
     parser.add_argument('--api-root', help='API root')
     parser.add_argument('--auth-token', help='API token')
     parser.add_argument('--bucket', help='S3 bucket name')
+    parser.add_argument('--process-name', help='Tag set in collected metrics')
     parser.add_argument('--check-only', action='store_true', help='Only check if the frame exists in the archive. \
                                                                    returns a status code of 0 if found, 1 if not \
-                                                                   (or an error occured)')
+                                                                   (or an error occurred)')
     args = parser.parse_args()
+
+    if args.process_name:
+        settings.EXTRA_METRICS_TAGS['ingester_process_name'] = args.process_name
 
     try:
         with open(args.path, 'rb') as fileobj:

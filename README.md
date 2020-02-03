@@ -25,6 +25,7 @@ set as environment variables.
 | | `AWS_DEFAULT_REGION` | AWS S3 Default Region | `""`
 | Metrics | `OPENTSDB_HOSTNAME` | OpenTSDB Host to send metrics to | `""`
 | | `OPENTSDB_PYTHON_METRICS_TEST_MODE` | Set to any value to turn off metrics collection | `False`
+| | `INGESTER_PROCESS_NAME` | A tag set with the collected metrics to identify where the metrics are coming from | `ingester`
 | Postprocessing | `FITS_BROKER` | FITS exchange broker  | `memory://localhost`
 | | `PROCESSED_EXCHANGE_NAME` | Processed files RabbitMQ Exchange Name | `archived_fits`
 | | `POSTPROCESS_FILES` | Optionally submit files to fits queue  | `True`

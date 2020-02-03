@@ -2,10 +2,11 @@ import logging
 from datetime import datetime
 
 import requests
-from opentsdb_python_metrics.metric_wrappers import metric_timer_with_tags, SendMetricMixin
+from opentsdb_python_metrics.metric_wrappers import SendMetricMixin
 
 from lco_ingester.postproc import PostProcService
 from lco_ingester.utils.fits import obs_end_time_from_dict
+from lco_ingester.utils.metrics import method_timer
 from lco_ingester.exceptions import BackoffRetryError, RetryError
 from lco_ingester.settings import settings
 
@@ -37,7 +38,7 @@ class ArchiveService(SendMetricMixin):
         except KeyError as e:
             raise BackoffRetryError(e)
 
-    @metric_timer_with_tags('ingester.post_frame', ingester_process_name=settings.INGESTER_PROCESS_NAME)
+    @method_timer('ingester.post_frame')
     def post_frame(self, fits_dict):
         response = requests.post(
             '{0}frames/'.format(self.api_root), json=fits_dict, headers=self.headers
@@ -64,6 +65,6 @@ class ArchiveService(SendMetricMixin):
         self.send_metric(
             'ingester.ingest_lag',
             ingest_lag.total_seconds(),
-            ingester_process_name=settings.INGESTER_PROCESS_NAME
+            **settings.EXTRA_METRICS_TAGS
         )
         return fits_dict
