@@ -74,6 +74,11 @@ class FitsDict(object):
             # set obstype to CATALOG even though it's set to EXPOSE by the pipeline
             self.fits_dict['OBSTYPE'] = 'CATALOG'
 
+    def check_dayobs(self):
+        if not self.fits_dict.get('DAY_OBS'):
+            date_obs = self.fits_dict.get('DATE-OBS')
+            self.fits_dict['DAY_OBS'] = date_obs.split('T')[0].replace('-', '')
+
     def set_public_date(self):
         if not self.fits_dict.get('L1PUBDAT'):
             # Check if the frame doesnt specify a public date.
@@ -132,6 +137,7 @@ class FitsDict(object):
         self.normalize_null_values()
         self.check_rlevel()
         self.check_catalog()
+        self.check_dayobs()
         self.set_public_date()
         self.normalize_related()
         return self.fits_dict
