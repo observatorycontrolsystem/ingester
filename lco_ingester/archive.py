@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 import requests
-from opentsdb_python_metrics.metric_wrappers import metric_timer, SendMetricMixin
+from opentsdb_python_metrics.metric_wrappers import metric_timer_with_tags, SendMetricMixin
 
 from lco_ingester.postproc import PostProcService
 from lco_ingester.utils.fits import obs_end_time_from_dict
@@ -37,7 +37,7 @@ class ArchiveService(SendMetricMixin):
         except KeyError as e:
             raise BackoffRetryError(e)
 
-    @metric_timer('ingester.post_frame')
+    @metric_timer_with_tags('ingester.post_frame', ingester_process_name=settings.INGESTER_PROCESS_NAME)
     def post_frame(self, fits_dict):
         response = requests.post(
             '{0}frames/'.format(self.api_root), json=fits_dict, headers=self.headers
@@ -61,5 +61,9 @@ class ArchiveService(SendMetricMixin):
             post_proc.post_to_archived_queue(fits_dict)
         # Record metric for the ingest lag (time between date of image vs date ingested)
         ingest_lag = datetime.utcnow() - obs_end_time_from_dict(fits_dict)
-        self.send_metric('ingester.ingest_lag', ingest_lag.total_seconds())
+        self.send_metric(
+            'ingester.ingest_lag',
+            ingest_lag.total_seconds(),
+            ingester_process_name=settings.INGESTER_PROCESS_NAME
+        )
         return fits_dict

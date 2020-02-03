@@ -1,16 +1,16 @@
-import hashlib
 import logging
 from io import BytesIO
 from datetime import datetime
 
 from lco_ingester.utils.fits import get_storage_class
-from opentsdb_python_metrics.metric_wrappers import metric_timer, SendMetricMixin
+from opentsdb_python_metrics.metric_wrappers import metric_timer_with_tags, SendMetricMixin
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
 import requests
 import boto3
 
 from lco_ingester.exceptions import BackoffRetryError
+from lco_ingester.settings import settings
 
 logger = logging.getLogger('lco_ingester')
 
@@ -61,7 +61,7 @@ class S3Service(SendMetricMixin):
         if etag.startswith('"') and etag.endswith('"'):
             return etag[1:-1]
 
-    @metric_timer('ingester.upload_file')
+    @metric_timer_with_tags('ingester.upload_file', ingester_process_name=settings.INGESTER_PROCESS_NAME)
     def upload_file(self, file, fits_dict):
         storage_class = get_storage_class(fits_dict)
         start_time = datetime.utcnow()
@@ -91,7 +91,11 @@ class S3Service(SendMetricMixin):
         # Record metric for the bytes transferred / time to upload
         upload_time = datetime.utcnow() - start_time
         bytes_per_second = len(file) / upload_time.total_seconds()
-        self.send_metric('ingester.s3_upload_bytes_per_second', bytes_per_second)
+        self.send_metric(
+            'ingester.s3_upload_bytes_per_second',
+            bytes_per_second,
+            ingester_process_name=settings.INGESTER_PROCESS_NAME
+        )
         # TODO: Remove 'migrated': True from the return dict when the s3 migration is complete
         return {'key': key, 'md5': s3_md5, 'extension': file.extension, 'migrated': True}
 

@@ -4,11 +4,12 @@ import tarfile
 import hashlib
 import os
 
-from opentsdb_python_metrics.metric_wrappers import metric_timer
+from opentsdb_python_metrics.metric_wrappers import metric_timer_with_tags
 from dateutil.parser import parse
 from astropy import wcs
 
 from lco_ingester.exceptions import DoNotRetryError
+from lco_ingester.settings import settings
 
 
 class File:
@@ -59,7 +60,7 @@ class File:
                 return tarfileobj.extractfile(member)
         raise DoNotRetryError('Spectral package missing meta fits!')
 
-    @metric_timer('ingester.get_md5')
+    @metric_timer_with_tags('ingester.get_md5', ingester_process_name=settings.INGESTER_PROCESS_NAME)
     def get_md5(self):
         return hashlib.md5(self.get_from_start().read()).hexdigest()
 
