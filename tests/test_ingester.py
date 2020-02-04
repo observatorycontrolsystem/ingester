@@ -139,9 +139,9 @@ class TestIngester(unittest.TestCase):
 
     def test_blacklist(self):
         ingester = self.ingesters[0]
-        ingester.blacklist_headers = ['DAY-OBS', '', 'COMMENT', 'HISTORY']
+        ingester.blacklist_headers = ['', 'COMMENT', 'HISTORY']
         ingester.ingest()
-        self.assertNotIn('DAY-OBS', self.archive_mock.post_frame.call_args[0][0].keys())
+        self.assertNotIn('COMMENT', self.archive_mock.post_frame.call_args[0][0].keys())
 
     def test_reduction_level(self):
         for ingester in self.ingesters:

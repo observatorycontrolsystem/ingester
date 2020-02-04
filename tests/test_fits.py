@@ -50,6 +50,12 @@ class TestFits(unittest.TestCase):
         fd.check_rlevel()
         self.assertEqual(11, fd.fits_dict['RLEVEL'])
 
+    def test_dayobs_missing(self):
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'DATE-OBS': '2020-01-31T20:09:56.956'}
+        fd.check_dayobs()
+        self.assertEqual('20200131', fd.fits_dict['DAY-OBS'])
+
     def test_catalog_file(self):
         self.fileobj.name = 'something-e90_cat.fits.fz'
         fd = FitsDict(File(self.fileobj), [], [])
