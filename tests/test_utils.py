@@ -1,7 +1,7 @@
 import io
 import hashlib
 import unittest
-from lco_ingester.utils.fits import File, reduction_level
+from lco_ingester.utils.fits import File, reduction_level, get_dayobs
 
 
 class TestFitsUtils(unittest.TestCase):
@@ -57,3 +57,12 @@ class TestFitsUtils(unittest.TestCase):
             md52 = file.get_md5()
             self.assertEqual(md51, md52)
             self.assertEqual(md5bstring, md51)
+
+    def test_get_dayobs_no_dayobs(self):
+        fits_dict = {'DATE-OBS': '2020-01-31T20:09:56.956'}
+        self.assertEqual('20200131', get_dayobs(fits_dict))
+
+    def test_get_dayobs(self):
+        fits_dict = {'DAY-OBS': '20200131'}
+        self.assertEqual('20200131', get_dayobs(fits_dict))
+

@@ -222,12 +222,18 @@ def related_for_catalog(basename):
     return basename.replace('_cat', '')
 
 
-def dateobs_to_dayobs(date_obs: str):
+def get_dayobs(fits_dict: dict):
     """
-    Infer dayobs from dateobs
-    :param dateobs: DATE-OBS FITS header value
+    Get dayobs from a fits_dict
+    :param fits_dict: Fits dictionary with required header keywords
     :return: Date in DAY-OBS YYYYMMDD format
     """
-    return date_obs.split('T')[0].replace('-', '')
+    day_obs = fits_dict.get('DAY-OBS')
+    if not day_obs:
+        # Fall back to DATE-OBS
+        date_obs = fits_dict.get('DATE-OBS')
+        day_obs = date_obs.split('T')[0].replace('-', '')
+
+    return day_obs
 
 

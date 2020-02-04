@@ -6,7 +6,7 @@ from astropy.io import fits
 from dateutil.parser import parse
 
 from lco_ingester.exceptions import DoNotRetryError
-from lco_ingester.utils.fits import reduction_level, related_for_catalog, dateobs_to_dayobs
+from lco_ingester.utils.fits import reduction_level, related_for_catalog, get_dayobs
 from lco_ingester.utils.fits import File
 from lco_ingester.settings import settings
 
@@ -75,9 +75,7 @@ class FitsDict(object):
             self.fits_dict['OBSTYPE'] = 'CATALOG'
 
     def check_dayobs(self):
-        if not self.fits_dict.get('DAY-OBS'):
-            date_obs = self.fits_dict.get('DATE-OBS')
-            self.fits_dict['DAY-OBS'] = dateobs_to_dayobs(date_obs)
+        self.fits_dict['DAY-OBS'] = get_dayobs(self.fits_dict)
 
     def set_public_date(self):
         if not self.fits_dict.get('L1PUBDAT'):
