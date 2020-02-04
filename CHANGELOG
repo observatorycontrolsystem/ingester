@@ -1,3 +1,7 @@
+2.1.10
+2020-02-04
+Automatically populate DAY-OBS if it does not exist in image header
+
 2.1.9
 2020-01-23
 Optional POSTPROCESS_FILES env var to control submitting to queues
