@@ -220,3 +220,14 @@ def related_for_catalog(basename):
     # being inferred from the filename
     # a file's corresponding catalog is that filename + _cat
     return basename.replace('_cat', '')
+
+
+def dateobs_to_dayobs(date_obs: str):
+    """
+    Infer dayobs from dateobs
+    :param dateobs: DATE-OBS FITS header value
+    :return: Date in DAY-OBS YYYYMMDD format
+    """
+    return date_obs.split('T')[0].replace('-', '')
+
+

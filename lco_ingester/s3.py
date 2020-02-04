@@ -3,7 +3,7 @@ import logging
 from io import BytesIO
 from datetime import datetime
 
-from lco_ingester.utils.fits import get_storage_class
+from lco_ingester.utils.fits import get_storage_class, dateobs_to_dayobs
 from opentsdb_python_metrics.metric_wrappers import metric_timer, SendMetricMixin
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
@@ -38,7 +38,7 @@ class S3Service(SendMetricMixin):
         if not day_obs:
             # SOR files don't have the day_obs in their filename or header, so use the DATE_OBS field:
             date_obs = fits_dict.get('DATE-OBS')
-            day_obs = date_obs.split('T')[0].replace('-', '')
+            day_obs = dateobs_to_dayobs(date_obs)
         if self.is_bpm_file(file.basename, fits_dict):
             # Files with bpm in the name, or BPM OBSTYPE or EXTNAME headers are placed in the instrument/bpm/ dir
             return '/'.join((site, instrument, 'bpm', file.basename)) + file.extension
