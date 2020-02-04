@@ -44,6 +44,9 @@ PROCESSED_EXCHANGE_NAME = os.getenv('PROCESSED_EXCHANGE_NAME', 'archived_fits')
 # Optionally submit files to fits queue
 POSTPROCESS_FILES = ast.literal_eval(os.getenv('POSTPROCESS_FILES', 'True'))
 
+# Whether to submit the metrics asynchronously
+SUBMIT_METRICS_ASYNCHRONOUSLY = True
+
 # Extra tags for metrics
 EXTRA_METRICS_TAGS = {
     'ingester_process_name': os.getenv('INGESTER_PROCESS_NAME', 'ingester')

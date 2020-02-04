@@ -25,6 +25,9 @@ def main():
                                                                    (or an error occurred)')
     args = parser.parse_args()
 
+    # Submit metrics synchronously so that they all get submitted before the program exits
+    settings.SUBMIT_METRICS_ASYNCHRONOUSLY = False
+
     if args.process_name:
         settings.EXTRA_METRICS_TAGS['ingester_process_name'] = args.process_name
 
@@ -36,6 +39,7 @@ def main():
                         k: v for k, v in vars(args).items() if k in ['api_root', 'auth_token'] and v is not None
                     }
                     exists = frame_exists(fileobj, **check_args)
+
                 except Exception as e:
                     sys.stdout.write(str(e))
                     sys.exit(1)
