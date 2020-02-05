@@ -10,8 +10,8 @@ def method_timer(metric_name):
     def method_timer_decorator(method):
         def wrapper(self, *args, **kwargs):
             # Decorate the wrapped method with metric_timer_with_tags, which does the work of figuring out
-            # the runtime, so that the EXTRA_METRICS_TAGS are evaluated at runtime. An example of when the
-            # value is changed at runtime is when the ingester command line entrypoint is used.
+            # how long a method takes to run, so that the settings used are evaluated at runtime. An example
+            # of when settings are changed at runtime is when the ingester command line entrypoint is used.
             @metric_timer_with_tags(
                 metric_name=metric_name,
                 asynchronous=settings.SUBMIT_METRICS_ASYNCHRONOUSLY,
