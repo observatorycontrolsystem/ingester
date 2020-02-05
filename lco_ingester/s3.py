@@ -2,8 +2,9 @@ import logging
 from io import BytesIO
 from datetime import datetime
 
-from lco_ingester.utils.fits import get_storage_class
 from opentsdb_python_metrics.metric_wrappers import SendMetricMixin
+from lco_ingester.utils.fits import get_storage_class, get_dayobs
+
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
 import requests
@@ -34,12 +35,8 @@ class S3Service(SendMetricMixin):
         ''' Creates s3 path name based on the filename and certain fits headers '''
         site = fits_dict.get('SITEID')
         instrument = fits_dict.get('INSTRUME')
-        day_obs = fits_dict.get('DAY-OBS')
+        day_obs = get_dayobs(fits_dict)
         data_type = 'raw' if fits_dict.get('RLEVEL', 0) == 0 else 'processed'
-        if not day_obs:
-            # SOR files don't have the day_obs in their filename or header, so use the DATE_OBS field:
-            date_obs = fits_dict.get('DATE-OBS')
-            day_obs = date_obs.split('T')[0].replace('-', '')
         if self.is_bpm_file(file.basename, fits_dict):
             # Files with bpm in the name, or BPM OBSTYPE or EXTNAME headers are placed in the instrument/bpm/ dir
             return '/'.join((site, instrument, 'bpm', file.basename)) + file.extension

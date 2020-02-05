@@ -6,7 +6,7 @@ from astropy.io import fits
 from dateutil.parser import parse
 
 from lco_ingester.exceptions import DoNotRetryError
-from lco_ingester.utils.fits import reduction_level, related_for_catalog
+from lco_ingester.utils.fits import reduction_level, related_for_catalog, get_dayobs
 from lco_ingester.utils.fits import File
 from lco_ingester.settings import settings
 
@@ -74,6 +74,9 @@ class FitsDict(object):
             # set obstype to CATALOG even though it's set to EXPOSE by the pipeline
             self.fits_dict['OBSTYPE'] = 'CATALOG'
 
+    def check_dayobs(self):
+        self.fits_dict['DAY-OBS'] = get_dayobs(self.fits_dict)
+
     def set_public_date(self):
         if not self.fits_dict.get('L1PUBDAT'):
             # Check if the frame doesnt specify a public date.
@@ -132,6 +135,7 @@ class FitsDict(object):
         self.normalize_null_values()
         self.check_rlevel()
         self.check_catalog()
+        self.check_dayobs()
         self.set_public_date()
         self.normalize_related()
         return self.fits_dict
