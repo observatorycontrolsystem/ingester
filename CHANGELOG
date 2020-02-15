@@ -1,3 +1,8 @@
+2.1.11
+2020-02-15
+Add extra tags to the metrics
+Submit metrics synchronously when using the command line entry point
+
 2.1.10
 2020-02-04
 Automatically populate DAY-OBS if it does not exist in image header
