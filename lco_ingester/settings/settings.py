@@ -45,7 +45,7 @@ PROCESSED_EXCHANGE_NAME = os.getenv('PROCESSED_EXCHANGE_NAME', 'archived_fits')
 POSTPROCESS_FILES = ast.literal_eval(os.getenv('POSTPROCESS_FILES', 'True'))
 
 # Whether to submit the metrics asynchronously
-SUBMIT_METRICS_ASYNCHRONOUSLY = True
+SUBMIT_METRICS_ASYNCHRONOUSLY = ast.literal_eval(os.getenv('SUBMIT_METRICS_ASYNCHRONOUSLY', 'False'))
 
 # Extra tags for metrics
 EXTRA_METRICS_TAGS = {
