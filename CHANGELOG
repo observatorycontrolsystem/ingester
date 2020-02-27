@@ -1,3 +1,7 @@
+2.1.12
+2020-02-26
+Submit all metrics synchronously by default
+
 2.1.11
 2020-02-15
 Add extra tags to the metrics
