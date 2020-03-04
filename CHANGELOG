@@ -1,3 +1,7 @@
+2.1.13
+2020-03-04
+Fix retry logic for HTTP 4xx Client Errors
+
 2.1.12
 2020-02-26
 Submit all metrics synchronously by default
