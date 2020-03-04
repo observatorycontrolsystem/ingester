@@ -7,7 +7,7 @@ from opentsdb_python_metrics.metric_wrappers import SendMetricMixin
 from lco_ingester.postproc import PostProcService
 from lco_ingester.utils.fits import obs_end_time_from_dict
 from lco_ingester.utils import metrics
-from lco_ingester.exceptions import BackoffRetryError, RetryError
+from lco_ingester.exceptions import BackoffRetryError, DoNotRetryError
 from lco_ingester.settings import settings
 
 logger = logging.getLogger('lco_ingester')
@@ -25,7 +25,18 @@ class ArchiveService(SendMetricMixin):
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
         except requests.exceptions.HTTPError as exc:
-            raise RetryError(exc)
+            # HTTP 4xx errors are "client errors", meaning that the client sent
+            # an incorrectly formatted request. There is no reason to retry an
+            # incorrectly formatted request; it will only fail again.
+            if 400 <= response.status_code < 500:
+                raise DoNotRetryError(exc)
+
+            # All other responses should back off and retry at a later time.
+            # The most likely cause is that the HTTP server is unavailable
+            # or overloaded, so we should try again later.
+            raise BackoffRetryError(exc)
+
+        # Return JSON data to client
         return response.json()
 
     def version_exists(self, md5):
