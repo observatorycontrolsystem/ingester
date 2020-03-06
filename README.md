@@ -135,3 +135,16 @@ it will launch an asynchronous celery task to ingest the file.
 `run_celery.sh` is a convenience script that can be used to launch celery locally for testing.
 
 A `Dockerfile` is available that can be used to run the application.
+
+#### Uploading a release to PyPI
+
+This section describes how to upload a production release version to the
+[Python Package Index](https://pypi.org/), also known as
+[PyPI](https://pypi.org/).
+
+To upload a production release, please follow these steps:
+
+- Commit the new version number to the [setup.py](setup.py) file
+- Create a Git tag with that version number: `git tag -a 1.2.3`
+- Push the tag to Github: `git push --tags`
+- Wait for the Travis CI service to package and push the release to PyPI: see [.travis.yml](.travis.yml)
