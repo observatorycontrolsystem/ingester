@@ -27,10 +27,6 @@ set as environment variables.
 | | `OPENTSDB_PYTHON_METRICS_TEST_MODE` | Set to any value to turn off metrics collection | `False`
 | | `INGESTER_PROCESS_NAME` | A tag set with the collected metrics to identify where the metrics are coming from | `ingester`
 | | `SUBMIT_METRICS_ASYNCHRONOUSLY` | Optionally submit metrics asynchronously. This option does not apply when the command line entrypoint is used, in which case metrics are always submitted synchronously. Note that some metrics may be lost when submitted asynchronously. | `False`
-| Postprocessing | `FITS_BROKER` | FITS exchange broker  | `memory://localhost`
-| | `PROCESSED_EXCHANGE_NAME` | Processed files RabbitMQ Exchange Name | `archived_fits`
-| | `POSTPROCESS_FILES` | Optionally submit files to fits queue  | `True`
-
 
 
 ## Ingester Library API
@@ -118,23 +114,6 @@ $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt
 (venv) $ pytest
 ````
-
-## Ingester Application
-In addition to the library, the code provides an application that watches a queue for filenames and ingests
-files as they appear.
-
-#### Setup
-You will need a RabbitMQ server running with the environment variable `BROKER_URL` pointing to it. You will also
-need to set the `FITS_BROKER` environment variable to the RabbitMQ to which the app is watching for new filenames. 
-The other environment variables in the Configuration section should be set as well.
-
-#### Running
-`listener.py` Will listen on the configured queue for new messages. When one is received,
-it will launch an asynchronous celery task to ingest the file.
-
-`run_celery.sh` is a convenience script that can be used to launch celery locally for testing.
-
-A `Dockerfile` is available that can be used to run the application.
 
 #### Uploading a release to PyPI
 

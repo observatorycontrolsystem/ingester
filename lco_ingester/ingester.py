@@ -7,7 +7,7 @@ from lco_ingester.s3 import S3Service
 from lco_ingester.settings import settings
 
 
-def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN, broker_url=settings.FITS_BROKER):
+def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
     """
     Checks if the frame exists in the archive.
 
@@ -16,7 +16,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
     :param auth_token: Archive API authentication token
     :return: Boolean indicating whether the frame exists
     """
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     md5 = File(fileobj, run_validate=False).get_md5()
     return archive.version_exists(md5)
 
@@ -58,8 +58,7 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
     return s3.upload_file(file, fits_dict)
 
 
-def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
-                          broker_url=settings.FITS_BROKER):
+def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
     """
     Ingest an archive record.
 
@@ -67,10 +66,9 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
     :param record: Archive record to ingest
     :param api_root: Archive API root url
     :param auth_token: Archive API authentication token
-    :param broker_url: FITS exchange broker
     :return: The archive record that was ingested
     """
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     # Construct final archive payload and post to archive
     record['version_set'] = [version]
     return archive.post_frame(record)
@@ -79,7 +77,7 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
 def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
                                       blacklist_headers=settings.HEADER_BLACKLIST,
                                       api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
-                                      bucket=settings.BUCKET, broker_url=settings.FITS_BROKER):
+                                      bucket=settings.BUCKET):
     """
     Ingest and upload a file.
 
@@ -90,11 +88,10 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
     :param bucket: S3 bucket name
     :param required_headers: FITS headers that must be present
     :param blacklist_headers: FITS headers that should not be ingested
-    :param broker_url: FITS exchange broker
     :return: Information about the uploaded file and record
     """
     file = File(fileobj, path)
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     s3 = S3Service(bucket)
     ingester = Ingester(file, s3, archive, required_headers, blacklist_headers)
     return ingester.ingest()
