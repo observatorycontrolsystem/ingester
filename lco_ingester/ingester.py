@@ -9,11 +9,12 @@ from lco_ingester.settings import settings
 
 def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN, broker_url=settings.FITS_BROKER):
     """
-    Checks if the frame exists in the archive.
+    Checks if the frame exists in the science archive.
 
     :param fileobj: File-like object
-    :param api_root: Archive API root url
-    :param auth_token: Archive API authentication token
+    :param api_root: Science archive root url
+    :param auth_token: Science archive authentication token
+    :param broker_url: FITS exchange broker
     :return: Boolean indicating whether the frame exists
     """
     archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
@@ -24,13 +25,15 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
 def validate_fits_and_create_archive_record(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
                                             blacklist_headers=settings.HEADER_BLACKLIST):
     """
-    Validate the fits file and also create an archive record from it.
+    Validate the FITS file and create a science archive record from it.
 
     :param fileobj: File-like object
-    :param path: File path/name for this object
+    :param path: File path/name for this object. This option may be
+        used to override the filename associated with the fileobj. It must
+        be used if the fileobj does not have a filename.
     :param required_headers: FITS headers that must be present
     :param blacklist_headers: FITS headers that should not be ingested
-    :return: Constructed archive record
+    :return: Constructed science archive record
     """
     file = File(fileobj, path)
     json_record = FitsDict(file, required_headers, blacklist_headers).as_dict()
@@ -44,7 +47,9 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
     Uploads a file to s3.
 
     :param fileobj: File-like object
-    :param path: File path/name for this object
+    :param path: File path/name for this object. This option may be
+        used to override the filename associated with the fileobj. It must
+        be used if the fileobj does not have a filename.
     :param bucket: S3 bucket name
     :return: Version information for the file that was uploaded
     """
@@ -61,14 +66,14 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
 def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
                           broker_url=settings.FITS_BROKER):
     """
-    Ingest an archive record.
+    Add a record to the science archive database.
 
-    :param version: Result of the upload to s3
-    :param record: Archive record to ingest
-    :param api_root: Archive API root url
-    :param auth_token: Archive API authentication token
+    :param version: Version information from the upload to S3
+    :param record: Science archive record to ingest
+    :param api_root: Science archive root url
+    :param auth_token: Science archive authentication token
     :param broker_url: FITS exchange broker
-    :return: The archive record that was ingested
+    :return: The science archive record that was ingested
     """
     archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
     # Construct final archive payload and post to archive
@@ -81,12 +86,14 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
                                       api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
                                       bucket=settings.BUCKET, broker_url=settings.FITS_BROKER):
     """
-    Ingest and upload a file.
+    Add a record to the science archive database and upload the associated file to S3.
 
     :param fileobj: File-like object
-    :param path: File path/name for this object
-    :param api_root: Archive API root url
-    :param auth_token: Archive API authentication token
+    :param path: File path/name for this object. This option may be
+        used to override the filename associated with the fileobj. It must
+        be used if the fileobj does not have a filename.
+    :param api_root: Science archive root url
+    :param auth_token: Science archive authentication token
     :param bucket: S3 bucket name
     :param required_headers: FITS headers that must be present
     :param blacklist_headers: FITS headers that should not be ingested

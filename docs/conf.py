@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../lco_ingester'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'ingester'
+project = 'Ingester'
 copyright = str(datetime.utcnow().year) + ', Las Cumbres Observatory'
 author = 'Las Cumbres Observatory Software Team'
 

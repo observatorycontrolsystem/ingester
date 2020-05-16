@@ -14,6 +14,17 @@ Optional prerequisites may be skipped for reduced functionality.
 - Write access to the same S3 bucket that the running science archive is using
 - (Optional) A running [OpenTSDB](http://opentsdb.net/) for metrics collection
 
+## Installation
+
+It is highly recommended that you install and run your python code inside a dedicated python
+[virtual environment](https://docs.python.org/3/tutorial/venv.html).
+
+Add the `lco_ingester` package to your python environment:
+
+```bash
+(venv) $ pip install lco_ingester
+```
+
 ## Configuration
 
 AWS and science archive credentials must be set in order to upload data. Science archive configuration as well as the
@@ -37,18 +48,6 @@ set as environment variables.
 | Postprocessing  | `FITS_BROKER` | FITS exchange broker  | `memory://localhost` |
 | | `PROCESSED_EXCHANGE_NAME` | Processed files RabbitMQ Exchange Name | `archived_fits` |
 | | `POSTPROCESS_FILES` | Optionally submit files to fits queue  | `True` |
-
-
-## Installation
-
-It is highly recommended that you install and run your python code inside a dedicated python
-[virtual environment](https://docs.python.org/3/tutorial/venv.html).
-
-Add the `lco_ingester` package to your python environment:
-
-```bash
-(venv) $ pip install lco_ingester
-```
 
 ## Examples
 Triple arrows (>>>) are used to show the output of a function.
@@ -88,7 +87,7 @@ A command line script for ingesting data, and optionally only checking if that d
 in the science archive, is available for use as well.
 
 ```bash
-lco_ingest_frame --help  # See available options
+(venv) lco_ingest_frame --help  # See available options
 ```
 
 ## For Developers
