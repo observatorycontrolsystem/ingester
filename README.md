@@ -1,6 +1,6 @@
 Ingester Library
 ================
-[![Ingester build Status](https://api.travis-ci.com/LCOGT/ingester.svg?branch=master)](https://travis-ci.org/LCOGT/ingester)
+[![Build Status](https://travis-ci.com/observatorycontrolsystem/ingester.svg?branch=master)](https://travis-ci.com/observatorycontrolsystem/ingester)
 
 A library for adding new science data products to an observatory control system's science archive. The library
 handles uploading FITS files into AWS S3, as well as adding records to the science archive's database containing
