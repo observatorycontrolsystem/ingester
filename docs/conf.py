@@ -59,7 +59,7 @@ html_theme = 'alabaster'
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
 
-# recommonmark settings
+# -- Options for recommonmark -------------------------------------------------
 source_parsers = {
     '.md': 'recommonmark.parser.CommonMarkParser'
 }
@@ -69,9 +69,10 @@ source_suffix = [
     '.md'
 ]
 
-# autodoc settings
+# -- Options for autodoc -------------------------------------------------
 autodoc_mock_imports = [
     'opentsdb-python-metrics'
 ]
 
+# -- Options for napoleon -------------------------------------------------
 napoleon_google_docstring = True
