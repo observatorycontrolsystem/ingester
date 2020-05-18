@@ -51,7 +51,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
         bool: Boolean indicating whether the file exists in the science archive
 
     Raises:
-        lco_ingester.exceptions.BackoffRetryError: If there was an problem getting
+        lco_ingester.exceptions.BackoffRetryError: If there was a problem getting
             a response from the science archive API
 
     """
@@ -224,8 +224,7 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
 
 
 class Ingester(object):
-    """
-    Ingest a single file into the archive.
+    """Ingest a single file into the archive.
 
     A single instance of this class is responsible for parsing a fits file,
     uploading the data to s3, and making a call to the archive api.
