@@ -1,3 +1,31 @@
+"""``ingester.py`` - Top level functions for adding data to the science archive.
+
+Data is added to the science archive using the archive API and an S3 client. The steps necessary to add
+data to the science archive are as follows:
+
+    1) Check that the file does not yet exist in the science archive
+    2) Validate and build a cleaned dictionary of the headers of the FITS file
+    3) Upload the file to S3
+    4) Combine the results from steps 2 and 3 into a record to be added to the science archive database
+
+Examples:
+    Ingest a file one step at a time:
+
+    >>> from lco_ingester import ingester
+    >>> with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
+    >>>     if not frame_exists(fileobj):
+    >>>        record = ingester.validate_fits_and_create_archive_record(fileobj)
+    >>>        s3_version = ingester.upload_file_to_s3(fileobj)
+    >>>        ingested_record = ingester.ingest_archive_record(s3_version, record)
+
+    Ingest a file in one step:
+
+    >>> from lco_ingester import ingester
+    >>> with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
+    >>>    ingested_record = ingester.upload_file_and_ingest_to_archive(fileobj)
+
+"""
+
 from lco_ingester.fits import FitsDict
 from lco_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError
 from lco_ingester.utils.fits import wcs_corners_from_dict
@@ -8,13 +36,24 @@ from lco_ingester.settings import settings
 
 
 def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN, broker_url=settings.FITS_BROKER):
-    """
-    Checks if the frame exists in the archive.
+    """Checks if the file exists in the science archive.
 
-    :param fileobj: File-like object
-    :param api_root: Archive API root url
-    :param auth_token: Archive API authentication token
-    :return: Boolean indicating whether the frame exists
+    Computes the md5 of the given file and checks whether a file with that md5 already exists in
+    the science archive.
+
+    Args:
+        fileobj (file-like object): File-like object
+        api_root (str): Science archive API root url
+        auth_token (str): Science archive API authentication token
+        broker_url (str): FITS exchange broker
+
+    Returns:
+        bool: Boolean indicating whether the file exists in the science archive
+
+    Raises:
+        lco_ingester.exceptions.BackoffRetryError: If there was a problem getting
+            a response from the science archive API
+
     """
     archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
     md5 = File(fileobj, run_validate=False).get_md5()
@@ -23,14 +62,31 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
 
 def validate_fits_and_create_archive_record(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
                                             blacklist_headers=settings.HEADER_BLACKLIST):
-    """
-    Validate the fits file and also create an archive record from it.
+    """Validates the FITS file and creates a science archive record from it.
 
-    :param fileobj: File-like object
-    :param path: File path/name for this object
-    :param required_headers: FITS headers that must be present
-    :param blacklist_headers: FITS headers that should not be ingested
-    :return: Constructed archive record
+    Checks that required headers are present, removes blacklisted headers, and cleans other
+    headers such that they are valid for ingestion into the science archive.
+
+    Args:
+        fileobj (file-like object): File-like object
+        path (str): File path/name for this object. This option may be used to override the filename
+            associated with the fileobj. It must be used if the fileobj does not have a filename.
+        required_headers (tuple): FITS headers that must be present
+        blacklist_headers (tuple): FITS headers that should not be ingested
+
+    Returns:
+        dict: Constructed science archive record. For example::
+
+            {
+                'basename': 'tst1mXXX-ab12-20191013-0001-e00',
+                'FILTER': 'rp',
+                'DATE-OBS': '2019-10-13T10:13:00',
+                ...
+            }
+
+    Raises:
+        lco_ingester.exceptions.DoNotRetryError: If required headers could not be found
+
     """
     file = File(fileobj, path)
     json_record = FitsDict(file, required_headers, blacklist_headers).as_dict()
@@ -40,13 +96,31 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
 
 
 def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
-    """
-    Uploads a file to s3.
+    """Uploads a file to the S3 bucket.
 
-    :param fileobj: File-like object
-    :param path: File path/name for this object
-    :param bucket: S3 bucket name
-    :return: Version information for the file that was uploaded
+    Args:
+        fileobj (file-like object): File-like object
+        path (str): File path/name for this object. This option may be used to override the filename
+            associated with the fileobj. It must be used if the fileobj does not have a filename.
+        bucket (str): S3 bucket name
+
+    Returns:
+        dict: Version information for the file that was uploaded. For example::
+
+            {
+                'key': '792FE6EFFE6FAD7E',
+                'md5': 'ECD9B357D67117BE8BF38D6F4B4A6',
+                'extension': '.fits.fz'
+            }
+
+    Hint:
+        The response contains an "md5" field, which is the md5 computed by S3. It is a good idea to
+        check that this md5 is the same as the locally computed md5 of the file to make sure that
+        the entire file was successfully uploaded.
+
+    Raises:
+        lco_ingester.exceptions.BackoffRetryError: If there is a problem connecting to S3
+
     """
     file = File(fileobj, path)
     s3 = S3Service(bucket)
@@ -60,15 +134,36 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
 
 def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
                           broker_url=settings.FITS_BROKER):
-    """
-    Ingest an archive record.
+    """Adds a record to the science archive database.
 
-    :param version: Result of the upload to s3
-    :param record: Archive record to ingest
-    :param api_root: Archive API root url
-    :param auth_token: Archive API authentication token
-    :param broker_url: FITS exchange broker
-    :return: The archive record that was ingested
+    Args:
+        version (dict): Version information returned from the upload to S3
+        record (dict): Science archive record to ingest
+        api_root (str): Science archive API root url
+        auth_token (str): Science archive API authentication token
+        broker_url (str): FITS exchange broker
+
+    Returns:
+        dict: The science archive record that was ingested. For example::
+
+        {
+            'basename': 'tst1mXXX-ab12-20191013-0001-e00',
+            'version_set': [
+                {
+                    'key': '792FE6EFFE6FAD7E',
+                    'md5': 'ECD9B357D67117BE8BF38D6F4B4A6',
+                    'extension': '.fits.fz'
+                    }
+                ],
+            'frameid': 12345,
+            ...
+        }
+
+    Raises:
+        lco_ingester.exceptions.BackoffRetryError: If there was a problem connecting to the science archive
+        lco_ingester.exceptions.DoNotRetryError: If there was a problem with the record that must be fixed before
+            attempting to ingest it again
+
     """
     archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
     # Construct final archive payload and post to archive
@@ -80,18 +175,46 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
                                       blacklist_headers=settings.HEADER_BLACKLIST,
                                       api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
                                       bucket=settings.BUCKET, broker_url=settings.FITS_BROKER):
-    """
-    Ingest and upload a file.
+    """Uploads a file to S3 and adds the associated record to the science archive database.
 
-    :param fileobj: File-like object
-    :param path: File path/name for this object
-    :param api_root: Archive API root url
-    :param auth_token: Archive API authentication token
-    :param bucket: S3 bucket name
-    :param required_headers: FITS headers that must be present
-    :param blacklist_headers: FITS headers that should not be ingested
-    :param broker_url: FITS exchange broker
-    :return: Information about the uploaded file and record
+    This is a standalone function that runs all of the necessary steps to add data to the
+    science archive.
+
+    Args:
+        fileobj (file-like object): File-like object
+        path (str): File path/name for this object. This option may be used to override the filename
+            associated with the fileobj. It must be used if the fileobj does not have a filename.
+        api_root (str): Science archive API root url
+        auth_token (str): Science archive API authentication token
+        bucket (str): S3 bucket name
+        required_headers (tuple): FITS headers that must be present
+        blacklist_headers (tuple): FITS headers that should not be ingested
+        broker_url (str): FITS exchange broker
+
+    Returns:
+        dict: Information about the uploaded file and record. For example:
+
+            {
+                'basename': 'tst1mXXX-ab12-20191013-0001-e00',
+                'version_set': [
+                    {
+                        'key': '792FE6EFFE6FAD7E',
+                        'md5': 'ECD9B357D67117BE8BF38D6F4B4A6',
+                        'extension': '.fits.fz'
+                        }
+                    ],
+                'frameid': 12345,
+                ...
+            }
+
+    Raises:
+        lco_ingester.exceptions.NonFatalDoNotRetryError: If the file already exists in the science archive
+        lco_ingester.exceptions.BackoffRetryError: If the md5 computed locally does not match the md5
+            computed by S3, if there was an error connecting to S3, or if there was a problem reaching
+            the science archive.
+        lco_ingester.exceptions.DoNotRetryError: If there was a problem that must be fixed before attempting
+             to ingest again
+
     """
     file = File(fileobj, path)
     archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
@@ -101,8 +224,7 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
 
 
 class Ingester(object):
-    """
-    Ingest a single file into the archive.
+    """Ingest a single file into the archive.
 
     A single instance of this class is responsible for parsing a fits file,
     uploading the data to s3, and making a call to the archive api.
