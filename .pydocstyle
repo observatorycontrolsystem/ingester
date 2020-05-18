@@ -1,0 +1,4 @@
+[pydocstyle]
+inherit = false
+convention = google
+add-ignore = D102, D107
