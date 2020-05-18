@@ -33,6 +33,7 @@ author = 'Las Cumbres Observatory Software Team'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx_markdown_tables',
     'recommonmark',
 ]
@@ -72,3 +73,5 @@ source_suffix = [
 autodoc_mock_imports = [
     'opentsdb-python-metrics'
 ]
+
+napoleon_google_docstring = True

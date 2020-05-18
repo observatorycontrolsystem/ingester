@@ -1,3 +1,8 @@
+"""
+Exceptions raised by the ingester library.
+"""
+
+
 class DoNotRetryError(Exception):
     """
     Exception that is raised when an error happens that

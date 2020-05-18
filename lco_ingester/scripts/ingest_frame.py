@@ -1,4 +1,14 @@
 #!/bin/env python3
+"""
+Command-line entrypoint to the ingester library.
+
+Examples:
+
+    See available options::
+
+        (venv) lco_ingest_frame --help
+
+"""
 import sys
 import argparse
 

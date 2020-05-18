@@ -49,47 +49,6 @@ set as environment variables.
 | | `PROCESSED_EXCHANGE_NAME` | Processed files RabbitMQ Exchange Name | `archived_fits` |
 | | `POSTPROCESS_FILES` | Optionally submit files to fits queue  | `True` |
 
-## Examples
-Triple arrows (>>>) are used to show the output of a function.
-
-#### Ingest a file step-by-step
-
-```python
-from lco_ingester import ingester
-
-with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
-
-    ingester.frame_exists(fileobj)
-    >>> False
-
-    record = ingester.validate_fits_and_create_archive_record(fileobj)
-    >>> {'basename': 'tst1mXXX-ab12-20191013-0001-e00', 'FILTER': 'rp', 'DATE-OBS': '2019-10-13T10:13:00', ... }
-
-    s3_version = ingester.upload_file_to_s3(fileobj)
-    >>> {'key': '792FE6EFFE6FAD7E', 'md5': 'ECD9B357D67117BE8BF38D6F4B4A6', 'extension': '.fits.fz'}
-
-    ingested_record = ingester.ingest_archive_record(s3_version, record)
-    >>> {'basename': 'tst1mXXX-ab12-20191013-0001-e00', 'version_set': [{'key': '792FE6EFFE6FAD7E', 'md5': 'ECD9B357D67117BE8BF38D6F4B4A6', 'extension': '.fits.fz'}], 'frameid': 400321, ... }
-```
-
-#### Ingest a file in one step
-
-```python
-from lco_ingester import ingester
-
-with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
-    ingester.upload_file_and_ingest_to_archive(fileobj)
-    >>> {'basename': 'tst1mXXX-ab12-20191013-0001-e00', 'version_set': [{'key': '792FE6EFFE6FAD7E', 'md5': 'ECD9B357D67117BE8BF38D6F4B4A6', 'extension': '.fits.fz'}], 'frameid': 400321, ... }
-```
-
-#### Using the command line entry point
-A command line script for ingesting data, and optionally only checking if that data already exists
-in the science archive, is available for use as well.
-
-```bash
-(venv) lco_ingest_frame --help  # See available options
-```
-
 ## For Developers
 
 #### Running the Tests

@@ -1,18 +1,19 @@
 :noindex:
 
-API Documentation
+Documentation
 =================
 
-Public API
-^^^^^^^^^^
-The public API of the ingester library.
-
+Ingester API and Example Usage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: ingester
    :members: frame_exists, validate_fits_and_create_archive_record, upload_file_to_s3, ingest_archive_record
 
 Exceptions
 ^^^^^^^^^^
-Exceptions that the ingester library raises.
-
 .. automodule:: exceptions
+   :members:
+
+Using the command line entry point
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: scripts.ingest_frame
    :members:

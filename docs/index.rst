@@ -5,7 +5,7 @@ Ingester Library
    :maxdepth: 3
 
    README.md
-   api_documentation
+   documentation
 
 Indices and tables
 ==================
