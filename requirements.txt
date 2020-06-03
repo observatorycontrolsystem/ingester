@@ -1,6 +1,6 @@
-astropy>=3.2,<3.3
+astropy>=3.2,<4.1
 requests>=2.0,<3.0
-boto3>=1.7,<1.8
+boto3>=1.7,<1.14
 python-dateutil>=2.7,<2.9
 celery>=4.1,<4.2
 flower>=0.9,<0.10
