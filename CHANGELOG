@@ -1,3 +1,7 @@
+2.1.15
+2020-06-03
+Check that all headers for WCS corners computation are set before doing the computation
+
 2.1.13
 2020-03-04
 Fix retry logic for HTTP 4xx Client Errors
