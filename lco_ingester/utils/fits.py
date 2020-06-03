@@ -115,6 +115,13 @@ def obs_end_time_from_dict(fits_dict):
     return dateobs
 
 
+def _values_are_set(fits_dict, headers):
+    """Check that the values for the provided headers are set"""
+    empty_values = [None, '']
+    values = [fits_dict.get(header) for header in headers]
+    return all([value not in empty_values for value in values])
+
+
 def wcs_corners_from_dict(fits_dict):
     """
     Take a fits dictionary and pick out the RA, DEC of each of the four corners.
@@ -125,12 +132,12 @@ def wcs_corners_from_dict(fits_dict):
     If this is a spectrograph (NRES only at the moment) then construct it out of the ra/dec
     and radius.
     """
-    if fits_dict.get('RADIUS'):
+    if _values_are_set(fits_dict, ['RADIUS', 'RA', 'DEC']):
         ra = fits_dict['RA']
         dec = fits_dict['DEC']
         r = fits_dict['RADIUS']
 
-        radius_in_degrees = r/3600.0
+        radius_in_degrees = r / 3600.0
         ra_in_degrees = ra * 15.0
 
         c1 = (ra_in_degrees - radius_in_degrees, dec + radius_in_degrees)
@@ -138,18 +145,20 @@ def wcs_corners_from_dict(fits_dict):
         c3 = (ra_in_degrees + radius_in_degrees, dec - radius_in_degrees)
         c4 = (ra_in_degrees - radius_in_degrees, dec - radius_in_degrees)
 
-    elif any([fits_dict.get(k) is None for k in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2', 'NAXIS1', 'NAXIS2']]) or \
-            fits_dict.get('NAXIS3') is not None:
-        # This file doesn't have sufficient information to provide an area
-        return None
-
-    else:
+    elif (
+            _values_are_set(fits_dict, ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2', 'NAXIS1', 'NAXIS2'])
+            and not _values_are_set(fits_dict, ['NAXIS3'])
+    ):
         # Find the RA and Dec coordinates of all 4 corners of the image
         w = wcs.WCS(fits_dict)
         c1 = w.all_pix2world(1, 1, 1)
         c2 = w.all_pix2world(1, fits_dict['NAXIS2'], 1)
         c3 = w.all_pix2world(fits_dict['NAXIS1'], fits_dict['NAXIS2'], 1)
         c4 = w.all_pix2world(fits_dict['NAXIS1'], 1, 1)
+
+    else:
+        # This file doesn't have sufficient information to provide an area
+        return None
 
     return {
         'type': 'Polygon',
