@@ -1,7 +1,7 @@
 import io
 import hashlib
 import unittest
-from lco_ingester.utils.fits import File, reduction_level, get_dayobs, wcs_corners_from_dict
+from ocs_ingester.utils.fits import File, reduction_level, get_dayobs, wcs_corners_from_dict
 
 
 class TestFitsUtils(unittest.TestCase):
