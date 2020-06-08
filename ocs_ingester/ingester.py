@@ -51,7 +51,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
         bool: Boolean indicating whether the file exists in the science archive
 
     Raises:
-        lco_ingester.exceptions.BackoffRetryError: If there was a problem getting
+        ocs_ingester.exceptions.BackoffRetryError: If there was a problem getting
             a response from the science archive API
 
     """
@@ -85,7 +85,7 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
             }
 
     Raises:
-        lco_ingester.exceptions.DoNotRetryError: If required headers could not be found
+        ocs_ingester.exceptions.DoNotRetryError: If required headers could not be found
 
     """
     file = File(fileobj, path)
