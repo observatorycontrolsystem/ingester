@@ -31,7 +31,7 @@ setup(
         'pytest',
         # celery is not required by the library, but there are tests that test the ingester application
         # which require it.
-        'celery>=4.1,<4.2',
+        'celery>=4.1,<4.5',
     ],
     entry_points={
         'console_scripts': [
