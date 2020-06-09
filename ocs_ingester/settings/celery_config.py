@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 
-from lco_ingester.settings import settings
+from ocs_ingester.settings import settings
 
 
 # Celery Broker

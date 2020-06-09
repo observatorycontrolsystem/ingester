@@ -7,8 +7,8 @@ import os
 from dateutil.parser import parse
 from astropy import wcs
 
-from lco_ingester.exceptions import DoNotRetryError
-from lco_ingester.utils import metrics
+from ocs_ingester.exceptions import DoNotRetryError
+from ocs_ingester.utils import metrics
 
 
 class File:

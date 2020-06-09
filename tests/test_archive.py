@@ -3,9 +3,9 @@ import unittest
 from datetime import datetime
 from requests.exceptions import ConnectionError, HTTPError
 
-from lco_ingester.archive import PostProcService
-from lco_ingester.archive import ArchiveService
-from lco_ingester.exceptions import BackoffRetryError, DoNotRetryError
+from ocs_ingester.archive import PostProcService
+from ocs_ingester.archive import ArchiveService
+from ocs_ingester.exceptions import BackoffRetryError, DoNotRetryError
 
 
 def mocked_requests_get(*args, **kwargs):

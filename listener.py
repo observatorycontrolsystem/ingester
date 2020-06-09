@@ -6,9 +6,9 @@ from kombu.mixins import ConsumerMixin
 from kombu import Connection, Queue, Exchange
 
 import tasks
-from lco_ingester.settings import settings
+from ocs_ingester.settings import settings
 
-logger = logging.getLogger('lco_ingester')
+logger = logging.getLogger('ocs_ingester')
 
 crawl_exchange = Exchange(settings.CRAWLER_EXCHANGE_NAME, type='fanout')
 

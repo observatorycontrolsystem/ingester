@@ -21,10 +21,10 @@ Optional prerequisites may be skipped for reduced functionality.
 It is highly recommended that you install and run your python code inside a dedicated python
 [virtual environment](https://docs.python.org/3/tutorial/venv.html).
 
-Add the `lco_ingester` package to your python environment:
+Add the `ocs_ingester` package to your python environment:
 
 ```bash
-(venv) $ pip install lco_ingester
+(venv) $ pip install ocs_ingester
 ```
 
 ## Configuration
