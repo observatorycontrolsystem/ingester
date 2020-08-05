@@ -53,14 +53,13 @@ class FitsDict(object):
     def normalize_null_values(self):
         #  Sometimes keywords use N/A to mean null
         for k, v in self.fits_dict.items():
-            vs = v.strip()
-            if vs == 'N/A' or vs == 'UNKNOWN' or vs == 'UNSPECIFIED':
+            if v == 'N/A' or v == 'UNKNOWN' or v == 'UNSPECIFIED':
                 if k in self.INTEGER_TYPES:
                     self.fits_dict[k] = None
                 else:
                     self.fits_dict[k] = ''
             # Catch None and NONE values for Integer type fields so they pass archive validation
-            elif (vs == 'NONE' or vs == 'None') and k in self.INTEGER_TYPES:
+            elif ('NONE' in v or 'None' in v) and k in self.INTEGER_TYPES:
                 self.fits_dict[k] = None
 
     def check_rlevel(self):
