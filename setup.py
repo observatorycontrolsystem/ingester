@@ -7,13 +7,13 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='lco-ingester',
-    version='2.1.15',
-    description='Ingest frames into the LCO Archive',
+    name='ocs-ingester',
+    version='2.2.1',
+    description='Ingest frames into the science archive of an observatory control system',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/LCOGT/ingester',
-    packages=['lco_ingester', 'lco_ingester.utils', 'lco_ingester.settings', 'lco_ingester.scripts'],
+    url='https://github.com/observatorycontrolsystem/ingester',
+    packages=['ocs_ingester', 'ocs_ingester.utils', 'ocs_ingester.settings', 'ocs_ingester.scripts'],
     python_requires='>=3.5',
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
@@ -35,7 +35,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'lco_ingest_frame = lco_ingester.scripts.ingest_frame:main',
+            'ocs_ingest_frame = ocs_ingester.scripts.ingest_frame:main',
         ]
     }
 )

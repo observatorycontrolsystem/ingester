@@ -11,7 +11,7 @@ data to the science archive are as follows:
 Examples:
     Ingest a file one step at a time:
 
-    >>> from lco_ingester import ingester
+    >>> from ocs_ingester import ingester
     >>> with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
     >>>     if not frame_exists(fileobj):
     >>>        record = ingester.validate_fits_and_create_archive_record(fileobj)
@@ -20,19 +20,19 @@ Examples:
 
     Ingest a file in one step:
 
-    >>> from lco_ingester import ingester
+    >>> from ocs_ingester import ingester
     >>> with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
     >>>    ingested_record = ingester.upload_file_and_ingest_to_archive(fileobj)
 
 """
 
-from lco_ingester.fits import FitsDict
-from lco_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError
-from lco_ingester.utils.fits import wcs_corners_from_dict
-from lco_ingester.utils.fits import File
-from lco_ingester.archive import ArchiveService
-from lco_ingester.s3 import S3Service
-from lco_ingester.settings import settings
+from ocs_ingester.fits import FitsDict
+from ocs_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError
+from ocs_ingester.utils.fits import wcs_corners_from_dict
+from ocs_ingester.utils.fits import File
+from ocs_ingester.archive import ArchiveService
+from ocs_ingester.s3 import S3Service
+from ocs_ingester.settings import settings
 
 
 def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN, broker_url=settings.FITS_BROKER):
@@ -51,7 +51,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
         bool: Boolean indicating whether the file exists in the science archive
 
     Raises:
-        lco_ingester.exceptions.BackoffRetryError: If there was a problem getting
+        ocs_ingester.exceptions.BackoffRetryError: If there was a problem getting
             a response from the science archive API
 
     """
@@ -85,7 +85,7 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
             }
 
     Raises:
-        lco_ingester.exceptions.DoNotRetryError: If required headers could not be found
+        ocs_ingester.exceptions.DoNotRetryError: If required headers could not be found
 
     """
     file = File(fileobj, path)
@@ -119,7 +119,7 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
         the entire file was successfully uploaded.
 
     Raises:
-        lco_ingester.exceptions.BackoffRetryError: If there is a problem connecting to S3
+        ocs_ingester.exceptions.BackoffRetryError: If there is a problem connecting to S3
 
     """
     file = File(fileobj, path)
@@ -160,8 +160,8 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
         }
 
     Raises:
-        lco_ingester.exceptions.BackoffRetryError: If there was a problem connecting to the science archive
-        lco_ingester.exceptions.DoNotRetryError: If there was a problem with the record that must be fixed before
+        ocs_ingester.exceptions.BackoffRetryError: If there was a problem connecting to the science archive
+        ocs_ingester.exceptions.DoNotRetryError: If there was a problem with the record that must be fixed before
             attempting to ingest it again
 
     """
@@ -208,11 +208,11 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
             }
 
     Raises:
-        lco_ingester.exceptions.NonFatalDoNotRetryError: If the file already exists in the science archive
-        lco_ingester.exceptions.BackoffRetryError: If the md5 computed locally does not match the md5
+        ocs_ingester.exceptions.NonFatalDoNotRetryError: If the file already exists in the science archive
+        ocs_ingester.exceptions.BackoffRetryError: If the md5 computed locally does not match the md5
             computed by S3, if there was an error connecting to S3, or if there was a problem reaching
             the science archive.
-        lco_ingester.exceptions.DoNotRetryError: If there was a problem that must be fixed before attempting
+        ocs_ingester.exceptions.DoNotRetryError: If there was a problem that must be fixed before attempting
              to ingest again
 
     """

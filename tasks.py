@@ -8,18 +8,18 @@ from celery import Celery
 from celery.exceptions import SoftTimeLimitExceeded
 import requests
 
-from lco_ingester.settings.log_config import logConf
-from lco_ingester.archive import ArchiveService
-from lco_ingester.utils.fits import File
-from lco_ingester.s3 import S3Service
-from lco_ingester.ingester import Ingester
-from lco_ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
+from ocs_ingester.settings.log_config import logConf
+from ocs_ingester.archive import ArchiveService
+from ocs_ingester.utils.fits import File
+from ocs_ingester.s3 import S3Service
+from ocs_ingester.ingester import Ingester
+from ocs_ingester.exceptions import RetryError, DoNotRetryError, BackoffRetryError, NonFatalDoNotRetryError
 
 
 dictConfig(logConf)
-logger = logging.getLogger('lco_ingester')
+logger = logging.getLogger('ocs_ingester')
 app = Celery('tasks')
-app.config_from_object('lco_ingester.settings.celery_config.celery_config')
+app.config_from_object('ocs_ingester.settings.celery_config.celery_config')
 
 
 def task_log(task):

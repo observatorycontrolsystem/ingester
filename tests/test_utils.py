@@ -1,7 +1,7 @@
 import io
 import hashlib
 import unittest
-from lco_ingester.utils.fits import File, reduction_level, get_dayobs
+from ocs_ingester.utils.fits import File, reduction_level, get_dayobs, wcs_corners_from_dict
 
 
 class TestFitsUtils(unittest.TestCase):
@@ -66,3 +66,29 @@ class TestFitsUtils(unittest.TestCase):
         fits_dict = {'DAY-OBS': '20200131'}
         self.assertEqual('20200131', get_dayobs(fits_dict))
 
+    def test_get_wcs_corners_from_dict_for_ccd(self):
+        fits_dict = {'CD1_1': 6, 'CD1_2': 2, 'CD2_1': 3, 'CD2_2': 4, 'NAXIS1': 1000, 'NAXIS2': 1100}
+        result = wcs_corners_from_dict(fits_dict)
+        self.assertIn('type', result)
+        self.assertIn('coordinates', result)
+
+    def test_get_wcs_corners_from_dict_for_ccd_with_naxis3(self):
+        fits_dict = {'CD1_1': 6, 'CD1_2': 2, 'CD2_1': 3, 'CD2_2': 4, 'NAXIS1': 1000, 'NAXIS2': 1100, 'NAXIS3': 2000}
+        result = wcs_corners_from_dict(fits_dict)
+        self.assertIsNone(result)
+
+    def test_get_wcs_corners_from_dict_for_ccd_missing_headers(self):
+        fits_dict = {'CD1_1': 1, 'CD1_2': 2, 'CD2_1': 3, 'NAXIS1': 1000, 'NAXIS2': 1100}
+        result = wcs_corners_from_dict(fits_dict)
+        self.assertIsNone(result)
+
+    def test_get_wcs_corners_from_dict_for_nres(self):
+        fits_dict = {'RADIUS': 5, 'RA': 110, 'DEC': 30}
+        result = wcs_corners_from_dict(fits_dict)
+        self.assertIn('type', result)
+        self.assertIn('coordinates', result)
+
+    def test_get_wcs_corners_from_dict_for_nres_missing_headers(self):
+        fits_dict = {'RADIUS': 5, 'RA': ''}
+        result = wcs_corners_from_dict(fits_dict)
+        self.assertIsNone(result)

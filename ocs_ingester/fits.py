@@ -5,12 +5,12 @@ from datetime import timedelta
 from astropy.io import fits
 from dateutil.parser import parse
 
-from lco_ingester.exceptions import DoNotRetryError
-from lco_ingester.utils.fits import reduction_level, related_for_catalog, get_dayobs
-from lco_ingester.utils.fits import File
-from lco_ingester.settings import settings
+from ocs_ingester.exceptions import DoNotRetryError
+from ocs_ingester.utils.fits import reduction_level, related_for_catalog, get_dayobs
+from ocs_ingester.utils.fits import File
+from ocs_ingester.settings import settings
 
-logger = logging.getLogger('lco_ingester')
+logger = logging.getLogger('ocs_ingester')
 
 
 class FitsDict(object):
@@ -59,6 +59,7 @@ class FitsDict(object):
                     self.fits_dict[k] = None
                 else:
                     self.fits_dict[k] = ''
+            # Catch None and NONE values for Integer type fields so they pass archive validation
             elif (vs == 'NONE' or vs == 'None') and k in self.INTEGER_TYPES:
                 self.fits_dict[k] = None
 

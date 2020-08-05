@@ -2,8 +2,8 @@ import unittest
 from unittest.mock import MagicMock
 import os
 
-from lco_ingester.fits import FitsDict
-from lco_ingester.utils.fits import File
+from ocs_ingester.fits import FitsDict
+from ocs_ingester.utils.fits import File
 
 
 class TestFits(unittest.TestCase):

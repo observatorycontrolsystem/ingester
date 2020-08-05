@@ -16,7 +16,7 @@ logConf = {
         }
     },
     "loggers": {
-        "lco_ingester": {
+        "ocs_ingester": {
             "handlers": ["console"],
             "level": logging.INFO,
             "propagate": False,

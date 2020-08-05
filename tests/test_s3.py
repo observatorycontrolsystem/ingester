@@ -2,8 +2,8 @@ import os
 from unittest.mock import patch
 import unittest
 
-from lco_ingester.s3 import S3Service
-from lco_ingester.utils.fits import File
+from ocs_ingester.s3 import S3Service
+from ocs_ingester.utils.fits import File
 
 FITS_PATH = os.path.join(
     os.path.dirname(__file__),
