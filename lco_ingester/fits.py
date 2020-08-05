@@ -53,7 +53,7 @@ class FitsDict(object):
     def normalize_null_values(self):
         #  Sometimes keywords use N/A to mean null
         for k, v in self.fits_dict.items():
-            if v == 'N/A' or v == 'UNKNOWN' or v == 'UNSPECIFIED':
+            if v == 'N/A' or v == 'UNKNOWN' or v == 'UNSPECIFIED' or v == 'NONE' or v == 'None':
                 if k in self.INTEGER_TYPES:
                     self.fits_dict[k] = None
                 else:
