@@ -14,7 +14,7 @@ logger = logging.getLogger('lco_ingester')
 
 
 class FitsDict(object):
-    INTEGER_TYPES = ['BLKUID', 'REQNUM']
+    INTEGER_TYPES = ['BLKUID', 'REQNUM', 'TRACKNUM', 'MOLUID']
 
     def __init__(self, file, required_headers, blacklist_headers):
         self.file = file
@@ -53,11 +53,14 @@ class FitsDict(object):
     def normalize_null_values(self):
         #  Sometimes keywords use N/A to mean null
         for k, v in self.fits_dict.items():
-            if v == 'N/A' or v == 'UNKNOWN' or v == 'UNSPECIFIED' or v == 'NONE' or v == 'None':
+            vs = v.strip()
+            if vs == 'N/A' or vs == 'UNKNOWN' or vs == 'UNSPECIFIED':
                 if k in self.INTEGER_TYPES:
                     self.fits_dict[k] = None
                 else:
                     self.fits_dict[k] = ''
+            elif (vs == 'NONE' or vs == 'None') and k in self.INTEGER_TYPES:
+                self.fits_dict[k] = None
 
     def check_rlevel(self):
         if not self.fits_dict.get('RLEVEL'):
