@@ -14,7 +14,7 @@ logger = logging.getLogger('ocs_ingester')
 
 
 class FitsDict(object):
-    INTEGER_TYPES = ['BLKUID', 'REQNUM']
+    INTEGER_TYPES = ['BLKUID', 'REQNUM', 'TRACKNUM', 'MOLUID']
 
     def __init__(self, file, required_headers, blacklist_headers):
         self.file = file
@@ -58,6 +58,9 @@ class FitsDict(object):
                     self.fits_dict[k] = None
                 else:
                     self.fits_dict[k] = ''
+            # Catch None and NONE values for Integer type fields so they pass archive validation
+            elif k in self.INTEGER_TYPES and ('NONE' in str(v).upper()):
+                self.fits_dict[k] = None
 
     def check_rlevel(self):
         if not self.fits_dict.get('RLEVEL'):
