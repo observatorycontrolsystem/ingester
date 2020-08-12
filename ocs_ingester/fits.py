@@ -59,7 +59,7 @@ class FitsDict(object):
                 else:
                     self.fits_dict[k] = ''
             # Catch None and NONE values for Integer type fields so they pass archive validation
-            elif k in self.INTEGER_TYPES and ('NONE' in v or 'None' in v):
+            elif k in self.INTEGER_TYPES and ('NONE' in str(v).upper()):
                 self.fits_dict[k] = None
 
     def check_rlevel(self):
