@@ -1,6 +1,6 @@
 2.2.1
 2020-08-05
-Treat NONE and None header values as a null value
+Treat NONE and None Integer type header values as a null value
 
 2.2.0
 2020-06-08
