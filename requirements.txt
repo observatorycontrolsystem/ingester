@@ -4,7 +4,7 @@ boto3>=1.7,<1.14
 python-dateutil>=2.7,<2.9
 celery>=4.1,<5.0
 flower>=0.9,<0.10
-kombu<5.0
+kombu<6.0
 pytest
 
 -e .
