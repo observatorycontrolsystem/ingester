@@ -6,21 +6,9 @@ import os
 
 from dateutil.parser import parse
 from astropy import wcs
-from astropy.io import fits
 
 from ocs_ingester.exceptions import DoNotRetryError
 from ocs_ingester.utils import metrics
-
-
-LETTER_TO_OBSTYPE = {
-    'b': 'BIAS',
-    'd': 'DARK',
-    'f': 'SKYFLAT',
-    'g': 'GUIDE',
-    's': 'STANDARD',
-    'w': 'LAMPFLAT',
-    'x': 'EXPERIMENTAL'
-}
 
 
 class File:
@@ -109,57 +97,6 @@ class File:
     def validate(self):
         if self.filename is None:
             raise DoNotRetryError('Unable to get filename from file object, must specify a path')
-        self.repair_obstype()
-
-    def repair_obstype(self):
-        # Sometimes the OBSTYPE header is 'UNKNOWN'. We want to change it to the correct type based 
-        # on the filename, i.e. -e00 is EXPOSE.
-        with self.get_fits() as fp:
-            try:
-                header = fits.getheader(fp, extname='COMPRESSED_IMAGE')
-                is_compressed = True
-            except Exception:
-                header = fits.getheader(fp)
-                is_compressed = False
-            if 'OBSTYPE' not in header or header['OBSTYPE'].strip() == 'UNKNOWN':
-                name_parts = self.basename.split('-')
-                obstype_letter = name_parts[4][0]
-                is_nres = (('ENCID' in header and 'igl' in header['ENCID']) or ('TELID' in header and 'igl' in header['TELID']))
-                try:
-                    if 'trace' == name_parts[0]:
-                        obstype = 'TRACE'
-                    elif 'arc' == name_parts[0]:
-                        obstype = 'ARC'
-                    elif 'bias' == name_parts[3]:
-                        obstype = 'BIAS'
-                    elif 'bpm' == name_parts[3]:
-                        obstype = 'BPM'
-                    elif obstype_letter == 'e':
-                        if is_nres:
-                            obstype = 'TARGET'
-                        elif 'en' in name_parts[1]:
-                            obstype = 'SPECTRUM'
-                        else:
-                            obstype = 'EXPOSE'
-                    elif obstype_letter == 'a':
-                        if is_nres:
-                            obstype = 'DOUBLE'
-                        else:
-                            obstype = 'ARC'
-                    elif obstype_letter in LETTER_TO_OBSTYPE:
-                        obstype = LETTER_TO_OBSTYPE[obstype_letter]
-                    else:
-                        # Failed to infer an OBSTYPE for this filename
-                        raise Exception()
-                    # Set the OBSTYPE into the header
-                    if is_compressed:
-                        fits.setval(fp, 'OBSTYPE', value=obstype,
-                                    extname='COMPRESSED_IMAGE', comment='Observation type')
-                    else:
-                        fits.setval(fp, 'OBSTYPE', value=obstype, comment='Observation type')
-                except Exception:
-                    # The file isn't what we expect, and we couldn't figure out obstype
-                    raise DoNotRetryError('OBSTYPE is not valie and could not be inferred. Please manually correct OBSTYPE')
 
 
 def obs_end_time_from_dict(fits_dict):

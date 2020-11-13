@@ -50,6 +50,31 @@ class TestFits(unittest.TestCase):
         fd.check_rlevel()
         self.assertEqual(11, fd.fits_dict['RLEVEL'])
 
+    def test_repair_obstype(self):
+        self.fileobj.name = 'tst1m005-en20-20150511-1234-e00.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'OBSTYPE': 'UNKNOWN'}
+        fd.repair_obstype()
+        self.assertEqual('SPECTRUM', fd.fits_dict['OBSTYPE'])
+
+        self.fileobj.name = 'tst1m005-en20-20150511-bias-bin1x1.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'OBSTYPE': 'UNKNOWN'}
+        fd.repair_obstype()
+        self.assertEqual('BIAS', fd.fits_dict['OBSTYPE'])
+
+        self.fileobj.name = 'tstnrs1m005-fa20-20150511-1234-e00.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'OBSTYPE': 'UNKNOWN', 'ENCID': 'igla'}
+        fd.repair_obstype()
+        self.assertEqual('TARGET', fd.fits_dict['OBSTYPE'])
+
+        self.fileobj.name = 'tst1m005-fa10-20150511-1234-e00.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'OBSTYPE': 'UNKNOWN'}
+        fd.repair_obstype()
+        self.assertEqual('EXPOSE', fd.fits_dict['OBSTYPE'])
+
     def test_truncate_exptime(self):
         fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {'EXPTIME': -0.00899999999999999}

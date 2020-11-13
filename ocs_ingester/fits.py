@@ -12,6 +12,15 @@ from ocs_ingester.settings import settings
 
 logger = logging.getLogger('ocs_ingester')
 
+LETTER_TO_OBSTYPE = {
+    'b': 'BIAS',
+    'd': 'DARK',
+    'f': 'SKYFLAT',
+    'g': 'GUIDE',
+    's': 'STANDARD',
+    'w': 'LAMPFLAT',
+    'x': 'EXPERIMENTAL'
+}
 
 class FitsDict(object):
     INTEGER_TYPES = ['BLKUID', 'REQNUM', 'TRACKNUM', 'MOLUID']
@@ -107,6 +116,42 @@ class FitsDict(object):
         if self.fits_dict.get('EXPTIME'):
             self.fits_dict['EXPTIME'] = round(self.fits_dict['EXPTIME'], 6)
 
+    def repair_obstype(self):
+        if self.fits_dict.get('OBSTYPE', 'UNKNOWN').strip() == 'UNKNOWN':
+            try:
+                name_parts = self.file.basename.split('-')
+                obstype_letter = name_parts[4][0]
+                is_nres = 'igl' in self.fits_dict.get('ENCID', '') or 'igl' in self.fits_dict.get('TELID', '')
+                if 'trace' == name_parts[0]:
+                    obstype = 'TRACE'
+                elif 'arc' == name_parts[0]:
+                    obstype = 'ARC'
+                elif 'bias' == name_parts[3]:
+                    obstype = 'BIAS'
+                elif 'bpm' == name_parts[3]:
+                    obstype = 'BPM'
+                elif obstype_letter == 'e':
+                    if is_nres:
+                        obstype = 'TARGET'
+                    elif 'en' in name_parts[1]:
+                        obstype = 'SPECTRUM'
+                    else:
+                        obstype = 'EXPOSE'
+                elif obstype_letter == 'a':
+                    if is_nres:
+                        obstype = 'DOUBLE'
+                    else:
+                        obstype = 'ARC'
+                elif obstype_letter in LETTER_TO_OBSTYPE:
+                    obstype = LETTER_TO_OBSTYPE[obstype_letter]
+                else:
+                    # Failed to infer an OBSTYPE for this filename
+                    raise Exception()
+                # Set the OBSTYPE into the header
+                self.fits_dict['OBSTYPE'] = obstype
+            except Exception as e:
+                raise DoNotRetryError('OBSTYPE is UNKNOWN and could not be inferred. Please manually correct OBSTYPE')
+
     def normalize_related(self):
         """
         Fits files contain several keys whose values are the filenames
@@ -150,5 +195,6 @@ class FitsDict(object):
         self.check_dayobs()
         self.set_public_date()
         self.truncate_exptime()
+        self.repair_obstype()
         self.normalize_related()
         return self.fits_dict
