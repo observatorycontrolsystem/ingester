@@ -149,7 +149,7 @@ class FitsDict(object):
                     raise Exception()
                 # Set the OBSTYPE into the header
                 self.fits_dict['OBSTYPE'] = obstype
-            except Exception as e:
+            except Exception:
                 raise DoNotRetryError('OBSTYPE is UNKNOWN and could not be inferred. Please manually correct OBSTYPE')
 
     def normalize_related(self):
