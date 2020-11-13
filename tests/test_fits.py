@@ -50,6 +50,12 @@ class TestFits(unittest.TestCase):
         fd.check_rlevel()
         self.assertEqual(11, fd.fits_dict['RLEVEL'])
 
+    def test_truncate_exptime(self):
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'EXPTIME': -0.00899999999999999}
+        fd.truncate_exptime()
+        self.assertEqual(fd.fits_dict['EXPTIME'], -0.009)
+
     def test_dayobs_missing(self):
         fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {'DATE-OBS': '2020-01-31T20:09:56.956'}

@@ -98,6 +98,15 @@ class FitsDict(object):
                     parse(self.fits_dict['DATE-OBS']) + timedelta(days=365)
                 ).isoformat()
 
+    def truncate_exptime(self):
+        """
+        The science archive requires EXPTIME to have up to 13 digits,
+        with up to 6 digits of precision after the decimal. We should
+        enforce this in the ingester so we dont upload data we cannot ingest.
+        """
+        if self.fits_dict.get('EXPTIME'):
+            self.fits_dict['EXPTIME'] = round(self.fits_dict['EXPTIME'], 6)
+
     def normalize_related(self):
         """
         Fits files contain several keys whose values are the filenames
@@ -140,5 +149,6 @@ class FitsDict(object):
         self.check_catalog()
         self.check_dayobs()
         self.set_public_date()
+        self.truncate_exptime()
         self.normalize_related()
         return self.fits_dict
