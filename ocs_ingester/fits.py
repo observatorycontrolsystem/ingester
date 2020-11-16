@@ -107,7 +107,7 @@ class FitsDict(object):
                     parse(self.fits_dict['DATE-OBS']) + timedelta(days=365)
                 ).isoformat()
 
-    def truncate_exptime(self):
+    def round_exptime(self):
         """
         The science archive requires EXPTIME to have up to 13 digits,
         with up to 6 digits of precision after the decimal. We should
@@ -194,7 +194,7 @@ class FitsDict(object):
         self.check_catalog()
         self.check_dayobs()
         self.set_public_date()
-        self.truncate_exptime()
+        self.round_exptime()
         self.repair_obstype()
         self.normalize_related()
         return self.fits_dict

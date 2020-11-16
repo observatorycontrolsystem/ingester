@@ -75,10 +75,10 @@ class TestFits(unittest.TestCase):
         fd.repair_obstype()
         self.assertEqual('EXPOSE', fd.fits_dict['OBSTYPE'])
 
-    def test_truncate_exptime(self):
+    def test_round_exptime(self):
         fd = FitsDict(File(self.fileobj), [], [])
         fd.fits_dict = {'EXPTIME': -0.00899999999999999}
-        fd.truncate_exptime()
+        fd.round_exptime()
         self.assertEqual(fd.fits_dict['EXPTIME'], -0.009)
 
     def test_dayobs_missing(self):
