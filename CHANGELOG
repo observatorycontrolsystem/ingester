@@ -1,4 +1,4 @@
-2.2.2
+2.2.3
 2020-11-17
 Try to autofill OBSTYPE if it is empty based on naming conventions. Truncate EXPTIME to archive precision.
 
