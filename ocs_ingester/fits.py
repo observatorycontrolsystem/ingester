@@ -189,12 +189,12 @@ class FitsDict(object):
     def as_dict(self):
         self.get_hdu_with_required_headers()
         self.remove_blacklist_headers()
+        self.repair_obstype()
         self.normalize_null_values()
         self.check_rlevel()
         self.check_catalog()
         self.check_dayobs()
         self.set_public_date()
         self.round_exptime()
-        self.repair_obstype()
         self.normalize_related()
         return self.fits_dict
