@@ -5,16 +5,25 @@ from datetime import timedelta
 from astropy.io import fits
 from dateutil.parser import parse
 
-from lco_ingester.exceptions import DoNotRetryError
-from lco_ingester.utils.fits import reduction_level, related_for_catalog, get_dayobs
-from lco_ingester.utils.fits import File
-from lco_ingester.settings import settings
+from ocs_ingester.exceptions import DoNotRetryError
+from ocs_ingester.utils.fits import reduction_level, related_for_catalog, get_dayobs
+from ocs_ingester.utils.fits import File
+from ocs_ingester.settings import settings
 
-logger = logging.getLogger('lco_ingester')
+logger = logging.getLogger('ocs_ingester')
 
+LETTER_TO_OBSTYPE = {
+    'b': 'BIAS',
+    'd': 'DARK',
+    'f': 'SKYFLAT',
+    'g': 'GUIDE',
+    's': 'STANDARD',
+    'w': 'LAMPFLAT',
+    'x': 'EXPERIMENTAL'
+}
 
 class FitsDict(object):
-    INTEGER_TYPES = ['BLKUID', 'REQNUM']
+    INTEGER_TYPES = ['BLKUID', 'REQNUM', 'TRACKNUM', 'MOLUID']
 
     def __init__(self, file, required_headers, blacklist_headers):
         self.file = file
@@ -58,6 +67,9 @@ class FitsDict(object):
                     self.fits_dict[k] = None
                 else:
                     self.fits_dict[k] = ''
+            # Catch None and NONE values for Integer type fields so they pass archive validation
+            elif k in self.INTEGER_TYPES and ('NONE' in str(v).upper()):
+                self.fits_dict[k] = None
 
     def check_rlevel(self):
         if not self.fits_dict.get('RLEVEL'):
@@ -94,6 +106,51 @@ class FitsDict(object):
                 self.fits_dict['L1PUBDAT'] = (
                     parse(self.fits_dict['DATE-OBS']) + timedelta(days=365)
                 ).isoformat()
+
+    def round_exptime(self):
+        """
+        The science archive requires EXPTIME to have up to 13 digits,
+        with up to 6 digits of precision after the decimal. We should
+        enforce this in the ingester so we dont upload data we cannot ingest.
+        """
+        if self.fits_dict.get('EXPTIME'):
+            self.fits_dict['EXPTIME'] = round(self.fits_dict['EXPTIME'], 6)
+
+    def repair_obstype(self):
+        if self.fits_dict.get('OBSTYPE', 'UNKNOWN').strip() == 'UNKNOWN':
+            try:
+                name_parts = self.file.basename.split('-')
+                obstype_letter = name_parts[4][0]
+                is_nres = 'igl' in self.fits_dict.get('ENCID', '') or 'igl' in self.fits_dict.get('TELID', '')
+                if 'trace' == name_parts[0]:
+                    obstype = 'TRACE'
+                elif 'arc' == name_parts[0]:
+                    obstype = 'ARC'
+                elif 'bias' == name_parts[3]:
+                    obstype = 'BIAS'
+                elif 'bpm' == name_parts[3]:
+                    obstype = 'BPM'
+                elif obstype_letter == 'e':
+                    if is_nres:
+                        obstype = 'TARGET'
+                    elif 'en' in name_parts[1]:
+                        obstype = 'SPECTRUM'
+                    else:
+                        obstype = 'EXPOSE'
+                elif obstype_letter == 'a':
+                    if is_nres:
+                        obstype = 'DOUBLE'
+                    else:
+                        obstype = 'ARC'
+                elif obstype_letter in LETTER_TO_OBSTYPE:
+                    obstype = LETTER_TO_OBSTYPE[obstype_letter]
+                else:
+                    # Failed to infer an OBSTYPE for this filename
+                    raise Exception()
+                # Set the OBSTYPE into the header
+                self.fits_dict['OBSTYPE'] = obstype
+            except Exception:
+                raise DoNotRetryError('OBSTYPE is UNKNOWN and could not be inferred. Please manually correct OBSTYPE')
 
     def normalize_related(self):
         """
@@ -132,10 +189,12 @@ class FitsDict(object):
     def as_dict(self):
         self.get_hdu_with_required_headers()
         self.remove_blacklist_headers()
+        self.repair_obstype()
         self.normalize_null_values()
         self.check_rlevel()
         self.check_catalog()
         self.check_dayobs()
         self.set_public_date()
+        self.round_exptime()
         self.normalize_related()
         return self.fits_dict

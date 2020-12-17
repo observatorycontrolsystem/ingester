@@ -8,10 +8,10 @@ import hashlib
 import opentsdb_python_metrics.metric_wrappers
 import dateutil
 
-from lco_ingester.ingester import Ingester
-from lco_ingester.utils.fits import File
-from lco_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
-from lco_ingester.settings import settings
+from ocs_ingester.ingester import Ingester
+from ocs_ingester.utils.fits import File
+from ocs_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
+from ocs_ingester.settings import settings
 
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 

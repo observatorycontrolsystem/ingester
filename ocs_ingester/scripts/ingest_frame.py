@@ -1,15 +1,25 @@
 #!/bin/env python3
+"""
+Command-line entrypoint to the ingester library.
+
+Examples:
+
+    See available options::
+
+        (venv) ocs_ingest_frame --help
+
+"""
 import sys
 import argparse
 
-from lco_ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
-from lco_ingester.settings import settings
-from lco_ingester.exceptions import NonFatalDoNotRetryError
+from ocs_ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
+from ocs_ingester.settings import settings
+from ocs_ingester.exceptions import NonFatalDoNotRetryError
 
 description = (
-    'Upload a file to the LCO archive. This script will output the resulting URL '
-    'if the upload is successful. An optional flag --check-only can be used to '
-    'check for the existence of a file without uploading it (based on md5).'
+    'Upload a file to the science archive of an observatory control system. This script will output the resulting URL '
+    'if the upload is successful. An optional flag --check-only can be used to check for the existence of a file '
+    'without uploading it (based on md5).'
 )
 
 

@@ -4,12 +4,12 @@ from datetime import datetime
 import requests
 from opentsdb_python_metrics.metric_wrappers import SendMetricMixin
 
-from lco_ingester.utils.fits import obs_end_time_from_dict
-from lco_ingester.utils import metrics
-from lco_ingester.exceptions import BackoffRetryError, DoNotRetryError
-from lco_ingester.settings import settings
+from ocs_ingester.utils.fits import obs_end_time_from_dict
+from ocs_ingester.utils import metrics
+from ocs_ingester.exceptions import BackoffRetryError, DoNotRetryError
+from ocs_ingester.settings import settings
 
-logger = logging.getLogger('lco_ingester')
+logger = logging.getLogger('ocs_ingester')
 
 
 class ArchiveService(SendMetricMixin):

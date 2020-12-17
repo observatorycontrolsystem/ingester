@@ -3,18 +3,18 @@ from io import BytesIO
 from datetime import datetime
 
 from opentsdb_python_metrics.metric_wrappers import SendMetricMixin
-from lco_ingester.utils.fits import get_storage_class, get_dayobs
+from ocs_ingester.utils.fits import get_storage_class, get_dayobs
 
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError
 
 import requests
 import boto3
 
-from lco_ingester.exceptions import BackoffRetryError
-from lco_ingester.utils import metrics
-from lco_ingester.settings import settings
+from ocs_ingester.exceptions import BackoffRetryError
+from ocs_ingester.utils import metrics
+from ocs_ingester.settings import settings
 
-logger = logging.getLogger('lco_ingester')
+logger = logging.getLogger('ocs_ingester')
 
 
 class S3Service(SendMetricMixin):

@@ -2,7 +2,7 @@ import functools
 
 from opentsdb_python_metrics.metric_wrappers import metric_timer_with_tags
 
-from lco_ingester.settings import settings
+from ocs_ingester.settings import settings
 
 
 def method_timer(metric_name):

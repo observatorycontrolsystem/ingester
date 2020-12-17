@@ -1,3 +1,19 @@
+2.2.4
+2020-11-18
+Try to autofill OBSTYPE if it is empty based on naming conventions. Truncate EXPTIME to archive precision.
+
+2.2.1
+2020-08-05
+Treat NONE and None Integer type header values as a null value
+
+2.2.0
+2020-06-08
+Rename lco_ingester to ocs_ingester for the OCS project
+
+2.1.15
+2020-06-03
+Check that all headers for WCS corners computation are set before doing the computation
+
 2.1.13
 2020-03-04
 Fix retry logic for HTTP 4xx Client Errors

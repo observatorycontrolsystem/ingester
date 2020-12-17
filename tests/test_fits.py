@@ -2,8 +2,8 @@ import unittest
 from unittest.mock import MagicMock
 import os
 
-from lco_ingester.fits import FitsDict
-from lco_ingester.utils.fits import File
+from ocs_ingester.fits import FitsDict
+from ocs_ingester.utils.fits import File
 
 
 class TestFits(unittest.TestCase):
@@ -49,6 +49,37 @@ class TestFits(unittest.TestCase):
         fd.fits_dict = {}
         fd.check_rlevel()
         self.assertEqual(11, fd.fits_dict['RLEVEL'])
+
+    def test_repair_obstype(self):
+        self.fileobj.name = 'tst1m005-en20-20150511-1234-e00.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'OBSTYPE': 'UNKNOWN'}
+        fd.repair_obstype()
+        self.assertEqual('SPECTRUM', fd.fits_dict['OBSTYPE'])
+
+        self.fileobj.name = 'tst1m005-en20-20150511-bias-bin1x1.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'OBSTYPE': 'UNKNOWN'}
+        fd.repair_obstype()
+        self.assertEqual('BIAS', fd.fits_dict['OBSTYPE'])
+
+        self.fileobj.name = 'tstnrs1m005-fa20-20150511-1234-e00.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'OBSTYPE': 'UNKNOWN', 'ENCID': 'igla'}
+        fd.repair_obstype()
+        self.assertEqual('TARGET', fd.fits_dict['OBSTYPE'])
+
+        self.fileobj.name = 'tst1m005-fa10-20150511-1234-e00.fits.fz'
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'OBSTYPE': 'UNKNOWN'}
+        fd.repair_obstype()
+        self.assertEqual('EXPOSE', fd.fits_dict['OBSTYPE'])
+
+    def test_round_exptime(self):
+        fd = FitsDict(File(self.fileobj), [], [])
+        fd.fits_dict = {'EXPTIME': -0.00899999999999999}
+        fd.round_exptime()
+        self.assertEqual(fd.fits_dict['EXPTIME'], -0.009)
 
     def test_dayobs_missing(self):
         fd = FitsDict(File(self.fileobj), [], [])
