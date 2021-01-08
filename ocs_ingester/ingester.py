@@ -35,7 +35,7 @@ from ocs_ingester.s3 import S3Service
 from ocs_ingester.settings import settings
 
 
-def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN, broker_url=settings.FITS_BROKER):
+def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
     """Checks if the file exists in the science archive.
 
     Computes the md5 of the given file and checks whether a file with that md5 already exists in
@@ -45,7 +45,6 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
         fileobj (file-like object): File-like object
         api_root (str): Science archive API root url
         auth_token (str): Science archive API authentication token
-        broker_url (str): FITS exchange broker
 
     Returns:
         bool: Boolean indicating whether the file exists in the science archive
@@ -55,7 +54,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
             a response from the science archive API
 
     """
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     md5 = File(fileobj, run_validate=False).get_md5()
     return archive.version_exists(md5)
 
@@ -132,8 +131,7 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
     return s3.upload_file(file, fits_dict)
 
 
-def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
-                          broker_url=settings.FITS_BROKER):
+def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
     """Adds a record to the science archive database.
 
     Args:
@@ -141,7 +139,6 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
         record (dict): Science archive record to ingest
         api_root (str): Science archive API root url
         auth_token (str): Science archive API authentication token
-        broker_url (str): FITS exchange broker
 
     Returns:
         dict: The science archive record that was ingested. For example::
@@ -165,7 +162,7 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
             attempting to ingest it again
 
     """
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     # Construct final archive payload and post to archive
     record['version_set'] = [version]
     return archive.post_frame(record)
@@ -174,7 +171,7 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
 def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
                                       blacklist_headers=settings.HEADER_BLACKLIST,
                                       api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
-                                      bucket=settings.BUCKET, broker_url=settings.FITS_BROKER):
+                                      bucket=settings.BUCKET):
     """Uploads a file to S3 and adds the associated record to the science archive database.
 
     This is a standalone function that runs all of the necessary steps to add data to the
@@ -189,7 +186,6 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
         bucket (str): S3 bucket name
         required_headers (tuple): FITS headers that must be present
         blacklist_headers (tuple): FITS headers that should not be ingested
-        broker_url (str): FITS exchange broker
 
     Returns:
         dict: Information about the uploaded file and record. For example:
@@ -217,7 +213,7 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
 
     """
     file = File(fileobj, path)
-    archive = ArchiveService(api_root=api_root, auth_token=auth_token, broker_url=broker_url)
+    archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     s3 = S3Service(bucket)
     ingester = Ingester(file, s3, archive, required_headers, blacklist_headers)
     return ingester.ingest()

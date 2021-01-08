@@ -7,7 +7,6 @@ def get_tuple_from_environment(variable_name, default):
 
 
 # General settings
-FITS_BROKER = os.getenv('FITS_BROKER', 'memory://localhost')
 API_ROOT = os.getenv('API_ROOT', 'http://localhost:8000/')
 AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 
@@ -34,15 +33,6 @@ PRIVATE_PROPOSALS = get_tuple_from_environment('PRIVATE_PROPOSALS', 'LCOEngineer
 
 # File types which are private (L1PUBDATE far out)
 PRIVATE_FILE_TYPES = get_tuple_from_environment('PRIVATE_FILE_TYPES', '-t00,-x00')
-
-# Crawler RabbitMQ Exchange Name
-CRAWLER_EXCHANGE_NAME = os.getenv('CRAWLER_EXCHANGE_NAME', 'fits_files')
-
-# Processed files RabbitMQ Exchange Name
-PROCESSED_EXCHANGE_NAME = os.getenv('PROCESSED_EXCHANGE_NAME', 'archived_fits')
-
-# Optionally submit files to fits queue
-POSTPROCESS_FILES = ast.literal_eval(os.getenv('POSTPROCESS_FILES', 'True'))
 
 # Whether to submit the metrics asynchronously
 SUBMIT_METRICS_ASYNCHRONOUSLY = ast.literal_eval(os.getenv('SUBMIT_METRICS_ASYNCHRONOUSLY', 'False'))

@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ocs-ingester',
-    version='2.2.4',
+    version='2.2.5',
     description='Ingest frames into the science archive of an observatory control system',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -24,15 +24,11 @@ setup(
         'boto3',
         'python-dateutil',
         'lcogt-logging',
-        'kombu',
         'opentsdb-python-metrics>=0.2.0'
     ],
-    tests_require=[
-        'pytest',
-        # celery is not required by the library, but there are tests that test the ingester application
-        # which require it.
-        'celery>=4.1,<4.2',
-    ],
+    extras_require={
+        'tests': ['pytest']
+    },
     entry_points={
         'console_scripts': [
             'ocs_ingest_frame = ocs_ingester.scripts.ingest_frame:main',

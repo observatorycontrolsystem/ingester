@@ -95,8 +95,7 @@ class S3Service(SendMetricMixin):
             asynchronous=settings.SUBMIT_METRICS_ASYNCHRONOUSLY,
             **settings.EXTRA_METRICS_TAGS
         )
-        # TODO: Remove 'migrated': True from the return dict when the s3 migration is complete
-        return {'key': key, 'md5': s3_md5, 'extension': file.extension, 'migrated': True}
+        return {'key': key, 'md5': s3_md5, 'extension': file.extension}
 
     @staticmethod
     def get_file(path):

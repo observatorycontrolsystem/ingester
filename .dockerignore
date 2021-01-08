@@ -1,8 +1,0 @@
-Jenkinsfile
-docker-compose.yml
-CHANGELOG
-tests/
-scratch/
-.git/
-.tox/
-*.swp

@@ -47,9 +47,7 @@ set as environment variables.
 |                 | `OPENTSDB_PYTHON_METRICS_TEST_MODE` | Set to any value to turn off metrics collection                                                                                                                                                                                            | `False`                    |
 |                 | `INGESTER_PROCESS_NAME`             | A tag set with the collected metrics to identify where the metrics are coming from                                                                                                                                                         | `ingester`                 |
 |                 | `SUBMIT_METRICS_ASYNCHRONOUSLY`     | Optionally submit metrics asynchronously. This option does not apply when the command line entrypoint is used, in which case metrics are always submitted synchronously. Note that some metrics may be lost when submitted asynchronously. | `False`                    |
-| Postprocessing  | `FITS_BROKER`                       | FITS exchange broker                                                                                                                                                                                                                       | `memory://localhost`       |
-|                 | `PROCESSED_EXCHANGE_NAME`           | Processed files RabbitMQ Exchange Name                                                                                                                                                                                                     | `archived_fits`            |
-|                 | `POSTPROCESS_FILES`                 | Optionally submit files to fits queue                                                                                                                                                                                                      | `True`                     |
+
 
 ## For Developers
 
