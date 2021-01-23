@@ -56,6 +56,6 @@ set as environment variables.
 After cloning this project, from the project root and inside your virtual environment:
 
 ```bash
-(venv) $ pip install -r requirements.txt
+(venv) $ pip install -e .[tests]
 (venv) $ pytest
 ```
