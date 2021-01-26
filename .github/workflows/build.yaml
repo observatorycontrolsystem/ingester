@@ -41,5 +41,21 @@ jobs:
     if: github.event_name == 'create' && github.event.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
-      - name: Noop
-        run: echo "Running publish to pypi"
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+    - name: Build package and publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        # TODO: Update token when finished testing
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_TOKEN }}
+      # TODO: Update repository when finished testing
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload --repository testpypi dist/*
