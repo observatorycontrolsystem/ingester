@@ -53,9 +53,7 @@ jobs:
     - name: Build package and publish to PyPI
       env:
         TWINE_USERNAME: __token__
-        # TODO: Update token when finished testing
-        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_TOKEN }}
-      # TODO: Update repository when finished testing
+        TWINE_PASSWORD: ${{ secrets.PYPI_INGESTER_API_TOKEN }}
       run: |
         python setup.py sdist bdist_wheel
-        twine upload --repository testpypi dist/*
+        twine upload dist/*
