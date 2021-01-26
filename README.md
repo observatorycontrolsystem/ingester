@@ -1,6 +1,7 @@
 # Ingester Library
 
-[![Build Status](https://travis-ci.com/observatorycontrolsystem/ingester.svg?branch=master)](https://travis-ci.com/observatorycontrolsystem/ingester)
+![Build](https://github.com/observatorycontrolsystem/ingester/workflows/Build/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/observatorycontrolsystem/ingester/badge.svg?branch=master)](https://coveralls.io/github/observatorycontrolsystem/ingester?branch=master)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/24eb8debeb0c499ca192b4497a1f1e12)](https://www.codacy.com/gh/observatorycontrolsystem/ingester?utm_source=github.com&utm_medium=referral&utm_content=observatorycontrolsystem/ingester&utm_campaign=Badge_Grade)
 
 A library for adding new science data products to an observatory control system's science archive. The library
