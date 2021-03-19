@@ -138,7 +138,7 @@ def wcs_corners_from_dict(fits_dict):
         dec = fits_dict['DEC']
         r = fits_dict['RADIUS']
 
-        radius_in_degrees = r / 3600.0
+        radius_in_degrees = Angle(r, units.arcsecond).deg
         ra_in_degrees = Angle(ra, units.hourangle).deg
         dec = Angle(dec, units.deg).deg
 
