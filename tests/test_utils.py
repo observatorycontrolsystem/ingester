@@ -88,6 +88,12 @@ class TestFitsUtils(unittest.TestCase):
         self.assertIn('type', result)
         self.assertIn('coordinates', result)
 
+    def test_get_wcs_corners_from_dict_for_nres_sexagesimal(self):
+        fits_dict = {'RADIUS': 5, 'RA': '11:45:44.212',  'DEC': '-80:01:44.56'}
+        result = wcs_corners_from_dict(fits_dict)
+        self.assertIn('type', result)
+        self.assertIn('coordinates', result)
+
     def test_get_wcs_corners_from_dict_for_nres_missing_headers(self):
         fits_dict = {'RADIUS': 5, 'RA': ''}
         result = wcs_corners_from_dict(fits_dict)

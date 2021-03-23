@@ -1,3 +1,7 @@
+2.2.6
+2021-03-23
+Add support for sexagesimal NRES RA/Dec keywords
+
 2.2.5
 2021-01-07
 Remove the migrated field, remove the task queue and ability to run this as an application
