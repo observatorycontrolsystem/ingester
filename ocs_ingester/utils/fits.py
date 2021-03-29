@@ -5,7 +5,8 @@ import hashlib
 import os
 
 from dateutil.parser import parse
-from astropy import wcs
+from astropy import wcs, units
+from astropy.coordinates import Angle
 
 from ocs_ingester.exceptions import DoNotRetryError
 from ocs_ingester.utils import metrics
@@ -137,8 +138,9 @@ def wcs_corners_from_dict(fits_dict):
         dec = fits_dict['DEC']
         r = fits_dict['RADIUS']
 
-        radius_in_degrees = r / 3600.0
-        ra_in_degrees = ra * 15.0
+        radius_in_degrees = Angle(r, units.arcsecond).deg
+        ra_in_degrees = Angle(ra, units.hourangle).deg
+        dec = Angle(dec, units.deg).deg
 
         c1 = (ra_in_degrees - radius_in_degrees, dec + radius_in_degrees)
         c2 = (ra_in_degrees + radius_in_degrees, dec + radius_in_degrees)
