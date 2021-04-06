@@ -18,9 +18,10 @@ class File:
 
     The user of this class is expected to close the file object that is passed in.
     """
-    def __init__(self, fileobj, path=None, run_validate=True):
+    def __init__(self, fileobj, path=None, file_metadata=None, run_validate=True):
         self.fileobj = fileobj
         self.path = path
+        self.file_metadata = file_metadata
         self.basename, self.extension = self.get_basename_and_extension(self.filename)
         if run_validate:
             self.validate()

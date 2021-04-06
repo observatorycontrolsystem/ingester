@@ -59,7 +59,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
     return archive.version_exists(md5)
 
 
-def validate_fits_and_create_archive_record(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
+def validate_fits_and_create_archive_record(fileobj, path=None, file_metadata=None, required_headers=settings.REQUIRED_HEADERS,
                                             blacklist_headers=settings.HEADER_BLACKLIST):
     """Validates the FITS file and creates a science archive record from it.
 
@@ -87,14 +87,14 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
         ocs_ingester.exceptions.DoNotRetryError: If required headers could not be found
 
     """
-    file = File(fileobj, path)
+    file = File(fileobj, path, file_metadata)
     json_record = FitsDict(file, required_headers, blacklist_headers).as_dict()
     json_record['area'] = wcs_corners_from_dict(json_record)
     json_record['basename'] = file.basename
     return json_record
 
 
-def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
+def upload_file_to_s3(fileobj, path=None, file_metadata=None, bucket=settings.BUCKET):
     """Uploads a file to the S3 bucket.
 
     Args:
@@ -121,7 +121,7 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
         ocs_ingester.exceptions.BackoffRetryError: If there is a problem connecting to S3
 
     """
-    file = File(fileobj, path)
+    file = File(fileobj, path, file_metadata)
     s3 = S3Service(bucket)
 
     # Transform this fits file into a cleaned dictionary
@@ -168,7 +168,8 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
     return archive.post_frame(record)
 
 
-def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
+def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
+                                      required_headers=settings.REQUIRED_HEADERS,
                                       blacklist_headers=settings.HEADER_BLACKLIST,
                                       api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
                                       bucket=settings.BUCKET):
@@ -212,7 +213,7 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
              to ingest again
 
     """
-    file = File(fileobj, path)
+    file = File(fileobj, path, file_metadata)
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     s3 = S3Service(bucket)
     ingester = Ingester(file, s3, archive, required_headers, blacklist_headers)
