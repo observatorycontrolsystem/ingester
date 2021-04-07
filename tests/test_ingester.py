@@ -71,11 +71,11 @@ class TestIngester(unittest.TestCase):
         self.s3_mock = MagicMock()
         self.s3_mock.upload_file = MagicMock(return_value={'md5': 'fakemd5'})
         self.mock_metadata = {'PROPID': 'INGEST-TEST-2021',
-                              'DATE-OBS': '2021-04-07T00:00:00.000',
-                              'INSTRUME': 'fa05',
-                              'SITEID': 'tst',
+                              'DATE-OBS': '2015-02-19T13:56:05.261',
+                              'INSTRUME': 'nres03',
+                              'SITEID': 'cpt',
                               'TELID': '1m0a',
-                              'OBSTYPE': 'DARK',
+                              'OBSTYPE': 'EXPOSE',
                               'BLKUID': 1234,
                               'RLEVEL': 92}
         bad_headers = settings.HEADER_BLACKLIST
