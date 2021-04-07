@@ -191,8 +191,9 @@ class FitsDict(object):
         """
         related_frame_keys = [
             'L1IDBIAS', 'L1IDDARK', 'L1IDFLAT', 'L1IDSHUT',
-            'L1IDMASK', 'L1IDFRNG', 'L1IDCAT', 'TARFILE',
-            'ORIGNAME', 'ARCFILE', 'FLATFILE', 'GUIDETAR'
+            'L1IDMASK', 'L1IDFRNG', 'L1IDCAT', 'L1IDARC',
+            'L1ID1D', 'L1ID2D', 'L1IDSUM', 'TARFILE',
+            'ORIGNAME', 'ARCFILE', 'FLATFILE', 'GUIDETAR',
         ]
         for key in related_frame_keys:
             filename = self.fits_dict.get(key)
