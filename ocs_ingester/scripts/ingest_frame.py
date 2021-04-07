@@ -17,8 +17,8 @@ from ocs_ingester.settings import settings
 from ocs_ingester.exceptions import NonFatalDoNotRetryError
 
 description = (
-    'Upload a file to the science archive of an observatory control system. This script will output the resulting URL '
-    'if the upload is successful. An optional flag --check-only can be used to check for the existence of a file '
+    'Upload a FITS file to the science archive of an observatory control system. This script will output the resulting '
+    'URL if the upload is successful. An optional flag --check-only can be used to check for the existence of a file '
     'without uploading it (based on md5).'
 )
 
