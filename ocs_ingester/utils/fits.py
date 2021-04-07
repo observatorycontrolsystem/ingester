@@ -42,7 +42,7 @@ class File:
                 hdu_list = fits.open(io.BytesIO(fits_file.read()), mode='readonly')
                 hdu_list.verify()
             return True
-        except:
+        except Exception:
             return False
 
     @contextmanager
