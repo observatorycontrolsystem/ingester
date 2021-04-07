@@ -4,7 +4,8 @@ Data is added to the science archive using the archive API and an S3 client. The
 data to the science archive are as follows:
 
     1) Check that the file does not yet exist in the science archive
-    2) Validate and build a cleaned dictionary of the headers of the FITS file
+    2) Validate and build a cleaned dictionary of the headers of the FITS file, or from provided metadata when uploading
+       a non-FITS file
     3) Upload the file to S3
     4) Combine the results from steps 2 and 3 into a record to be added to the science archive database
 
@@ -70,6 +71,8 @@ def validate_fits_and_create_archive_record(fileobj, path=None, file_metadata=No
         fileobj (file-like object): File-like object
         path (str): File path/name for this object. This option may be used to override the filename
             associated with the fileobj. It must be used if the fileobj does not have a filename.
+        file_metadata (dict): Dictionary of file metadata to use when generating the archive record for a non-FITS file.
+            This must be used when uploading a non-FITS file.
         required_headers (tuple): FITS headers that must be present
         blacklist_headers (tuple): FITS headers that should not be ingested
 
@@ -101,6 +104,8 @@ def upload_file_to_s3(fileobj, path=None, file_metadata=None, bucket=settings.BU
         fileobj (file-like object): File-like object
         path (str): File path/name for this object. This option may be used to override the filename
             associated with the fileobj. It must be used if the fileobj does not have a filename.
+        file_metadata (dict): Dictionary of file metadata to use when generating the archive record for a non-FITS file.
+            This must be used when uploading a non-FITS file.
         bucket (str): S3 bucket name
 
     Returns:
@@ -182,6 +187,8 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
         fileobj (file-like object): File-like object
         path (str): File path/name for this object. This option may be used to override the filename
             associated with the fileobj. It must be used if the fileobj does not have a filename.
+        file_metadata (dict): Dictionary of file metadata to use when generating the archive record for a non-FITS file.
+            This must be used when uploading a non-FITS file.
         api_root (str): Science archive API root url
         auth_token (str): Science archive API authentication token
         bucket (str): S3 bucket name
