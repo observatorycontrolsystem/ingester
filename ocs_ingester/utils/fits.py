@@ -3,10 +3,12 @@ from contextlib import contextmanager
 import tarfile
 import hashlib
 import os
+import io
 
 from dateutil.parser import parse
 from astropy import wcs, units
 from astropy.coordinates import Angle
+from astropy.io import fits
 
 from ocs_ingester.exceptions import DoNotRetryError
 from ocs_ingester.utils import metrics
@@ -29,6 +31,19 @@ class File:
     def get_from_start(self):
         self.fileobj.seek(0)
         return self.fileobj
+
+    def is_valid_fits(self):
+        """
+        Use astropy to determine if a file is a valid FITS file
+        :return: True if valid FITS, False if not
+        """
+        try:
+            with self.get_fits() as fits_file:
+                hdu_list = fits.open(io.BytesIO(fits_file.read()), mode='readonly')
+                hdu_list.verify()
+            return True
+        except:
+            return False
 
     @contextmanager
     def get_fits(self):

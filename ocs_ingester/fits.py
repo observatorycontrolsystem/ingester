@@ -34,7 +34,8 @@ class FitsDict(object):
             self.blacklist_headers.append('')
 
     def get_hdu_with_required_headers(self):
-        if not self.file.file_metadata:
+        if self.file.is_valid_fits():
+            # Loop through each HDU and use the first header that passes validation as the dict representation
             with self.file.get_fits() as fits_file:
                 with fits.open(io.BytesIO(fits_file.read()), mode='readonly') as hdulist:
                     for hdu in hdulist:
@@ -46,12 +47,17 @@ class FitsDict(object):
                             continue
                     raise DoNotRetryError(
                         'Could not find required keywords in headers!')  # No headers met requirement
+        # File provided is not a FITS file, use provided metadata
         else:
-            if self._is_valid_file_metadata(self.file.file_metadata):
-                self.fits_dict = self.file.file_metadata
+            if self.file.file_metadata is None:
+                raise DoNotRetryError('Metadata must be provided for non-FITS files.')
             else:
-                raise DoNotRetryError(
-                    'Could not find required keywords in provided metadata!')  # No headers met requirement
+                if self._is_valid_file_metadata(self.file.file_metadata):
+                    self.fits_dict = self.file.file_metadata
+                else:
+                    raise DoNotRetryError(
+                        'Could not find required keywords in provided metadata!')  # No headers met requirement
+
 
     def _is_valid_file_metadata(self, metadata_dict: dict):
         """
