@@ -7,11 +7,19 @@ from ocs_ingester.utils.fits import File
 
 FITS_PATH = os.path.join(
     os.path.dirname(__file__),
-    'fits/'
+    'test_files/fits/'
+)
+OTHER_PATH = os.path.join(
+    os.path.dirname(__file__),
+    'test_files/other/'
 )
 FITS_FILE = os.path.join(
     FITS_PATH,
     'coj1m011-kb05-20150219-0125-e90.fits.fz'
+)
+PDF_FILE = os.path.join(
+    OTHER_PATH,
+    'cptnrs03-fa13-20150219-0001-e92-summary.pdf'
 )
 
 
@@ -50,12 +58,32 @@ class TestS3(unittest.TestCase):
                 self.s3.file_to_s3_key(File(fileobj), fits_dict)
             )
 
+    def test_pdf_obstype_basename_to_hash(self):
+        fits_dict = {'SITEID': 'cpt', 'INSTRUME': 'nres03',
+                     'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'EXPOSE', 'RLEVEL': 92}
+        with open(PDF_FILE, 'rb') as fileobj:
+            self.assertEqual(
+                'cpt/nres03/20150219/processed/cptnrs03-fa13-20150219-0001-e92-summary.pdf',
+                self.s3.file_to_s3_key(File(fileobj, file_metadata=fits_dict), fits_dict)
+            )
+
     def test_bpm_filename_basename_to_hash(self):
         fits_dict = {'SITEID': 'coj', 'INSTRUME': 'kb05', 'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'EXPOSE'}
         with open(FITS_FILE, 'rb') as fileobj:
             self.assertEqual(
                 'coj/kb05/bpm/coj1m011-kb05-20150219-0125-bpm.fits.fz',
                 self.s3.file_to_s3_key(File(fileobj, path='coj1m011-kb05-20150219-0125-bpm.fits.fz'), fits_dict)
+            )
+
+    def test_pdf_filename_basename_to_hash(self):
+        fits_dict = {'SITEID': 'cpt', 'INSTRUME': 'nres03',
+                     'DATE-OBS': '2015-02-19T13:56:05.261', 'OBSTYPE': 'EXPOSE', 'RLEVEL': 92}
+        with open(PDF_FILE, 'rb') as fileobj:
+            self.assertEqual(
+                'cpt/nres03/20150219/processed/cptnrs03-fa13-20150219-0001-e92-summary.pdf',
+                self.s3.file_to_s3_key(File(fileobj,
+                                            path='cptnrs03-fa13-20150219-0001-e92-summary.pdf',
+                                            file_metadata=fits_dict), fits_dict)
             )
 
     def test_processed_basename_to_hash(self):

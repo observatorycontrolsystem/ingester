@@ -4,6 +4,7 @@ import os
 import io
 import tarfile
 import hashlib
+from copy import copy
 
 import opentsdb_python_metrics.metric_wrappers
 import dateutil
@@ -18,8 +19,14 @@ opentsdb_python_metrics.metric_wrappers.test_mode = True
 
 FITS_PATH = os.path.join(
     os.path.dirname(__file__),
-    'fits/'
+    'test_files/fits/'
 )
+
+OTHER_PATH = os.path.join(
+    os.path.dirname(__file__),
+    'test_files/other/'
+)
+
 FITS_FILE = os.path.join(
     FITS_PATH,
     'coj1m011-kb05-20150219-0125-e90.fits.fz'
@@ -36,6 +43,11 @@ SPECTRO_FILE = os.path.join(
 NRES_FILE = os.path.join(
     FITS_PATH,
     'lscnrs01-fl09-20171109-0049-e91.tar.gz'
+)
+
+PDF_FILE = os.path.join(
+    OTHER_PATH,
+    'cptnrs03-fa13-20150219-0001-e92-summary.pdf'
 )
 
 
@@ -58,6 +70,14 @@ class TestIngester(unittest.TestCase):
         self.archive_mock.version_exists.return_value = False
         self.s3_mock = MagicMock()
         self.s3_mock.upload_file = MagicMock(return_value={'md5': 'fakemd5'})
+        self.mock_metadata = {'PROPID': 'INGEST-TEST-2021',
+                              'DATE-OBS': '2015-02-19T13:56:05.261',
+                              'INSTRUME': 'nres03',
+                              'SITEID': 'cpt',
+                              'TELID': '1m0a',
+                              'OBSTYPE': 'EXPOSE',
+                              'BLKUID': 1234,
+                              'RLEVEL': 92}
         bad_headers = settings.HEADER_BLACKLIST
         self.ingesters = [
             Ingester(
@@ -212,3 +232,28 @@ class TestIngester(unittest.TestCase):
                 self.assertIsNone(reqnum)
             except AssertionError:
                 self.assertGreater(int(reqnum), -1)
+
+    def test_ingest_pdf_no_meta(self):
+        with open(PDF_FILE, 'rb') as fileobj:
+            ingester = self.create_ingester_for_file(File(fileobj))
+            with self.assertRaises(DoNotRetryError):
+                ingester.ingest()
+            self.assertFalse(self.s3_mock.upload_file.called)
+            self.assertFalse(self.archive_mock.post_frame.called)
+
+    def test_ingest_pdf_missing_keyword(self):
+        bad_metadata = copy(self.mock_metadata)
+        del bad_metadata['BLKUID']
+        with open(PDF_FILE, 'rb') as fileobj:
+            ingester = self.create_ingester_for_file(File(fileobj, file_metadata=bad_metadata))
+            with self.assertRaises(DoNotRetryError):
+                ingester.ingest()
+            self.assertFalse(self.s3_mock.upload_file.called)
+            self.assertFalse(self.archive_mock.post_frame.called)
+
+    def test_ingest_pdf_with_meta(self):
+        with open(PDF_FILE, 'rb') as fileobj:
+            ingester = self.create_ingester_for_file(File(fileobj, file_metadata=self.mock_metadata))
+            ingester.ingest()
+            self.assertTrue(self.s3_mock.upload_file.called)
+            self.assertTrue(self.archive_mock.post_frame.called)

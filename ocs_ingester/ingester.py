@@ -4,7 +4,8 @@ Data is added to the science archive using the archive API and an S3 client. The
 data to the science archive are as follows:
 
     1) Check that the file does not yet exist in the science archive
-    2) Validate and build a cleaned dictionary of the headers of the FITS file
+    2) Validate and build a cleaned dictionary of the headers of the FITS file, or from provided metadata when uploading
+       a non-FITS file
     3) Upload the file to S3
     4) Combine the results from steps 2 and 3 into a record to be added to the science archive database
 
@@ -59,7 +60,7 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
     return archive.version_exists(md5)
 
 
-def validate_fits_and_create_archive_record(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
+def validate_fits_and_create_archive_record(fileobj, path=None, file_metadata=None, required_headers=settings.REQUIRED_HEADERS,
                                             blacklist_headers=settings.HEADER_BLACKLIST):
     """Validates the FITS file and creates a science archive record from it.
 
@@ -70,6 +71,8 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
         fileobj (file-like object): File-like object
         path (str): File path/name for this object. This option may be used to override the filename
             associated with the fileobj. It must be used if the fileobj does not have a filename.
+        file_metadata (dict): Dictionary of file metadata to use when generating the archive record for a non-FITS file.
+            This must be used when uploading a non-FITS file.
         required_headers (tuple): FITS headers that must be present
         blacklist_headers (tuple): FITS headers that should not be ingested
 
@@ -87,20 +90,22 @@ def validate_fits_and_create_archive_record(fileobj, path=None, required_headers
         ocs_ingester.exceptions.DoNotRetryError: If required headers could not be found
 
     """
-    file = File(fileobj, path)
+    file = File(fileobj, path, file_metadata)
     json_record = FitsDict(file, required_headers, blacklist_headers).as_dict()
     json_record['area'] = wcs_corners_from_dict(json_record)
     json_record['basename'] = file.basename
     return json_record
 
 
-def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
+def upload_file_to_s3(fileobj, path=None, file_metadata=None, bucket=settings.BUCKET):
     """Uploads a file to the S3 bucket.
 
     Args:
         fileobj (file-like object): File-like object
         path (str): File path/name for this object. This option may be used to override the filename
             associated with the fileobj. It must be used if the fileobj does not have a filename.
+        file_metadata (dict): Dictionary of file metadata to use when generating the archive record for a non-FITS file.
+            This must be used when uploading a non-FITS file.
         bucket (str): S3 bucket name
 
     Returns:
@@ -121,7 +126,7 @@ def upload_file_to_s3(fileobj, path=None, bucket=settings.BUCKET):
         ocs_ingester.exceptions.BackoffRetryError: If there is a problem connecting to S3
 
     """
-    file = File(fileobj, path)
+    file = File(fileobj, path, file_metadata)
     s3 = S3Service(bucket)
 
     # Transform this fits file into a cleaned dictionary
@@ -168,7 +173,8 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
     return archive.post_frame(record)
 
 
-def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=settings.REQUIRED_HEADERS,
+def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
+                                      required_headers=settings.REQUIRED_HEADERS,
                                       blacklist_headers=settings.HEADER_BLACKLIST,
                                       api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
                                       bucket=settings.BUCKET):
@@ -181,6 +187,8 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
         fileobj (file-like object): File-like object
         path (str): File path/name for this object. This option may be used to override the filename
             associated with the fileobj. It must be used if the fileobj does not have a filename.
+        file_metadata (dict): Dictionary of file metadata to use when generating the archive record for a non-FITS file.
+            This must be used when uploading a non-FITS file.
         api_root (str): Science archive API root url
         auth_token (str): Science archive API authentication token
         bucket (str): S3 bucket name
@@ -212,7 +220,7 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, required_headers=setti
              to ingest again
 
     """
-    file = File(fileobj, path)
+    file = File(fileobj, path, file_metadata)
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
     s3 = S3Service(bucket)
     ingester = Ingester(file, s3, archive, required_headers, blacklist_headers)

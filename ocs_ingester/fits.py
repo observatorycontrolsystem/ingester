@@ -34,23 +34,48 @@ class FitsDict(object):
             self.blacklist_headers.append('')
 
     def get_hdu_with_required_headers(self):
-        with self.file.get_fits() as fits_file:
-            with fits.open(io.BytesIO(fits_file.read()), mode='readonly') as hdulist:
-                for hdu in hdulist:
-                    fits_dict = dict(hdu.header)
-                    if any([k for k in self.required_headers if k not in fits_dict]):
-                        pass
-                    else:
-                        self.fits_dict = fits_dict
-                        logger.info('Ingester extracted fits headers', extra={
-                            'tags': {
-                                'request_num': fits_dict.get('REQNUM'),
-                                'PROPID': fits_dict.get('PROPID'),
-                                'filename': '{}{}'.format(self.file.basename, self.file.extension)
-                            }
-                        })
-                        return
-                raise DoNotRetryError('Could not find required headers!')  # No headers met requirement
+        if self.file.is_valid_fits():
+            # Loop through each HDU and use the first header that passes validation as the dict representation
+            with self.file.get_fits() as fits_file:
+                with fits.open(io.BytesIO(fits_file.read()), mode='readonly') as hdulist:
+                    for hdu in hdulist:
+                        fits_dict = dict(hdu.header)
+                        if self._is_valid_file_metadata(fits_dict):
+                            self.fits_dict = fits_dict
+                            return
+                        else:
+                            continue
+                    raise DoNotRetryError(
+                        'Could not find required keywords in headers!')  # No headers met requirement
+        # File provided is not a FITS file, use provided metadata
+        else:
+            if self.file.file_metadata is None:
+                raise DoNotRetryError('Metadata must be provided for non-FITS files.')
+            else:
+                if self._is_valid_file_metadata(self.file.file_metadata):
+                    self.fits_dict = self.file.file_metadata
+                else:
+                    raise DoNotRetryError(
+                        'Could not find required keywords in provided metadata!')  # No headers met requirement
+
+    def _is_valid_file_metadata(self, metadata_dict: dict):
+        """
+        Check some file metadata for required headers.
+
+        :param metadata_dict: dictionary of file metadata
+        :return True if required headers are present, False if not
+        """
+        if any([k for k in self.required_headers if k not in metadata_dict]):
+            return False
+        else:
+            logger.info('Ingester validated file metadata', extra={
+                'tags': {
+                    'request_num': metadata_dict.get('REQNUM'),
+                    'PROPID': metadata_dict.get('PROPID'),
+                    'filename': '{}{}'.format(self.file.basename, self.file.extension)
+                }
+            })
+            return True
 
     def remove_blacklist_headers(self):
         for header in self.blacklist_headers:
@@ -156,7 +181,7 @@ class FitsDict(object):
         """
         Fits files contain several keys whose values are the filenames
         of frames that they are related to.
-        Sometimes the keys are non-existant, sometimes they contain
+        Sometimes the keys are non-existent, sometimes they contain
         'N/A' to represent null, sometimes they contain filenames with
         the file extension appended, sometimes without an extension.
         This function attempts to normalize these values to not exist
@@ -165,8 +190,9 @@ class FitsDict(object):
         """
         related_frame_keys = [
             'L1IDBIAS', 'L1IDDARK', 'L1IDFLAT', 'L1IDSHUT',
-            'L1IDMASK', 'L1IDFRNG', 'L1IDCAT', 'TARFILE',
-            'ORIGNAME', 'ARCFILE', 'FLATFILE', 'GUIDETAR'
+            'L1IDMASK', 'L1IDFRNG', 'L1IDCAT', 'L1IDARC',
+            'L1ID1D', 'L1ID2D', 'L1IDSUM', 'TARFILE',
+            'ORIGNAME', 'ARCFILE', 'FLATFILE', 'GUIDETAR',
         ]
         for key in related_frame_keys:
             filename = self.fits_dict.get(key)

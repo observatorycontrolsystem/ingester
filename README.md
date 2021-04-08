@@ -5,8 +5,8 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/24eb8debeb0c499ca192b4497a1f1e12)](https://www.codacy.com/gh/observatorycontrolsystem/ingester?utm_source=github.com&utm_medium=referral&utm_content=observatorycontrolsystem/ingester&utm_campaign=Badge_Grade)
 
 A library for adding new science data products to an observatory control system's science archive. The library
-handles uploading FITS files into AWS S3, as well as adding records to the science archive's database containing
-the searchable metadata of all available FITS files.
+handles uploading files into AWS S3, as well as adding records to the science archive's database containing
+the searchable metadata of all available files.
 
 ## Prerequisites
 
