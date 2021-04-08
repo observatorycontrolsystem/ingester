@@ -58,7 +58,6 @@ class FitsDict(object):
                     raise DoNotRetryError(
                         'Could not find required keywords in provided metadata!')  # No headers met requirement
 
-
     def _is_valid_file_metadata(self, metadata_dict: dict):
         """
         Check some file metadata for required headers.
@@ -69,7 +68,7 @@ class FitsDict(object):
         if any([k for k in self.required_headers if k not in metadata_dict]):
             return False
         else:
-            logger.info('Ingester extracted fits headers', extra={
+            logger.info('Ingester validated file metadata', extra={
                 'tags': {
                     'request_num': metadata_dict.get('REQNUM'),
                     'PROPID': metadata_dict.get('PROPID'),

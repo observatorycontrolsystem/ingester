@@ -39,8 +39,8 @@ class File:
         """
         try:
             with self.get_fits() as fits_file:
-                hdu_list = fits.open(io.BytesIO(fits_file.read()), mode='readonly')
-                hdu_list.verify()
+                with fits.open(io.BytesIO(fits_file.read()), mode='readonly') as hdu_list:
+                    hdu_list.verify()
             return True
         except Exception:
             return False
