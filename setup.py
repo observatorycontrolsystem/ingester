@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ocs-ingester',
-    version='2.2.6',
+    version='2.3.0',
     description='Ingest frames into the science archive of an observatory control system',
     long_description=long_description,
     long_description_content_type='text/markdown',
