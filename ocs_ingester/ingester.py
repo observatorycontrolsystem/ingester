@@ -253,7 +253,8 @@ class Ingester(object):
         version = self.s3.upload_file(self.file, fits_dict)
 
         # Remove dashes from version_set key to comply with science archive format
-        version['key'] = version['key'].replace('-', '')
+        if 'key' in version:
+            version['key'] = version['key'].replace('-', '')
 
         # Make sure our md5 matches amazons
         if version['md5'] != md5:

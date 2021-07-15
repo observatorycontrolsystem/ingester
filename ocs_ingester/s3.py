@@ -16,8 +16,6 @@ from ocs_ingester.settings import settings
 
 logger = logging.getLogger('ocs_ingester')
 
-s3 = boto3.resource('s3', endpoint_url=settings.S3_ENDPOINT_URL)
-
 class S3Service(SendMetricMixin):
     def __init__(self, bucket):
         self.bucket = bucket
@@ -64,6 +62,7 @@ class S3Service(SendMetricMixin):
     def upload_file(self, file, fits_dict):
         storage_class = get_storage_class(fits_dict)
         start_time = datetime.utcnow()
+        s3 = boto3.resource('s3', endpoint_url=settings.S3_ENDPOINT_URL)
         key = self.file_to_s3_key(file, fits_dict)
         content_disposition = 'attachment; filename={0}{1}'.format(file.basename, file.extension)
         content_type = self.extension_to_content_type(file.extension)
@@ -107,6 +106,7 @@ class S3Service(SendMetricMixin):
         :param path: Path to file in s3
         :return: File-like object
         """
+        s3 = boto3.resource('s3', endpoint_url=settings.S3_ENDPOINT_URL)
         protocol_preface = 's3://'
         plist = path[len(protocol_preface):].split('/')
         bucket = plist[0]
