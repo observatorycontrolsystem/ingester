@@ -252,10 +252,6 @@ class Ingester(object):
         # Upload the file to s3 and get version information back
         version = self.s3.upload_file(self.file, fits_dict)
 
-        # Remove dashes from version_set key to comply with science archive format
-        if 'key' in version:
-            version['key'] = version['key'].replace('-', '')
-
         # Make sure our md5 matches amazons
         if version['md5'] != md5:
             raise BackoffRetryError('S3 md5 did not match ours')
