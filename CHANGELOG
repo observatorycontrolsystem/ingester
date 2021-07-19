@@ -1,3 +1,7 @@
+2.3.1
+2021-07-19
+Add configurable endpoint for s3 connections
+
 2.3.0
 2021-04-08
 Add ability to upload files of arbitrary type to an OCS Science Archive
