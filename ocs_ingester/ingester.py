@@ -14,7 +14,7 @@ Examples:
 
     >>> from ocs_ingester import ingester
     >>> with open('tst1mXXX-ab12-20191013-0001-e00.fits.fz', 'rb') as fileobj:
-    >>>     if not frame_exists(fileobj):
+    >>>     if not ingester.frame_exists(fileobj):
     >>>        record = ingester.validate_fits_and_create_archive_record(fileobj)
     >>>        s3_version = ingester.upload_file_to_s3(fileobj)
     >>>        ingested_record = ingester.ingest_archive_record(s3_version, record)
