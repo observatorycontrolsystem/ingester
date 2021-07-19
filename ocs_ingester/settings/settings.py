@@ -12,6 +12,7 @@ AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 
 # AWS Credentials and defaults
 BUCKET = os.getenv('BUCKET', 'ingestertest')
+S3_ENDPOINT_URL = os.getenv('S3_ENDPOINT_URL', 'http://s3.us-west-2.amazonaws.com')
 
 # Files we wish to ignore
 IGNORED_CHARS = get_tuple_from_environment('IGNORED_CHARS', '-l00,tstnrs')
