@@ -14,6 +14,9 @@ AUTH_TOKEN = os.getenv('AUTH_TOKEN', '')
 BUCKET = os.getenv('BUCKET', 'ingestertest')
 S3_ENDPOINT_URL = os.getenv('S3_ENDPOINT_URL', 'http://s3.us-west-2.amazonaws.com')
 
+# Supported file extensions
+SUPPORTED_EXTENSIONS = get_tuple_from_environment('SUPPORTED_EXTENSIONS', '.fits,.fits.fz,.tar.gz,.pdf')
+
 # Files we wish to ignore
 IGNORED_CHARS = get_tuple_from_environment('IGNORED_CHARS', '-l00,tstnrs')
 

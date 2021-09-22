@@ -12,6 +12,7 @@ from astropy.io import fits
 
 from ocs_ingester.exceptions import DoNotRetryError
 from ocs_ingester.utils import metrics
+from ocs_ingester.settings.settings import SUPPORTED_EXTENSIONS
 
 
 class File:
@@ -98,8 +99,12 @@ class File:
         if path is not None:
             filename = os.path.basename(path)
             if filename.find('.') > 0:
-                basename = filename[:filename.index('.')]
-                extension = filename[filename.index('.'):]
+                extension_name = next((ext_name for ext_name in SUPPORTED_EXTENSIONS if filename.endswith(ext_name)), None)
+                if extension_name is not None:
+                    basename = filename.replace(extension_name, '')
+                    extension = extension_name
+                else:
+                    raise DoNotRetryError("Filetype not supported!")
             else:
                 basename = filename
                 extension = ''
