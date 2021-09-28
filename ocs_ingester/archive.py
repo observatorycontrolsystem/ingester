@@ -1,15 +1,33 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.parser import parse
 
 import requests
 from opentsdb_python_metrics.metric_wrappers import SendMetricMixin
 
-from ocs_ingester.utils.fits import obs_end_time_from_dict
 from ocs_ingester.utils import metrics
 from ocs_ingester.exceptions import BackoffRetryError, DoNotRetryError
-from ocs_ingester.settings import settings
+from ocs_ingester.settings import settings as ingester_settings
+
+from ocs_archive.settings import settings as archive_settings
 
 logger = logging.getLogger('ocs_ingester')
+
+
+def obs_end_time_from_dict(archive_record):
+    obs_date = parse(archive_record.get('observation_date'))
+    end_time = parse(archive_record.get('headers', {}).get(archive_settings.OBSERVATION_END_TIME_KEY))
+    if end_time:
+        # observation end is just a time - we need the date as well to be sure when this is
+        end_date = obs_date.date()
+        if abs(obs_date.hour - end_time.hour) > 12:
+            # There was a date rollover during this observation, so set the date for utstop
+            end_date += timedelta(days=1)
+
+        return datetime.combine(end_date, end_time.time())
+    elif archive_record.get('exposure_time'):
+        return obs_date + timedelta(seconds=archive_record['exposure_time'])
+    return obs_date
 
 
 class ArchiveService(SendMetricMixin):
@@ -48,29 +66,29 @@ class ArchiveService(SendMetricMixin):
             raise BackoffRetryError(e)
 
     @metrics.method_timer('ingester.post_frame')
-    def post_frame(self, fits_dict):
+    def post_frame(self, archive_record):
         response = requests.post(
-            '{0}frames/'.format(self.api_root), json=fits_dict, headers=self.headers
+            '{0}frames/'.format(self.api_root), json=archive_record, headers=self.headers
         )
         result = self.handle_response(response)
         logger.info('Ingester posted frame to archive', extra={
             'tags': {
                 'filename': result.get('filename'),
-                'request_num': fits_dict.get('REQNUM'),
-                'PROPID': result.get('PROPID'),
+                'request_id': archive_record.get('request_id'),
+                'proposal_id': result.get('proposal_id'),
                 'id': result.get('id')
             }
         })
         # Add some useful information from the result
-        fits_dict['frameid'] = result.get('id')
-        fits_dict['filename'] = result.get('filename')
-        fits_dict['url'] = result.get('url')
+        archive_record['frameid'] = result.get('id')
+        archive_record['filename'] = result.get('filename')
+        archive_record['url'] = result.get('url')
         # Record metric for the ingest lag (time between date of image vs date ingested)
-        ingest_lag = datetime.utcnow() - obs_end_time_from_dict(fits_dict)
+        ingest_lag = datetime.utcnow() - obs_end_time_from_dict(archive_record)
         self.send_metric(
             metric_name='ingester.ingest_lag',
             value=ingest_lag.total_seconds(),
-            asynchronous=settings.SUBMIT_METRICS_ASYNCHRONOUSLY,
-            **settings.EXTRA_METRICS_TAGS
+            asynchronous=ingester_settings.SUBMIT_METRICS_ASYNCHRONOUSLY,
+            **ingester_settings.EXTRA_METRICS_TAGS
         )
-        return fits_dict
+        return archive_record

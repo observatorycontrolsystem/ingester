@@ -13,7 +13,7 @@ import sys
 import argparse
 
 from ocs_ingester.ingester import frame_exists, upload_file_and_ingest_to_archive
-from ocs_ingester.settings import settings
+from ocs_ingester.settings import ingester_settings
 from ocs_ingester.exceptions import NonFatalDoNotRetryError
 
 description = (
@@ -36,10 +36,10 @@ def main():
     args = parser.parse_args()
 
     # Submit metrics synchronously so that they all get submitted before the program exits
-    settings.SUBMIT_METRICS_ASYNCHRONOUSLY = False
+    ingester_settings.SUBMIT_METRICS_ASYNCHRONOUSLY = False
 
     if args.process_name:
-        settings.EXTRA_METRICS_TAGS['ingester_process_name'] = args.process_name
+        ingester_settings.EXTRA_METRICS_TAGS['ingester_process_name'] = args.process_name
 
     try:
         with open(args.path, 'rb') as fileobj:
