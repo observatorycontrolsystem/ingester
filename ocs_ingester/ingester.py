@@ -29,6 +29,7 @@ Examples:
 
 from ocs_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, DoNotRetryError
 from ocs_ingester.archive import ArchiveService
+from ocs_ingester.utils.metrics import upload_and_collect_metrics, get_md5_and_collect_metrics
 from ocs_ingester.settings import settings as ingester_settings
 
 from ocs_archive.settings import settings as archive_settings
@@ -36,6 +37,7 @@ from ocs_archive.input.file import File, FileSpecificationException
 from ocs_archive.input.filefactory import FileFactory
 from ocs_archive.storage.filestorefactory import FileStoreFactory
 from ocs_archive.storage.filestore import FileStoreSpecificationError, FileStoreConnectionError
+
 
 def frame_exists(fileobj, api_root=ingester_settings.API_ROOT, auth_token=ingester_settings.AUTH_TOKEN):
     """Checks if the file exists in the science archive.
@@ -57,7 +59,7 @@ def frame_exists(fileobj, api_root=ingester_settings.API_ROOT, auth_token=ingest
 
     """
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
-    md5 = File(fileobj).get_md5()
+    md5 = get_md5_and_collect_metrics(File(fileobj))
     return archive.version_exists(md5)
 
 
@@ -149,7 +151,7 @@ def upload_file_to_file_store(fileobj, path=None, file_metadata=None):
     try:
         filestore = FileStoreFactory.get_file_store_class()()
         # Returns the version, which holds in it the md5 that was uploaded
-        return filestore.store_file(datafile)
+        return upload_and_collect_metrics(filestore, datafile)
     except FileStoreSpecificationError as fe:
         raise DoNotRetryError(str(fe))
     except FileStoreConnectionError as fce:
@@ -272,12 +274,12 @@ class Ingester(object):
 
     def ingest(self):
         # Get the Md5 checksum of this file and check if it already exists in the archive
-        md5 = self.datafile.open_file.get_md5()
+        md5 = get_md5_and_collect_metrics(self.datafile.open_file)
         if self.archive.version_exists(md5):
             raise NonFatalDoNotRetryError('Version with this md5 already exists')
 
         # Upload the file to s3 and get version information back
-        version = self.filestore.store_file(data_file=self.datafile)
+        version = upload_and_collect_metrics(self.filestore, self.datafile)
 
         # Make sure our md5 matches amazons
         if version['md5'] != md5:
