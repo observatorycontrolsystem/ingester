@@ -16,8 +16,9 @@ logger = logging.getLogger('ocs_ingester')
 
 def obs_end_time_from_dict(archive_record):
     obs_date = parse(archive_record.get('observation_date'))
-    end_time = parse(archive_record.get('headers', {}).get(archive_settings.OBSERVATION_END_TIME_KEY))
+    end_time = archive_record.get('headers', {}).get(archive_settings.OBSERVATION_END_TIME_KEY)
     if end_time:
+        end_time = parse(end_time)
         # observation end is just a time - we need the date as well to be sure when this is
         end_date = obs_date.date()
         if abs(obs_date.hour - end_time.hour) > 12:

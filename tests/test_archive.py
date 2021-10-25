@@ -40,7 +40,7 @@ def mocked_requests_get(*args, **kwargs):
 class TestArchiveService(unittest.TestCase):
     def test_archive_post(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://fake/', auth_token='')
-        archive_service.post_frame({'DATE-OBS': datetime.utcnow().isoformat()})
+        archive_service.post_frame({'observation_date': datetime.utcnow().isoformat()})
         self.assertTrue(post_mock.called)
         self.assertEqual(post_mock.call_args[0][0], 'http://fake/frames/')
 

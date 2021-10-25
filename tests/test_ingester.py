@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 import unittest
 import os
 import io
@@ -9,8 +9,10 @@ from copy import copy
 import opentsdb_python_metrics.metric_wrappers
 import dateutil
 
-from ocs_ingester.ingester import Ingester
-from ocs_ingester.utils.fits import File
+from ocs_archive.input.file import File
+from ocs_archive.input.filefactory import FileFactory
+
+from ocs_ingester.ingester import Ingester, upload_file_and_ingest_to_archive
 from ocs_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
 from ocs_ingester.settings import settings
 
@@ -61,15 +63,28 @@ def mock_hashlib_md5(*args, **kwargs):
 
     return MockHash()
 
+# These mocks are in global namespace so they can apply to the mocked Ingester class below
+archive_mock = MagicMock()
+archive_mock.version_exists.return_value = False
+filestore_mock = MagicMock()
+filestore_mock.store_file = MagicMock(return_value={'md5': 'fakemd5'})
+
+def mocked_ingester(datafile_real, fake_filestore, fake_archive):
+    class MockIngester(Ingester):
+        def __init__(self):
+            super().__init__(datafile_real, filestore_mock, archive_mock)
+
+    return MockIngester()
+
 
 class TestIngester(unittest.TestCase):
     def setUp(self):
+        # Since these are globally used mocks, we should reset them at the start of each test in here
+        filestore_mock.reset_mock()
+        archive_mock.reset_mock()
         hashlib.md5 = MagicMock(side_effect=mock_hashlib_md5)
-        self.fits_files = [File(open(os.path.join(FITS_PATH, f), 'rb')) for f in os.listdir(FITS_PATH)]
-        self.archive_mock = MagicMock()
-        self.archive_mock.version_exists.return_value = False
-        self.s3_mock = MagicMock()
-        self.s3_mock.upload_file = MagicMock(return_value={'md5': 'fakemd5'})
+        self.open_files = [File(open(os.path.join(FITS_PATH, f), 'rb')) for f in os.listdir(FITS_PATH)]
+        self.data_files = [FileFactory.get_datafile_class_for_extension(open_file.extension)(open_file) for open_file in self.open_files]
         self.mock_metadata = {'PROPID': 'INGEST-TEST-2021',
                               'DATE-OBS': '2015-02-19T13:56:05.261',
                               'INSTRUME': 'nres03',
@@ -78,182 +93,171 @@ class TestIngester(unittest.TestCase):
                               'OBSTYPE': 'EXPOSE',
                               'BLKUID': 1234,
                               'RLEVEL': 92}
-        bad_headers = settings.HEADER_BLACKLIST
         self.ingesters = [
             Ingester(
-                file=file,
-                s3=self.s3_mock,
-                archive=self.archive_mock,
-                required_headers=settings.REQUIRED_HEADERS,
-                blacklist_headers=bad_headers,
+                datafile=data_file,
+                filestore=filestore_mock,
+                archive=archive_mock
             )
-            for file in self.fits_files
+            for data_file in self.data_files
         ]
 
-    def tearDown(self):
-        for file in self.fits_files:
-            file.fileobj.close()
 
-    def create_ingester_for_file(self, file):
-        ingester = Ingester(
-            file=file,
-            s3=self.s3_mock,
-            archive=self.archive_mock,
-            blacklist_headers=settings.HEADER_BLACKLIST,
-            required_headers=settings.REQUIRED_HEADERS
-        )
-        return ingester
+    def tearDown(self):
+        for file in self.open_files:
+            file.fileobj.close()
 
     def test_ingest_file(self):
         for ingester in self.ingesters:
             ingester.ingest()
-            self.assertTrue(self.s3_mock.upload_file.called)
-            self.assertTrue(self.archive_mock.post_frame.called)
+            self.assertTrue(filestore_mock.store_file.called)
+            self.assertTrue(archive_mock.post_frame.called)
 
-    def test_ingest_bytesio_file(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_bytesio_file(self, ingester_mock):
         with io.BytesIO() as buf:
             with open(FITS_FILE, 'rb') as fileobj:
                 buf.write(fileobj.read())
-                file = File(buf, 'fake_path.fits')
-                ingester = self.create_ingester_for_file(file)
-                ingester.ingest()
-                self.assertTrue(self.s3_mock.upload_file.called)
-                self.assertTrue(self.archive_mock.post_frame.called)
+                upload_file_and_ingest_to_archive(buf, path='fake_path.fits')
+                self.assertTrue(filestore_mock.store_file.called)
+                self.assertTrue(archive_mock.post_frame.called)
 
-    def test_ingest_bytesio_file_with_no_path(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_bytesio_file_with_no_path(self, ingester_mock):
         # BytesIO objects have no name attr, and must specify a path
         with io.BytesIO() as buf:
             with open(FITS_FILE, 'rb') as fileobj:
                 buf.write(fileobj.read())
                 with self.assertRaises(DoNotRetryError):
-                    file = File(buf)
-                    ingester = self.create_ingester_for_file(file)
-                    ingester.ingest()
-        self.assertFalse(self.s3_mock.upload_file.called)
-        self.assertFalse(self.archive_mock.post_frame.called)
+                    upload_file_and_ingest_to_archive(buf)
+        self.assertFalse(filestore_mock.store_file.called)
+        self.assertFalse(archive_mock.post_frame.called)
 
     def test_ingest_file_already_exists(self):
-        self.archive_mock.version_exists.return_value = True
+        archive_mock.version_exists.return_value = True
         with self.assertRaises(NonFatalDoNotRetryError):
             self.ingesters[0].ingest()
-        self.assertFalse(self.s3_mock.upload_file.called)
-        self.assertFalse(self.archive_mock.post_frame.called)
+        self.assertFalse(filestore_mock.store_file.called)
+        self.assertFalse(archive_mock.post_frame.called)
+        archive_mock.version_exists.return_value = False
 
-    def test_required(self):
-        ingester = self.ingesters[0]
-        ingester.required_headers = ['fooheader']
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_required(self, ingester_mock):
+        required_headers = ['fooheader']
         with self.assertRaises(DoNotRetryError):
-            ingester.ingest()
-        self.assertFalse(self.s3_mock.upload_file.called)
-        self.assertFalse(self.archive_mock.post_frame.called)
+            upload_file_and_ingest_to_archive(self.open_files[0].fileobj, required_headers=required_headers)
+        self.assertFalse(ingester_mock.filestore.store_file.called)
+        self.assertFalse(ingester_mock.archive.post_frame.called)
 
-    def test_get_area(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_get_area(self, ingester_mock):
         with open(FITS_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj))
-            ingester.ingest()
-            self.assertEqual('Polygon', self.archive_mock.post_frame.call_args[0][0]['area']['type'])
+            upload_file_and_ingest_to_archive(fileobj)
+            self.assertEqual('Polygon', archive_mock.post_frame.call_args[0][0]['area']['type'])
         with open(CAT_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj))
-            ingester.ingest()
-            self.assertIsNone(self.archive_mock.post_frame.call_args[0][0]['area'])
+            upload_file_and_ingest_to_archive(fileobj)
+            self.assertIsNone(archive_mock.post_frame.call_args[0][0]['area'])
 
-    def test_blacklist(self):
-        ingester = self.ingesters[0]
-        ingester.blacklist_headers = ['', 'COMMENT', 'HISTORY']
-        ingester.ingest()
-        self.assertNotIn('COMMENT', self.archive_mock.post_frame.call_args[0][0].keys())
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_blacklist(self, ingester_mock):
+        with open(FITS_FILE, 'rb') as fileobj:
+            blacklist_headers = ['', 'COMMENT', 'HISTORY']
+            upload_file_and_ingest_to_archive(fileobj, blacklist_headers=blacklist_headers)
+            self.assertNotIn('COMMENT', archive_mock.post_frame.call_args[0][0]['headers'].keys())
 
     def test_reduction_level(self):
         for ingester in self.ingesters:
             ingester.ingest()
-            self.assertIn('RLEVEL', self.archive_mock.post_frame.call_args[0][0].keys())
+            self.assertIn('reduction_level', archive_mock.post_frame.call_args[0][0].keys())
 
-    def test_related(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_related(self, ingester_mock):
         with open(FITS_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj))
-            ingester.ingest()
+            upload_file_and_ingest_to_archive(fileobj)
             self.assertEqual(
                 'bias_kb05_20150219_bin2x2',
-                self.archive_mock.post_frame.call_args[0][0]['L1IDBIAS']
+                archive_mock.post_frame.call_args[0][0]['headers']['L1IDBIAS']
             )
             self.assertEqual(
                 'dark_kb05_20150219_bin2x2',
-                self.archive_mock.post_frame.call_args[0][0]['L1IDDARK']
+                archive_mock.post_frame.call_args[0][0]['headers']['L1IDDARK']
             )
             self.assertEqual(
                 'flat_kb05_20150219_SKYFLAT_bin2x2_V',
-                self.archive_mock.post_frame.call_args[0][0]['L1IDFLAT']
+                archive_mock.post_frame.call_args[0][0]['headers']['L1IDFLAT']
             )
 
-    def test_catalog_related(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_catalog_related(self, ingester_mock):
         with open(CAT_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj))
-            ingester.ingest()
+            upload_file_and_ingest_to_archive(fileobj)
             self.assertEqual(
                 'cpt1m010-kb70-20151219-0073-e10',
-                self.archive_mock.post_frame.call_args[0][0]['L1IDCAT']
+                archive_mock.post_frame.call_args[0][0]['headers']['L1IDCAT']
             )
 
-    def test_spectograph(self):
+    @patch('ocs_archive.settings.settings.FILETYPE_MAPPING_OVERRIDES', {'.tar.gz': 'ocs_archive.input.lcotarwithfitsfile.LcoTarWithFitsFile'})
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_spectograph(self, ingester_mock):
         with open(SPECTRO_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj))
-            ingester.ingest()
-            self.assertEqual(90, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
-            self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
+            upload_file_and_ingest_to_archive(fileobj)
+            self.assertEqual(90, archive_mock.post_frame.call_args[0][0]['reduction_level'])
+            self.assertTrue(dateutil.parser.parse(archive_mock.post_frame.call_args[0][0]['public_date']))
 
-    def test_nres_package(self):
+    @patch('ocs_archive.settings.settings.FILETYPE_MAPPING_OVERRIDES', {'.tar.gz': 'ocs_archive.input.lcotarwithfitsfile.LcoTarWithFitsFile'})
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_nres_package(self, ingester_mock):
         with open(NRES_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj))
-            ingester.ingest()
-            self.assertEqual('Polygon', self.archive_mock.post_frame.call_args[0][0]['area']['type'])
-            self.assertEqual(91, self.archive_mock.post_frame.call_args[0][0]['RLEVEL'])
-            self.assertEqual('TARGET', self.archive_mock.post_frame.call_args[0][0]['OBSTYPE'])
-            self.assertTrue(dateutil.parser.parse(self.archive_mock.post_frame.call_args[0][0]['L1PUBDAT']))
+            upload_file_and_ingest_to_archive(fileobj)
+            self.assertEqual('Polygon', archive_mock.post_frame.call_args[0][0]['area']['type'])
+            self.assertEqual(91, archive_mock.post_frame.call_args[0][0]['reduction_level'])
+            self.assertEqual('TARGET', archive_mock.post_frame.call_args[0][0]['configuration_type'])
+            self.assertTrue(dateutil.parser.parse(archive_mock.post_frame.call_args[0][0]['public_date']))
 
-    def test_spectrograph_missing_meta(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_spectrograph_missing_meta(self, ingester_mock):
         tarfile.TarFile.getmembers = MagicMock(return_value=[])
         with self.assertRaises(DoNotRetryError):
             with open(SPECTRO_FILE, 'rb') as fileobj:
-                ingester = self.create_ingester_for_file(File(fileobj))
-                ingester.ingest()
+                upload_file_and_ingest_to_archive(fileobj)
 
-    def test_empty_string_for_na(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_empty_string_for_na(self, ingester_mock):
         with open(os.path.join(FITS_PATH, 'coj1m011-fl08-20151216-0049-b00.fits'), 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj))
-            ingester.ingest()
-            self.assertFalse(self.archive_mock.post_frame.call_args[0][0]['OBJECT'])
-            self.assertTrue(self.archive_mock.post_frame.call_args[0][0]['DATE-OBS'])
+            upload_file_and_ingest_to_archive(fileobj)
+            self.assertFalse(archive_mock.post_frame.call_args[0][0]['target_name'])
+            self.assertIsNotNone(archive_mock.post_frame.call_args[0][0]['observation_date'])
 
     def test_reqnum_null_or_int(self):
         for ingester in self.ingesters:
             ingester.ingest()
-            reqnum = self.archive_mock.post_frame.call_args[0][0]['REQNUM']
+            reqnum = archive_mock.post_frame.call_args[0][0]['request_id']
             try:
                 self.assertIsNone(reqnum)
             except AssertionError:
                 self.assertGreater(int(reqnum), -1)
 
-    def test_ingest_pdf_no_meta(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_pdf_no_meta(self, ingester_mock):
         with open(PDF_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj))
             with self.assertRaises(DoNotRetryError):
-                ingester.ingest()
-            self.assertFalse(self.s3_mock.upload_file.called)
-            self.assertFalse(self.archive_mock.post_frame.called)
+                upload_file_and_ingest_to_archive(fileobj)
+            self.assertFalse(filestore_mock.store_file.called)
+            self.assertFalse(archive_mock.post_frame.called)
 
-    def test_ingest_pdf_missing_keyword(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_pdf_missing_keyword(self, ingester_mock):
         bad_metadata = copy(self.mock_metadata)
         del bad_metadata['BLKUID']
         with open(PDF_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj, file_metadata=bad_metadata))
             with self.assertRaises(DoNotRetryError):
-                ingester.ingest()
-            self.assertFalse(self.s3_mock.upload_file.called)
-            self.assertFalse(self.archive_mock.post_frame.called)
+                upload_file_and_ingest_to_archive(fileobj, file_metadata=bad_metadata)
+            self.assertFalse(filestore_mock.store_file.called)
+            self.assertFalse(archive_mock.post_frame.called)
 
-    def test_ingest_pdf_with_meta(self):
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_pdf_with_meta(self, ingester_mock):
         with open(PDF_FILE, 'rb') as fileobj:
-            ingester = self.create_ingester_for_file(File(fileobj, file_metadata=self.mock_metadata))
-            ingester.ingest()
-            self.assertTrue(self.s3_mock.upload_file.called)
-            self.assertTrue(self.archive_mock.post_frame.called)
+            upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata)
+            self.assertTrue(filestore_mock.store_file.called)
+            self.assertTrue(archive_mock.post_frame.called)
