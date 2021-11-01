@@ -6,7 +6,7 @@
 
 A library for adding new science data products to an observatory control system's science archive. The library
 handles uploading files into AWS S3, as well as adding records to the science archive's database containing
-the searchable metadata of all available files.
+the searchable metadata of all available files. It records metrics in an openTSDB about ingestion.
 
 ## Prerequisites
 
