@@ -12,7 +12,8 @@ import dateutil
 from ocs_archive.input.file import File
 from ocs_archive.input.filefactory import FileFactory
 
-from ocs_ingester.ingester import Ingester, upload_file_and_ingest_to_archive
+from ocs_ingester.ingester import (Ingester, upload_file_and_ingest_to_archive, ingest_archive_record,
+                                   upload_file_to_file_store, validate_fits_and_create_archive_record)
 from ocs_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
 from ocs_ingester.settings import settings
 
@@ -77,6 +78,27 @@ def mocked_ingester(datafile_real, fake_filestore, fake_archive):
     return MockIngester()
 
 
+class TestIngesterMethods(unittest.TestCase):
+    def test_create_archive_record(self):
+        with open(FITS_FILE, 'rb') as fileobj:
+            archive_record = validate_fits_and_create_archive_record(fileobj)
+            self.assertEqual(archive_record['area']['type'], 'Polygon')
+            self.assertIn('headers', archive_record)
+
+    def test_upload_file_to_file_store(self):
+        with open(FITS_FILE, 'rb') as fileobj:
+            version = upload_file_to_file_store(fileobj)
+            self.assertIn('md5', version)
+
+    @patch('requests.post')
+    def test_ingest_archive_record(self, post_mock):
+        with open(FITS_FILE, 'rb') as fileobj:
+            archive_record = validate_fits_and_create_archive_record(fileobj)
+            version = upload_file_to_file_store(fileobj)
+            ingest_archive_record(version, archive_record, api_root='http://fake')
+            self.assertTrue(post_mock.called)
+
+
 class TestIngester(unittest.TestCase):
     def setUp(self):
         # Since these are globally used mocks, we should reset them at the start of each test in here
@@ -101,7 +123,6 @@ class TestIngester(unittest.TestCase):
             )
             for data_file in self.data_files
         ]
-
 
     def tearDown(self):
         for file in self.open_files:
