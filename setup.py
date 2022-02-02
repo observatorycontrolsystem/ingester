@@ -22,7 +22,7 @@ setup(
         'astropy',
         'requests',
         'boto3',
-        'ocs_archive',
+        'ocs_archive==0.2.5',
         'python-dateutil',
         'lcogt-logging',
         'opentsdb-python-metrics>=0.2.0'
