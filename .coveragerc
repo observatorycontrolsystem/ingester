@@ -1,2 +1,7 @@
 [run]
 source = ocs_ingester
+
+[report]
+omit =
+    */scripts/*
+    *log_config.py

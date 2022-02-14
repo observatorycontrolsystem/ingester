@@ -8,13 +8,13 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ocs-ingester',
-    version='2.3.1',
+    version='3.0.0',
     description='Ingest frames into the science archive of an observatory control system',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/observatorycontrolsystem/ingester',
     packages=['ocs_ingester', 'ocs_ingester.utils', 'ocs_ingester.settings', 'ocs_ingester.scripts'],
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
     ],
@@ -22,6 +22,7 @@ setup(
         'astropy',
         'requests',
         'boto3',
+        'ocs_archive==0.2.6',
         'python-dateutil',
         'lcogt-logging',
         'opentsdb-python-metrics>=0.2.0'

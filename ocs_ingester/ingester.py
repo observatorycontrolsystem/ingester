@@ -27,16 +27,19 @@ Examples:
 
 """
 
-from ocs_ingester.fits import FitsDict
-from ocs_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError
-from ocs_ingester.utils.fits import wcs_corners_from_dict
-from ocs_ingester.utils.fits import File
+from ocs_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, DoNotRetryError
 from ocs_ingester.archive import ArchiveService
-from ocs_ingester.s3 import S3Service
-from ocs_ingester.settings import settings
+from ocs_ingester.utils.metrics import upload_and_collect_metrics, get_md5_and_collect_metrics
+from ocs_ingester.settings import settings as ingester_settings
+
+from ocs_archive.settings import settings as archive_settings
+from ocs_archive.input.file import File, FileSpecificationException
+from ocs_archive.input.filefactory import FileFactory
+from ocs_archive.storage.filestorefactory import FileStoreFactory
+from ocs_archive.storage.filestore import FileStoreSpecificationError, FileStoreConnectionError
 
 
-def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
+def frame_exists(fileobj, api_root=ingester_settings.API_ROOT, auth_token=ingester_settings.AUTH_TOKEN):
     """Checks if the file exists in the science archive.
 
     Computes the md5 of the given file and checks whether a file with that md5 already exists in
@@ -56,12 +59,13 @@ def frame_exists(fileobj, api_root=settings.API_ROOT, auth_token=settings.AUTH_T
 
     """
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
-    md5 = File(fileobj, run_validate=False).get_md5()
+    md5 = get_md5_and_collect_metrics(File(fileobj))
     return archive.version_exists(md5)
 
 
-def validate_fits_and_create_archive_record(fileobj, path=None, file_metadata=None, required_headers=settings.REQUIRED_HEADERS,
-                                            blacklist_headers=settings.HEADER_BLACKLIST):
+def validate_fits_and_create_archive_record(fileobj, path=None, file_metadata=None,
+                                            required_headers=archive_settings.REQUIRED_HEADERS,
+                                            blacklist_headers=archive_settings.HEADER_BLACKLIST):
     """Validates the FITS file and creates a science archive record from it.
 
     Checks that required headers are present, removes blacklisted headers, and cleans other
@@ -81,8 +85,12 @@ def validate_fits_and_create_archive_record(fileobj, path=None, file_metadata=No
 
             {
                 'basename': 'tst1mXXX-ab12-20191013-0001-e00',
-                'FILTER': 'rp',
-                'DATE-OBS': '2019-10-13T10:13:00',
+                'headers': {
+                    'FILTER': 'rp',
+                    'DATE-OBS': '2019-10-13T10:13:00',
+                    ...
+                },
+                'area': ...
                 ...
             }
 
@@ -90,14 +98,21 @@ def validate_fits_and_create_archive_record(fileobj, path=None, file_metadata=No
         ocs_ingester.exceptions.DoNotRetryError: If required headers could not be found
 
     """
-    file = File(fileobj, path, file_metadata)
-    json_record = FitsDict(file, required_headers, blacklist_headers).as_dict()
-    json_record['area'] = wcs_corners_from_dict(json_record)
-    json_record['basename'] = file.basename
+    try:
+        open_file = File(fileobj, path)
+        datafile = FileFactory.get_datafile_class_for_extension(open_file.extension)(
+            open_file, file_metadata, blacklist_headers, required_headers
+        )
+    except FileSpecificationException as fe:
+        raise DoNotRetryError(str(fe))
+    json_record = datafile.get_header_data().get_archive_frame_data()
+    json_record['headers'] = datafile.get_header_data().get_headers()
+    json_record['area'] = datafile.get_wcs_corners()
+    json_record['basename'] = open_file.basename
     return json_record
 
 
-def upload_file_to_s3(fileobj, path=None, file_metadata=None, bucket=settings.BUCKET):
+def upload_file_to_file_store(fileobj, path=None, file_metadata=None):
     """Uploads a file to the S3 bucket.
 
     Args:
@@ -106,7 +121,6 @@ def upload_file_to_s3(fileobj, path=None, file_metadata=None, bucket=settings.BU
             associated with the fileobj. It must be used if the fileobj does not have a filename.
         file_metadata (dict): Dictionary of file metadata to use when generating the archive record for a non-FITS file.
             This must be used when uploading a non-FITS file.
-        bucket (str): S3 bucket name
 
     Returns:
         dict: Version information for the file that was uploaded. For example::
@@ -118,25 +132,34 @@ def upload_file_to_s3(fileobj, path=None, file_metadata=None, bucket=settings.BU
             }
 
     Hint:
-        The response contains an "md5" field, which is the md5 computed by S3. It is a good idea to
+        The response contains an "md5" field, which is the md5 computed by file store. It is a good idea to
         check that this md5 is the same as the locally computed md5 of the file to make sure that
         the entire file was successfully uploaded.
 
     Raises:
-        ocs_ingester.exceptions.BackoffRetryError: If there is a problem connecting to S3
-
+        ocs_ingester.exceptions.BackoffRetryError: If there is a problem connecting to file store
+        ocs_ingester.exceptions.DoNotRetryError: If there is a problem configuring file store
     """
-    file = File(fileobj, path, file_metadata)
-    s3 = S3Service(bucket)
+    try:
+        open_file = File(fileobj, path)
+        datafile = FileFactory.get_datafile_class_for_extension(open_file.extension)(
+            open_file, file_metadata
+        )
+    except FileSpecificationException as fe:
+        raise DoNotRetryError(str(fe))
 
-    # Transform this fits file into a cleaned dictionary
-    fits_dict = FitsDict(file, settings.REQUIRED_HEADERS, settings.HEADER_BLACKLIST).as_dict()
+    try:
+        filestore = FileStoreFactory.get_file_store_class()()
+        # Returns the version, which holds in it the md5 that was uploaded
+        return upload_and_collect_metrics(filestore, datafile)
+    except FileStoreSpecificationError as fe:
+        raise DoNotRetryError(str(fe))
+    except FileStoreConnectionError as fce:
+        raise BackoffRetryError(str(fce))
 
-    # Returns the version, which holds in it the md5 that was uploaded
-    return s3.upload_file(file, fits_dict)
 
-
-def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN):
+def ingest_archive_record(version, record, api_root=ingester_settings.API_ROOT,
+                          auth_token=ingester_settings.AUTH_TOKEN):
     """Adds a record to the science archive database.
 
     Args:
@@ -157,7 +180,10 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
                     'extension': '.fits.fz'
                     }
                 ],
-            'frameid': 12345,
+            'headers': {
+                'REQNUM': 12345,
+                ...
+            }
             ...
         }
 
@@ -174,10 +200,9 @@ def ingest_archive_record(version, record, api_root=settings.API_ROOT, auth_toke
 
 
 def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
-                                      required_headers=settings.REQUIRED_HEADERS,
-                                      blacklist_headers=settings.HEADER_BLACKLIST,
-                                      api_root=settings.API_ROOT, auth_token=settings.AUTH_TOKEN,
-                                      bucket=settings.BUCKET):
+                                      required_headers=archive_settings.REQUIRED_HEADERS,
+                                      blacklist_headers=archive_settings.HEADER_BLACKLIST,
+                                      api_root=ingester_settings.API_ROOT, auth_token=ingester_settings.AUTH_TOKEN):
     """Uploads a file to S3 and adds the associated record to the science archive database.
 
     This is a standalone function that runs all of the necessary steps to add data to the
@@ -191,7 +216,6 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
             This must be used when uploading a non-FITS file.
         api_root (str): Science archive API root url
         auth_token (str): Science archive API authentication token
-        bucket (str): S3 bucket name
         required_headers (tuple): FITS headers that must be present
         blacklist_headers (tuple): FITS headers that should not be ingested
 
@@ -207,7 +231,10 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
                         'extension': '.fits.fz'
                         }
                     ],
-                'frameid': 12345,
+                'headers': {
+                    'REQNUM': 12345,
+                    ...
+                }
                 ...
             }
 
@@ -220,10 +247,19 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
              to ingest again
 
     """
-    file = File(fileobj, path, file_metadata)
+    try:
+        if file_metadata is None:
+            file_metadata = {}
+        open_file = File(fileobj, path)
+        datafile = FileFactory.get_datafile_class_for_extension(open_file.extension)(
+            open_file, file_metadata, required_headers=required_headers, blacklist_headers=blacklist_headers
+        )
+        filestore = FileStoreFactory.get_file_store_class()()
+    except (FileSpecificationException, FileStoreSpecificationError) as fe:
+        raise DoNotRetryError(str(fe))
+
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
-    s3 = S3Service(bucket)
-    ingester = Ingester(file, s3, archive, required_headers, blacklist_headers)
+    ingester = Ingester(datafile, filestore, archive)
     return ingester.ingest()
 
 
@@ -233,31 +269,28 @@ class Ingester(object):
     A single instance of this class is responsible for parsing a fits file,
     uploading the data to s3, and making a call to the archive api.
     """
-    def __init__(self, file, s3, archive, required_headers=None, blacklist_headers=None):
-        self.file = file
-        self.s3 = s3
+    def __init__(self, datafile, filestore, archive):
+        self.datafile = datafile
+        self.filestore = filestore
         self.archive = archive
-        self.required_headers = required_headers if required_headers else []
-        self.blacklist_headers = blacklist_headers if blacklist_headers else []
 
     def ingest(self):
         # Get the Md5 checksum of this file and check if it already exists in the archive
-        md5 = self.file.get_md5()
+        md5 = get_md5_and_collect_metrics(self.datafile.open_file)
         if self.archive.version_exists(md5):
             raise NonFatalDoNotRetryError('Version with this md5 already exists')
 
-        # Transform this fits file into a cleaned dictionary
-        fits_dict = FitsDict(self.file, self.required_headers, self.blacklist_headers).as_dict()
-
         # Upload the file to s3 and get version information back
-        version = self.s3.upload_file(self.file, fits_dict)
+        version = upload_and_collect_metrics(self.filestore, self.datafile)
 
         # Make sure our md5 matches amazons
         if version['md5'] != md5:
             raise BackoffRetryError('S3 md5 did not match ours')
 
         # Construct final archive payload and post to archive
-        fits_dict['area'] = wcs_corners_from_dict(fits_dict)
-        fits_dict['version_set'] = [version]
-        fits_dict['basename'] = self.file.basename
-        return self.archive.post_frame(fits_dict)
+        record = self.datafile.get_header_data().get_archive_frame_data()
+        record['headers'] = self.datafile.get_header_data().get_headers()
+        record['area'] = self.datafile.get_wcs_corners()
+        record['version_set'] = [version]
+        record['basename'] = self.datafile.open_file.basename
+        return self.archive.post_frame(record)
