@@ -1,3 +1,7 @@
+3.0.2
+2022-02-15
+Fix the ingest_frame script bug
+
 3.0.1
 2022-02-15
 Update ocs_archive version to fix filename bug
