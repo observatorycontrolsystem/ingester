@@ -1,3 +1,7 @@
+3.0.1
+2022-02-15
+Update ocs_archive version to fix filename bug
+
 3.0.0
 2022-02-14
 Refactor to use ocs_archive library
