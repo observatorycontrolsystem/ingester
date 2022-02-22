@@ -1,3 +1,7 @@
+3.0.3
+2022-02-22
+Fix ocs_archive bug in calculating wcs_corners
+
 3.0.2
 2022-02-15
 Fix the ingest_frame script bug
