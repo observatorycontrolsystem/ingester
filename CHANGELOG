@@ -1,3 +1,7 @@
+3.0.4
+2022-02-23
+ocs_archive set defaults for non nullable headers
+
 3.0.3
 2022-02-22
 Fix ocs_archive bug in calculating wcs_corners
