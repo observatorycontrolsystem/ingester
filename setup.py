@@ -14,7 +14,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/observatorycontrolsystem/ingester',
     packages=['ocs_ingester', 'ocs_ingester.utils', 'ocs_ingester.settings', 'ocs_ingester.scripts'],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
     ],
