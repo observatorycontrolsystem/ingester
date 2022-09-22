@@ -5,7 +5,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/24eb8debeb0c499ca192b4497a1f1e12)](https://www.codacy.com/gh/observatorycontrolsystem/ingester?utm_source=github.com&utm_medium=referral&utm_content=observatorycontrolsystem/ingester&utm_campaign=Badge_Grade)
 
 A library for adding new science data products to an observatory control system's [Science Archive](https://github.com/observatorycontrolsystem/science-archive/).
-The library handles uploading files into a FileStore (usually S3), as well as adding records to the Science Archive's database containing
+The library handles uploading files into a `FileStore` (usually S3), as well as adding records to the Science Archive's database containing
 the searchable metadata of all available files. It records ingestion metrics in an openTSDB instance, which can be disabled by setting the environment variable `OPENTSDB_PYTHON_METRICS_TEST_MODE=False`.
 
 ## Prerequisites
