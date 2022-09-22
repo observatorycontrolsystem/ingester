@@ -4,18 +4,21 @@
 [![Coverage Status](https://coveralls.io/repos/github/observatorycontrolsystem/ingester/badge.svg?branch=master)](https://coveralls.io/github/observatorycontrolsystem/ingester?branch=master)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/24eb8debeb0c499ca192b4497a1f1e12)](https://www.codacy.com/gh/observatorycontrolsystem/ingester?utm_source=github.com&utm_medium=referral&utm_content=observatorycontrolsystem/ingester&utm_campaign=Badge_Grade)
 
-A library for adding new science data products to an observatory control system's science archive. The library
-handles uploading files into AWS S3, as well as adding records to the science archive's database containing
-the searchable metadata of all available files. It records metrics in an openTSDB about ingestion.
+A library for adding new science data products to an observatory control system's [Science Archive](https://github.com/observatorycontrolsystem/science-archive/).
+The library handles uploading files into a `FileStore` (S3 recommended), as well as adding records to the Science Archive's database containing
+the searchable metadata of all available files. Optionally, it records ingestion metrics in an [openTSDB](http://opentsdb.net/) instance, which can be disabled by setting the environment variable `OPENTSDB_PYTHON_METRICS_TEST_MODE=False`.
 
 ## Prerequisites
 
 Optional prerequisites may be skipped for reduced functionality.
 
--   Python >= 3.6
--   A running [science archive](https://github.com/observatorycontrolsystem/science-archive)
--   Write access to the same S3 bucket that the running science archive is using
+-   Python >= 3.7
+-   A running [Science Archive](https://github.com/observatorycontrolsystem/science-archive/)
+-   A configured FileStore (S3 recommended) with write access to store data there
 -   (Optional) A running [OpenTSDB](http://opentsdb.net/) for metrics collection
+
+## Usage
+This project depends on the OCS [Archive Library](https://github.com/observatorycontrolsystem/ocs_archive/), so please look through and set all of its environment variables to match your file format header keys and data storage choices. Specifically, the `FILESTORE_TYPE` environment variable must be set for your FileStore backend, since it defaults to `dummy` which stores no data. The header mapping environment variables should also be set to map to the correct keys in your data products as well. These environment variable values must match the values used in your [Science Archive](https://github.com/observatorycontrolsystem/science-archive/) instance as well. Also check out the [data flow documentation](https://observatorycontrolsystem.github.io/integration/data_flow/) for more details on how to configure and use the ingester.
 
 ## Installation
 
