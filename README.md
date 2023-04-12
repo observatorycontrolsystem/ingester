@@ -14,7 +14,7 @@ Optional prerequisites may be skipped for reduced functionality.
 
 -   Python >= 3.7
 -   A running [Science Archive](https://github.com/observatorycontrolsystem/science-archive/)
--   A configured FileStore (S3 recommended) with write access to store data there
+-   A configured FileStore (S3 recommended) with write access to store data
 -   (Optional) A running [OpenTSDB](http://opentsdb.net/) for metrics collection
 
 ## Usage
