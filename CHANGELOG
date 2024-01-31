@@ -1,3 +1,7 @@
+3.0.6
+2024-01-31
+Upgrade ocs_archive library version to support selecting S3 addressing_style
+
 3.0.4
 2022-02-23
 ocs_archive set defaults for non nullable headers

@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ocs-ingester',
-    version='3.0.5',
+    version='3.0.6',
     description='Ingest frames into the science archive of an observatory control system',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -22,7 +22,7 @@ setup(
         'astropy',
         'requests',
         'boto3',
-        'ocs_archive==0.2.10',
+        'ocs_archive==0.3.0',
         'python-dateutil',
         'lcogt-logging',
         'opentsdb-python-metrics>=0.2.0'
