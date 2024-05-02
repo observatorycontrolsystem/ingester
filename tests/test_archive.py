@@ -57,6 +57,12 @@ class TestArchiveService(unittest.TestCase):
         self.assertTrue(post_mock.called)
         self.assertEqual(post_mock.call_args[0][0], 'http://fake/frames/')
 
+    def test_archive_post_thumbnail(self, post_mock, get_mock):
+        archive_service = ArchiveService(api_root='http://fake/', auth_token='')
+        archive_service.post_thumbnail({'observation_date': datetime.utcnow().isoformat()})
+        self.assertTrue(post_mock.called)
+        self.assertEqual(post_mock.call_args[0][0], 'http://fake/thumbnails/')
+
     def test_existing_md5(self, post_mock, get_mock):
         archive_service = ArchiveService(api_root='http://return1/', auth_token='')
         self.assertTrue(archive_service.version_exists(''))

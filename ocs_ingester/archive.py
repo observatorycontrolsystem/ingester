@@ -93,3 +93,31 @@ class ArchiveService(SendMetricMixin):
             **ingester_settings.EXTRA_METRICS_TAGS
         )
         return archive_record
+
+    @metrics.method_timer('ingester.post_thumbnail')
+    def post_thumbnail(self, archive_record):
+        response = requests.post(
+            '{0}thumbnails/'.format(self.api_root), json=archive_record, headers=self.headers
+        )
+        result = self.handle_response(response)
+        logger.info('Ingester posted thumbnail to archive', extra={
+            'tags': {
+                'filename': result.get('filename'),
+                'request_id': archive_record.get('request_id'),
+                'proposal_id': result.get('proposal_id'),
+                'id': result.get('id')
+            }
+        })
+                # Add some useful information from the result
+        archive_record['frameid'] = result.get('id')
+        archive_record['filename'] = result.get('filename')
+        archive_record['url'] = result.get('url')
+        # Record metric for the ingest lag (time between date of image vs date ingested)
+        ingest_lag = datetime.utcnow() - obs_end_time_from_dict(archive_record)
+        self.send_metric(
+            metric_name='ingester.ingest_lag',
+            value=ingest_lag.total_seconds(),
+            asynchronous=ingester_settings.SUBMIT_METRICS_ASYNCHRONOUSLY,
+            **ingester_settings.EXTRA_METRICS_TAGS
+        )
+        return archive_record

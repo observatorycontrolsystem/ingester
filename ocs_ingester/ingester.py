@@ -17,7 +17,7 @@ Examples:
     >>>     if not ingester.frame_exists(fileobj):
     >>>        record = ingester.validate_fits_and_create_archive_record(fileobj)
     >>>        s3_version = ingester.upload_file_to_s3(fileobj)
-    >>>        ingested_record = ingester.ingest_archive_record(s3_version, record)
+    >>>        ingested_record = ingester.ingest_archive_frame_record(s3_version, record)
 
     Ingest a file in one step:
 
@@ -158,7 +158,7 @@ def upload_file_to_file_store(fileobj, path=None, file_metadata=None):
         raise BackoffRetryError(str(fce))
 
 
-def ingest_archive_record(version, record, api_root=ingester_settings.API_ROOT,
+def ingest_archive_frame_record(version, record, api_root=ingester_settings.API_ROOT,
                           auth_token=ingester_settings.AUTH_TOKEN):
     """Adds a record to the science archive database.
 
@@ -293,4 +293,5 @@ class Ingester(object):
         record['area'] = self.datafile.get_wcs_corners()
         record['version_set'] = [version]
         record['basename'] = self.datafile.open_file.basename
-        return self.archive.post_frame(record)
+
+        return self.archive.post_thumbnail(record) if self.datafile.open_file.extension in archive_settings.THUMBNAIL_FILETYPES else self.archive.post_frame(record)

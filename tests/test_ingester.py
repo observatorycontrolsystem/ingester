@@ -12,7 +12,7 @@ import dateutil
 from ocs_archive.input.file import File
 from ocs_archive.input.filefactory import FileFactory
 
-from ocs_ingester.ingester import (Ingester, upload_file_and_ingest_to_archive, ingest_archive_record,
+from ocs_ingester.ingester import (Ingester, upload_file_and_ingest_to_archive, ingest_archive_frame_record,
                                    upload_file_to_file_store, validate_fits_and_create_archive_record)
 from ocs_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
 from ocs_ingester.settings import settings
@@ -53,6 +53,11 @@ PDF_FILE = os.path.join(
     'cptnrs03-fa13-20150219-0001-e92-summary.pdf'
 )
 
+JPG_FILE = os.path.join(
+    OTHER_PATH,
+    'tfn0m419-sq32-20240426-0097-e91-small.jpg'
+)
+
 
 def mock_hashlib_md5(*args, **kwargs):
     class MockHash(object):
@@ -91,11 +96,11 @@ class TestIngesterMethods(unittest.TestCase):
             self.assertIn('md5', version)
 
     @patch('requests.post')
-    def test_ingest_archive_record(self, post_mock):
+    def test_ingest_archive_frame_record(self, post_mock):
         with open(FITS_FILE, 'rb') as fileobj:
             archive_record = validate_fits_and_create_archive_record(fileobj)
             version = upload_file_to_file_store(fileobj)
-            ingest_archive_record(version, archive_record, api_root='http://fake')
+            ingest_archive_frame_record(version, archive_record, api_root='http://fake')
             self.assertTrue(post_mock.called)
 
 
@@ -282,3 +287,28 @@ class TestIngester(unittest.TestCase):
             upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata)
             self.assertTrue(filestore_mock.store_file.called)
             self.assertTrue(archive_mock.post_frame.called)
+
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_jpg_no_meta(self, ingester_mock):
+        with open(JPG_FILE, 'rb') as fileobj:
+            with self.assertRaises(DoNotRetryError):
+                upload_file_and_ingest_to_archive(fileobj)
+            self.assertFalse(filestore_mock.store_file.called)
+            self.assertFalse(archive_mock.post_frame.called)
+    
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_jpg_missing_keyword(self, ingester_mock):
+        bad_metadata = copy(self.mock_metadata)
+        del bad_metadata['BLKUID']
+        with open(JPG_FILE, 'rb') as fileobj:
+            with self.assertRaises(DoNotRetryError):
+                upload_file_and_ingest_to_archive(fileobj, file_metadata=bad_metadata)
+            self.assertFalse(filestore_mock.store_file.called)
+            self.assertFalse(archive_mock.post_frame.called)
+    
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_jpg_with_meta(self, ingester_mock):
+        with open(JPG_FILE, 'rb') as fileobj:
+            upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata)
+            self.assertTrue(filestore_mock.store_file.called)
+            self.assertTrue(archive_mock.post_thumbnail.called)            
