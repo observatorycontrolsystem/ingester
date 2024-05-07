@@ -307,8 +307,19 @@ class TestIngester(unittest.TestCase):
             self.assertFalse(archive_mock.post_frame.called)
     
     @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
-    def test_ingest_jpg_with_meta(self, ingester_mock):
+    def test_ingest_jpg_with_incomplete_meta(self, ingester_mock):
         with open(JPG_FILE, 'rb') as fileobj:
-            upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata)
+            with self.assertRaises(DoNotRetryError):
+                upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata)
+            self.assertFalse(filestore_mock.store_file.called)
+            self.assertFalse(archive_mock.post_thumbnail.called)    
+
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_jpg_with_complete_meta(self, ingester_mock):
+        test_metadata = copy(self.mock_metadata)
+        test_metadata['frame_filename'] = 'tfn0m419-sq32-20240426-0097-e91.fits.fz'
+        test_metadata['size'] = 'small'
+        with open(JPG_FILE, 'rb') as fileobj:
+            upload_file_and_ingest_to_archive(fileobj, file_metadata=test_metadata)
             self.assertTrue(filestore_mock.store_file.called)
             self.assertTrue(archive_mock.post_thumbnail.called)            

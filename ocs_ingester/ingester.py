@@ -26,6 +26,7 @@ Examples:
     >>>    ingested_record = ingester.upload_file_and_ingest_to_archive(fileobj)
 
 """
+import os
 
 from ocs_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, DoNotRetryError
 from ocs_ingester.archive import ArchiveService
@@ -281,6 +282,7 @@ class Ingester(object):
             raise NonFatalDoNotRetryError('Version with this md5 already exists')
 
         # Upload the file to s3 and get version information back
+        # we need to make sure that 
         version = upload_and_collect_metrics(self.filestore, self.datafile)
 
         # Make sure our md5 matches amazons
@@ -289,9 +291,10 @@ class Ingester(object):
 
         # Construct final archive payload and post to archive
         record = self.datafile.get_header_data().get_archive_frame_data()
+        print(record['frame_basename'])
         record['headers'] = self.datafile.get_header_data().get_headers()
         record['area'] = self.datafile.get_wcs_corners()
         record['version_set'] = [version]
-        record['basename'] = self.datafile.open_file.basename
-
+        record['filename'] = os.path.basename(self.datafile.open_file.filename)
+        
         return self.archive.post_thumbnail(record) if self.datafile.open_file.extension in archive_settings.THUMBNAIL_FILETYPES else self.archive.post_frame(record)

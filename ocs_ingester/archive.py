@@ -42,11 +42,13 @@ class ArchiveService(SendMetricMixin):
         except requests.exceptions.ConnectionError as exc:
             raise BackoffRetryError(exc)
         except requests.exceptions.HTTPError as exc:
+            print(response.content)
             # HTTP 4xx errors are "client errors", meaning that the client sent
             # an incorrectly formatted request. There is no reason to retry an
             # incorrectly formatted request; it will only fail again.
             if 400 <= response.status_code < 500:
                 raise DoNotRetryError(exc)
+            
 
             # All other responses should back off and retry at a later time.
             # The most likely cause is that the HTTP server is unavailable
@@ -110,8 +112,6 @@ class ArchiveService(SendMetricMixin):
         })
                 # Add some useful information from the result
         archive_record['frameid'] = result.get('id')
-        archive_record['filename'] = result.get('filename')
-        archive_record['url'] = result.get('url')
         # Record metric for the ingest lag (time between date of image vs date ingested)
         ingest_lag = datetime.utcnow() - obs_end_time_from_dict(archive_record)
         self.send_metric(
