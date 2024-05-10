@@ -291,10 +291,9 @@ class Ingester(object):
 
         # Construct final archive payload and post to archive
         record = self.datafile.get_header_data().get_archive_frame_data()
-        print(record['frame_basename'])
         record['headers'] = self.datafile.get_header_data().get_headers()
         record['area'] = self.datafile.get_wcs_corners()
         record['version_set'] = [version]
-        record['filename'] = os.path.basename(self.datafile.open_file.filename)
+        record['basename'] = self.datafile.open_file.basename
         
         return self.archive.post_thumbnail(record) if self.datafile.open_file.extension in archive_settings.THUMBNAIL_FILETYPES else self.archive.post_frame(record)
