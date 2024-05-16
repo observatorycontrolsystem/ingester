@@ -15,7 +15,6 @@ from ocs_archive.input.filefactory import FileFactory
 from ocs_ingester.ingester import (Ingester, upload_file_and_ingest_to_archive, ingest_archive_frame_record,
                                    upload_file_to_file_store, validate_fits_and_create_archive_record)
 from ocs_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
-from ocs_ingester.settings import settings
 
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 
@@ -317,7 +316,7 @@ class TestIngester(unittest.TestCase):
     @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
     def test_ingest_jpg_with_complete_meta(self, ingester_mock):
         test_metadata = copy(self.mock_metadata)
-        test_metadata['frame_filename'] = 'tfn0m419-sq32-20240426-0097-e91.fits.fz'
+        test_metadata['frame_basename'] = 'tfn0m419-sq32-20240426-0097-e91'
         test_metadata['size'] = 'small'
         with open(JPG_FILE, 'rb') as fileobj:
             upload_file_and_ingest_to_archive(fileobj, file_metadata=test_metadata)
