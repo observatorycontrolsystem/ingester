@@ -6,7 +6,7 @@ Documentation
 Ingester API and Example Usage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: ingester
-   :members: frame_exists, validate_fits_and_create_archive_record, upload_file_to_s3, ingest_archive_frame_record
+   :members: frame_exists, validate_fits_and_create_archive_record, upload_file_to_s3, ingest_archive_record
 
 Exceptions
 ^^^^^^^^^^

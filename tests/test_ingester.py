@@ -12,7 +12,7 @@ import dateutil
 from ocs_archive.input.file import File
 from ocs_archive.input.filefactory import FileFactory
 
-from ocs_ingester.ingester import (Ingester, upload_file_and_ingest_to_archive, ingest_archive_frame_record,
+from ocs_ingester.ingester import (Ingester, upload_file_and_ingest_to_archive, ingest_archive_record,
                                    upload_file_to_file_store, validate_fits_and_create_archive_record)
 from ocs_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
 
@@ -95,11 +95,11 @@ class TestIngesterMethods(unittest.TestCase):
             self.assertIn('md5', version)
 
     @patch('requests.post')
-    def test_ingest_archive_frame_record(self, post_mock):
+    def test_ingest_archive_record(self, post_mock):
         with open(FITS_FILE, 'rb') as fileobj:
             archive_record = validate_fits_and_create_archive_record(fileobj)
             version = upload_file_to_file_store(fileobj)
-            ingest_archive_frame_record(version, archive_record, api_root='http://fake')
+            ingest_archive_record(version, archive_record, api_root='http://fake')
             self.assertTrue(post_mock.called)
 
 

@@ -22,7 +22,9 @@ setup(
         'astropy',
         'requests',
         'boto3',
-        'ocs_archive==0.3.0',
+        # 'ocs_archive==0.3.0',
+        # install ocs_archive from the local directory
+        # 'ocs_archive @ file://localhost/Users/mdaily/Documents/ocs_archive',
         'python-dateutil',
         'lcogt-logging',
         'opentsdb-python-metrics>=0.2.0'

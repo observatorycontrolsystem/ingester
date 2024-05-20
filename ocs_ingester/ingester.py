@@ -17,7 +17,7 @@ Examples:
     >>>     if not ingester.frame_exists(fileobj):
     >>>        record = ingester.validate_fits_and_create_archive_record(fileobj)
     >>>        s3_version = ingester.upload_file_to_s3(fileobj)
-    >>>        ingested_record = ingester.ingest_archive_frame_record(s3_version, record)
+    >>>        ingested_record = ingester.ingest_archive_record(s3_version, record)
 
     Ingest a file in one step:
 
@@ -159,9 +159,9 @@ def upload_file_to_file_store(fileobj, path=None, file_metadata=None):
         raise BackoffRetryError(str(fce))
 
 
-def ingest_archive_frame_record(version, record, api_root=ingester_settings.API_ROOT,
+def ingest_archive_record(version, record, api_root=ingester_settings.API_ROOT,
                           auth_token=ingester_settings.AUTH_TOKEN):
-    """Adds a record to the science archive database.
+    """Adds a frame record to the science archive database.
 
     Args:
         version (dict): Version information returned from the upload to S3
@@ -290,7 +290,6 @@ class Ingester(object):
             raise NonFatalDoNotRetryError('Version with this md5 already exists')
 
         # Upload the file to s3 and get version information back
-        # we need to make sure that 
         version = upload_and_collect_metrics(self.filestore, self.datafile)
 
         # Make sure our md5 matches amazons
