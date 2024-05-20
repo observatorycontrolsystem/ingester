@@ -52,11 +52,6 @@ PDF_FILE = os.path.join(
     'cptnrs03-fa13-20150219-0001-e92-summary.pdf'
 )
 
-JPG_FILE = os.path.join(
-    OTHER_PATH,
-    'tfn0m419-sq32-20240426-0097-e91-small.jpg'
-)
-
 
 def mock_hashlib_md5(*args, **kwargs):
     class MockHash(object):
