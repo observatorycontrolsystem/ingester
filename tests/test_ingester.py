@@ -15,7 +15,6 @@ from ocs_archive.input.filefactory import FileFactory
 from ocs_ingester.ingester import (Ingester, upload_file_and_ingest_to_archive, ingest_archive_frame_record,
                                    upload_file_to_file_store, validate_fits_and_create_archive_record)
 from ocs_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
-from ocs_ingester.settings import settings
 
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 

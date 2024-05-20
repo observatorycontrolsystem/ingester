@@ -47,7 +47,6 @@ class ArchiveService(SendMetricMixin):
             # incorrectly formatted request; it will only fail again.
             if 400 <= response.status_code < 500:
                 raise DoNotRetryError(exc)
-            
 
             # All other responses should back off and retry at a later time.
             # The most likely cause is that the HTTP server is unavailable
