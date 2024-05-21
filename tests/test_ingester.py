@@ -112,6 +112,7 @@ class TestIngester(unittest.TestCase):
         self.open_files = [File(open(os.path.join(FITS_PATH, f), 'rb')) for f in os.listdir(FITS_PATH)]
         self.data_files = [FileFactory.get_datafile_class_for_extension(open_file.extension)(open_file) for open_file in self.open_files]
         self.mock_metadata = {'PROPID': 'INGEST-TEST-2021',
+                              'DAY-OBS': '20150219',
                               'DATE-OBS': '2015-02-19T13:56:05.261',
                               'INSTRUME': 'nres03',
                               'SITEID': 'cpt',
@@ -309,7 +310,7 @@ class TestIngester(unittest.TestCase):
     def test_ingest_jpg_with_incomplete_meta(self, ingester_mock):
         with open(JPG_FILE, 'rb') as fileobj:
             with self.assertRaises(DoNotRetryError):
-                upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata)
+                upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata, is_thumbnail=True, thumbnail_size='small')
             self.assertFalse(filestore_mock.store_file.called)
             self.assertFalse(archive_mock.post_thumbnail.called)    
 

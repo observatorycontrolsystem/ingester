@@ -258,6 +258,7 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
             if thumbnail_size is None:
                 raise FileSpecificationException('thumbnail_size must be provided for thumbnail files')
             file_metadata['size'] = thumbnail_size
+            required_headers = archive_settings.REQUIRED_THUMBNAIL_METADATA
         open_file = File(fileobj, path)
         datafile = FileFactory.get_datafile_class_for_extension(open_file.extension)(
             open_file, file_metadata, required_headers=required_headers, blacklist_headers=blacklist_headers
