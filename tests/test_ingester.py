@@ -305,7 +305,7 @@ class TestIngester(unittest.TestCase):
                 upload_file_and_ingest_to_archive(fileobj, file_metadata=bad_metadata)
             self.assertFalse(filestore_mock.store_file.called)
             self.assertFalse(archive_mock.post_frame.called)
-    
+
     @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
     def test_ingest_jpg_with_incomplete_meta(self, ingester_mock):
         with open(JPG_FILE, 'rb') as fileobj:
