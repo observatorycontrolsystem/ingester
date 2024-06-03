@@ -30,8 +30,8 @@ jobs:
         pip install coverage "coveralls<3.3"
     - name: Run tests
       run: | 
-        poetry run coverage run -m pytest
-        poetry run coverage xml
+        coverage run -m pytest
+        coverage xml
       env:
         OPENTSDB_PYTHON_METRICS_TEST_MODE: True
     - name: Generate and send coveralls report
