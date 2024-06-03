@@ -26,8 +26,6 @@ Examples:
     >>>    ingested_record = ingester.upload_file_and_ingest_to_archive(fileobj)
 
 """
-import os
-
 from ocs_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, DoNotRetryError
 from ocs_ingester.archive import ArchiveService
 from ocs_ingester.utils.metrics import upload_and_collect_metrics, get_md5_and_collect_metrics
@@ -203,7 +201,7 @@ def ingest_archive_record(version, record, api_root=ingester_settings.API_ROOT,
 def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
                                       required_headers=archive_settings.REQUIRED_HEADERS,
                                       blacklist_headers=archive_settings.HEADER_BLACKLIST,
-                                      api_root=ingester_settings.API_ROOT, auth_token=ingester_settings.AUTH_TOKEN, 
+                                      api_root=ingester_settings.API_ROOT, auth_token=ingester_settings.AUTH_TOKEN,
                                       is_thumbnail=False, thumbnail_size=None):
     """Uploads a file to S3 and adds the associated record to the science archive database.
 

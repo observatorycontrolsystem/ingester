@@ -295,7 +295,7 @@ class TestIngester(unittest.TestCase):
                 upload_file_and_ingest_to_archive(fileobj)
             self.assertFalse(filestore_mock.store_file.called)
             self.assertFalse(archive_mock.post_frame.called)
-    
+
     @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
     def test_ingest_jpg_missing_keyword(self, ingester_mock):
         bad_metadata = copy(self.mock_metadata)
@@ -312,7 +312,7 @@ class TestIngester(unittest.TestCase):
             with self.assertRaises(DoNotRetryError):
                 upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata, is_thumbnail=True, thumbnail_size='small')
             self.assertFalse(filestore_mock.store_file.called)
-            self.assertFalse(archive_mock.post_thumbnail.called)    
+            self.assertFalse(archive_mock.post_thumbnail.called)
 
     @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
     def test_ingest_jpg_with_complete_meta(self, ingester_mock):
@@ -321,4 +321,4 @@ class TestIngester(unittest.TestCase):
         with open(JPG_FILE, 'rb') as fileobj:
             upload_file_and_ingest_to_archive(fileobj, file_metadata=test_metadata, is_thumbnail=True, thumbnail_size='small')
             self.assertTrue(filestore_mock.store_file.called)
-            self.assertTrue(archive_mock.post_thumbnail.called)            
+            self.assertTrue(archive_mock.post_thumbnail.called)
