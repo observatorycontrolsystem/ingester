@@ -15,7 +15,6 @@ from ocs_archive.input.filefactory import FileFactory
 from ocs_ingester.ingester import (Ingester, upload_file_and_ingest_to_archive, ingest_archive_record,
                                    upload_file_to_file_store, validate_fits_and_create_archive_record)
 from ocs_ingester.exceptions import DoNotRetryError, NonFatalDoNotRetryError
-from ocs_ingester.settings import settings
 
 opentsdb_python_metrics.metric_wrappers.test_mode = True
 
@@ -53,6 +52,11 @@ PDF_FILE = os.path.join(
     'cptnrs03-fa13-20150219-0001-e92-summary.pdf'
 )
 
+JPG_FILE = os.path.join(
+    OTHER_PATH,
+    'tfn0m419-sq32-20240426-0097-e91-small.jpg'
+)
+
 
 def mock_hashlib_md5(*args, **kwargs):
     class MockHash(object):
@@ -70,10 +74,10 @@ archive_mock.version_exists.return_value = False
 filestore_mock = MagicMock()
 filestore_mock.store_file = MagicMock(return_value={'md5': 'fakemd5'})
 
-def mocked_ingester(datafile_real, fake_filestore, fake_archive):
+def mocked_ingester(datafile_real, fake_filestore, fake_archive, is_thumbnail):
     class MockIngester(Ingester):
         def __init__(self):
-            super().__init__(datafile_real, filestore_mock, archive_mock)
+            super().__init__(datafile_real, filestore_mock, archive_mock, is_thumbnail)
 
     return MockIngester()
 
@@ -108,6 +112,7 @@ class TestIngester(unittest.TestCase):
         self.open_files = [File(open(os.path.join(FITS_PATH, f), 'rb')) for f in os.listdir(FITS_PATH)]
         self.data_files = [FileFactory.get_datafile_class_for_extension(open_file.extension)(open_file) for open_file in self.open_files]
         self.mock_metadata = {'PROPID': 'INGEST-TEST-2021',
+                              'DAY-OBS': '20150219',
                               'DATE-OBS': '2015-02-19T13:56:05.261',
                               'INSTRUME': 'nres03',
                               'SITEID': 'cpt',
@@ -282,3 +287,38 @@ class TestIngester(unittest.TestCase):
             upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata)
             self.assertTrue(filestore_mock.store_file.called)
             self.assertTrue(archive_mock.post_frame.called)
+
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_jpg_no_meta(self, ingester_mock):
+        with open(JPG_FILE, 'rb') as fileobj:
+            with self.assertRaises(DoNotRetryError):
+                upload_file_and_ingest_to_archive(fileobj)
+            self.assertFalse(filestore_mock.store_file.called)
+            self.assertFalse(archive_mock.post_frame.called)
+
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_jpg_missing_keyword(self, ingester_mock):
+        bad_metadata = copy(self.mock_metadata)
+        del bad_metadata['BLKUID']
+        with open(JPG_FILE, 'rb') as fileobj:
+            with self.assertRaises(DoNotRetryError):
+                upload_file_and_ingest_to_archive(fileobj, file_metadata=bad_metadata)
+            self.assertFalse(filestore_mock.store_file.called)
+            self.assertFalse(archive_mock.post_frame.called)
+
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_jpg_with_incomplete_meta(self, ingester_mock):
+        with open(JPG_FILE, 'rb') as fileobj:
+            with self.assertRaises(DoNotRetryError):
+                upload_file_and_ingest_to_archive(fileobj, file_metadata=self.mock_metadata, is_thumbnail=True, thumbnail_size='small')
+            self.assertFalse(filestore_mock.store_file.called)
+            self.assertFalse(archive_mock.post_thumbnail.called)
+
+    @patch('ocs_ingester.ingester.Ingester', side_effect=mocked_ingester)
+    def test_ingest_jpg_with_complete_meta(self, ingester_mock):
+        test_metadata = copy(self.mock_metadata)
+        test_metadata['frame_basename'] = 'tfn0m419-sq32-20240426-0097-e91'
+        with open(JPG_FILE, 'rb') as fileobj:
+            upload_file_and_ingest_to_archive(fileobj, file_metadata=test_metadata, is_thumbnail=True, thumbnail_size='small')
+            self.assertTrue(filestore_mock.store_file.called)
+            self.assertTrue(archive_mock.post_thumbnail.called)

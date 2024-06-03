@@ -26,7 +26,6 @@ Examples:
     >>>    ingested_record = ingester.upload_file_and_ingest_to_archive(fileobj)
 
 """
-
 from ocs_ingester.exceptions import BackoffRetryError, NonFatalDoNotRetryError, DoNotRetryError
 from ocs_ingester.archive import ArchiveService
 from ocs_ingester.utils.metrics import upload_and_collect_metrics, get_md5_and_collect_metrics
@@ -160,7 +159,7 @@ def upload_file_to_file_store(fileobj, path=None, file_metadata=None):
 
 def ingest_archive_record(version, record, api_root=ingester_settings.API_ROOT,
                           auth_token=ingester_settings.AUTH_TOKEN):
-    """Adds a record to the science archive database.
+    """Adds a frame record to the science archive database.
 
     Args:
         version (dict): Version information returned from the upload to S3
@@ -202,7 +201,8 @@ def ingest_archive_record(version, record, api_root=ingester_settings.API_ROOT,
 def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
                                       required_headers=archive_settings.REQUIRED_HEADERS,
                                       blacklist_headers=archive_settings.HEADER_BLACKLIST,
-                                      api_root=ingester_settings.API_ROOT, auth_token=ingester_settings.AUTH_TOKEN):
+                                      api_root=ingester_settings.API_ROOT, auth_token=ingester_settings.AUTH_TOKEN,
+                                      is_thumbnail=False, thumbnail_size=None):
     """Uploads a file to S3 and adds the associated record to the science archive database.
 
     This is a standalone function that runs all of the necessary steps to add data to the
@@ -218,6 +218,8 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
         auth_token (str): Science archive API authentication token
         required_headers (tuple): FITS headers that must be present
         blacklist_headers (tuple): FITS headers that should not be ingested
+        is_thumbnail (bool): Whether the file is a thumbnail
+        thumbnail_size (str): The size of the thumbnail
 
     Returns:
         dict: Information about the uploaded file and record. For example:
@@ -250,6 +252,11 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
     try:
         if file_metadata is None:
             file_metadata = {}
+        if is_thumbnail:
+            if thumbnail_size is None:
+                raise FileSpecificationException('thumbnail_size must be provided for thumbnail files')
+            file_metadata['size'] = thumbnail_size
+            required_headers = archive_settings.REQUIRED_THUMBNAIL_METADATA
         open_file = File(fileobj, path)
         datafile = FileFactory.get_datafile_class_for_extension(open_file.extension)(
             open_file, file_metadata, required_headers=required_headers, blacklist_headers=blacklist_headers
@@ -259,7 +266,7 @@ def upload_file_and_ingest_to_archive(fileobj, path=None, file_metadata=None,
         raise DoNotRetryError(str(fe))
 
     archive = ArchiveService(api_root=api_root, auth_token=auth_token)
-    ingester = Ingester(datafile, filestore, archive)
+    ingester = Ingester(datafile, filestore, archive, is_thumbnail=is_thumbnail)
     return ingester.ingest()
 
 
@@ -269,10 +276,11 @@ class Ingester(object):
     A single instance of this class is responsible for parsing a fits file,
     uploading the data to s3, and making a call to the archive api.
     """
-    def __init__(self, datafile, filestore, archive):
+    def __init__(self, datafile, filestore, archive, is_thumbnail=False):
         self.datafile = datafile
         self.filestore = filestore
         self.archive = archive
+        self.is_thumbnail = is_thumbnail
 
     def ingest(self):
         # Get the Md5 checksum of this file and check if it already exists in the archive
@@ -293,4 +301,5 @@ class Ingester(object):
         record['area'] = self.datafile.get_wcs_corners()
         record['version_set'] = [version]
         record['basename'] = self.datafile.open_file.basename
-        return self.archive.post_frame(record)
+
+        return self.archive.post_thumbnail(record) if self.is_thumbnail else self.archive.post_frame(record)
