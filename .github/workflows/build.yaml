@@ -15,23 +15,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[tests]
-        pip install coverage
+        python -m pip install 'poetry'
+        poetry install
     - name: Run tests
       run: | 
-        coverage run -m pytest
-        coverage xml
+        poetry run coverage run -m pytest
+        poetry run coverage xml
       env:
         OPENTSDB_PYTHON_METRICS_TEST_MODE: True
     - name: Generate and send coveralls report
@@ -56,19 +56,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.11'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install setuptools wheel twine
+        python -m pip install 'poetry'
     - name: Build package and publish to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_INGESTER_API_TOKEN }}
       run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+        poetry build -f wheel
+        poetry build -f sdist
+        poetry publish -u "__token__" -p '${{ secrets.PYPI_INGESTER_API_TOKEN }}'

@@ -1,3 +1,7 @@
+3.2.0
+2026-04-01
+Upgrade ocs_archive library and minimum python version
+
 3.1.0
 2024-06-03
 Upgrade ocs_archive library, add support for uploading thumbnails to an OCS archive.
