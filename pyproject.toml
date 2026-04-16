@@ -33,7 +33,7 @@ python = ">=3.11"
 boto3 = ">=1,<2"
 requests = ">=2,<3"
 python-dateutil = ">=2,<3"
-astropy = "^7"
+astropy = ">=7,<9.0"
 numpy = "^2"
 ocs_archive = { git = "https://github.com/observatorycontrolsystem/ocs_archive.git", branch = "fix/reduction_level_parsing" }
 lcogt-logging = "<1.0.0"
