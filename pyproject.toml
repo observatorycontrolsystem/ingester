@@ -31,13 +31,13 @@ classifiers=[
 [tool.poetry.dependencies]
 python = ">=3.11"
 boto3 = ">=1,<2"
-requests = ">=2,<3"
+requests = "^2"
 python-dateutil = ">=2,<3"
 astropy = ">=7,<9.0"
 numpy = "^2"
 ocs_archive = { git = "https://github.com/observatorycontrolsystem/ocs_archive.git", branch = "fix/reduction_level_parsing" }
 lcogt-logging = "<1.0.0"
-opentsdb-python-metrics = ">=0.2.0"
+opentsdb-python-metrics = ">=0.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7,<8"
