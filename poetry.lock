@@ -56,18 +56,18 @@ test = ["hypothesis", "pytest", "pytest-remotedata"]
 
 [[package]]
 name = "boto3"
-version = "1.43.3"
+version = "1.43.6"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "boto3-1.43.3-py3-none-any.whl", hash = "sha256:fb9fe51849ef2a78198d582756fc06f14f7de27f73e0fa90275d6aa4171eb4d0"},
-    {file = "boto3-1.43.3.tar.gz", hash = "sha256:7c7777862ffc898f05efa566032bbabfe226dbb810e35ec11125817f128bc5c5"},
+    {file = "boto3-1.43.6-py3-none-any.whl", hash = "sha256:179601ec2992726a718053bf41e43c223ceba397d31ceab11f64d9c910d9fc3a"},
+    {file = "boto3-1.43.6.tar.gz", hash = "sha256:e6315effaf12b890b99956e6f8e2c3000a3f64e4ee91943cec3895ce9a836afb"},
 ]
 
 [package.dependencies]
-botocore = ">=1.43.3,<1.44.0"
+botocore = ">=1.43.6,<1.44.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.17.0,<0.18.0"
 
@@ -76,14 +76,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.43.3"
+version = "1.43.6"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "botocore-1.43.3-py3-none-any.whl", hash = "sha256:ec0769eb0f7c5034856bb406a92698dbc02a3d4be0f78a384747106b161d8ea3"},
-    {file = "botocore-1.43.3.tar.gz", hash = "sha256:eac6da0fffccf87888ebf4d89f0b2378218a707efa748cd955b838995e944695"},
+    {file = "botocore-1.43.6-py3-none-any.whl", hash = "sha256:b6d1fdbc6f65a5fe0b7e947823aa37535d3f39f3ba4d21110fab1f55bbbcc04b"},
+    {file = "botocore-1.43.6.tar.gz", hash = "sha256:b1e395b347356860398da42e61c808cf1e34b6fa7180cf2b9d87d986e1a06ba0"},
 ]
 
 [package.dependencies]
@@ -491,21 +491,17 @@ description = "Base library for the science archive and ingester of an observato
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "ocs_archive-0.5.0-py3-none-any.whl", hash = "sha256:6216cb84c9f014be2f850736cafb3d2652b1c517977199f6eadd9949646b01be"},
+    {file = "ocs_archive-0.5.0.tar.gz", hash = "sha256:8db59b244747c70b7784713d7e56efd68030958a855aab9444e4ce381ae63474"},
+]
 
 [package.dependencies]
-astropy = "^7"
+astropy = ">=7,<9.0"
 boto3 = ">=1,<2"
-numpy = "^2"
+numpy = ">=2,<3"
 python-dateutil = ">=2,<3"
 requests = ">=2,<3"
-
-[package.source]
-type = "git"
-url = "https://github.com/observatorycontrolsystem/ocs_archive.git"
-reference = "fix/reduction_level_parsing"
-resolved_reference = "6aeea9e1e91edd99e285b72c25d26498aa7ae517"
 
 [[package]]
 name = "opentsdb-http-client"
@@ -766,14 +762,14 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.6.3"
+version = "2.7.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main", "ci"]
 files = [
-    {file = "urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4"},
-    {file = "urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed"},
+    {file = "urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897"},
+    {file = "urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c"},
 ]
 
 [package.extras]
@@ -785,4 +781,4 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "f087c547ba213a822a609520c9ca42507c456890e68ef45515feaf700ef4ae82"
+content-hash = "3027f8fdc987c393dffa5d303bebdf90484b395cf7ad4e16464591ebac5ce362"

@@ -35,7 +35,7 @@ requests = "^2"
 python-dateutil = ">=2,<3"
 astropy = ">=7,<9.0"
 numpy = "^2"
-ocs_archive = { git = "https://github.com/observatorycontrolsystem/ocs_archive.git", branch = "fix/reduction_level_parsing" }
+ocs_archive = ">=0.5.0"
 lcogt-logging = "<1.0.0"
 opentsdb-python-metrics = ">=0.3.0"
 
